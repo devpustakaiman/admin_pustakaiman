@@ -1,0 +1,40 @@
+import 'package:get/get.dart';
+import '../../data/datasources/supabase_remote_data_source.dart';
+import '../../data/repositories/book_repository_impl.dart';
+import '../../domain/repositories/book_repository.dart';
+import '../../domain/usecases/add_book_usecase.dart';
+import '../../domain/usecases/delete_book_usecase.dart';
+import '../../domain/usecases/get_books_usecase.dart';
+import '../../domain/usecases/update_book_usecase.dart';
+import '../controllers/book_controller.dart';
+
+class DashboardBinding extends Bindings {
+  @override
+  void dependencies() {
+    // Data Sources
+    Get.lazyPut<SupabaseRemoteDataSource>(
+      () => SupabaseRemoteDataSourceImpl(),
+    );
+
+    // Repositories
+    Get.lazyPut<BookRepository>(
+      () => BookRepositoryImpl(remoteDataSource: Get.find()),
+    );
+
+    // Use Cases
+    Get.lazyPut(() => GetBooksUseCase(Get.find()));
+    Get.lazyPut(() => AddBookUseCase(Get.find()));
+    Get.lazyPut(() => UpdateBookUseCase(Get.find()));
+    Get.lazyPut(() => DeleteBookUseCase(Get.find()));
+
+    // Controllers
+    Get.lazyPut(
+      () => BookController(
+        getBooksUseCase: Get.find(),
+        addBookUseCase: Get.find(),
+        updateBookUseCase: Get.find(),
+        deleteBookUseCase: Get.find(),
+      ),
+    );
+  }
+}
