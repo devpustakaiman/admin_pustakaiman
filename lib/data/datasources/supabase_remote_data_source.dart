@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 abstract class SupabaseRemoteDataSource {
   Future<List<Map<String, dynamic>>> getBooks();
   Future<List<Map<String, dynamic>>> getArticles();
+  Future<List<Map<String, dynamic>>> getSubmissions();
   Future<void> addBook(Map<String, dynamic> bookMap);
   Future<void> updateBook(Map<String, dynamic> bookMap);
   Future<void> deleteBook(String id);
@@ -23,6 +24,15 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
   @override
   Future<List<Map<String, dynamic>>> getArticles() async {
     final response = await supabaseClient.from('articles').select();
+    return List<Map<String, dynamic>>.from(response);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getSubmissions() async {
+    final response = await supabaseClient
+        .from('submissions')
+        .select()
+        .order('created_at', ascending: false);
     return List<Map<String, dynamic>>.from(response);
   }
 
