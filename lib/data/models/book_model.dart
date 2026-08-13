@@ -18,9 +18,9 @@ class BookModel extends Book {
       title: json['title'] as String? ?? '',
       author: json['author'] as String? ?? '',
       synopsis: json['synopsis'] as String? ?? '',
-      coverUrl: json['cover_url'] as String? ?? json['coverUrl'] as String? ?? '',
-      pdfPreviewUrl: json['pdf_preview_url'] as String? ?? json['pdfPreviewUrl'] as String? ?? '',
-      mizanstoreUrl: json['mizanstore_url'] as String? ?? json['mizanstoreUrl'] as String? ?? '',
+      coverUrl: json['coverUrl'] as String? ?? '',
+      pdfPreviewUrl: json['pdfPreviewUrl'] as String? ?? '',
+      mizanstoreUrl: json['mizanstoreUrl'] as String? ?? '',
       category: json['category'] as String? ?? '',
     );
   }
@@ -31,9 +31,9 @@ class BookModel extends Book {
       'title': title,
       'author': author,
       'synopsis': synopsis,
-      'cover_url': coverUrl,
-      'pdf_preview_url': pdfPreviewUrl,
-      'mizanstore_url': mizanstoreUrl,
+      'coverUrl': coverUrl,
+      'pdfPreviewUrl': pdfPreviewUrl,
+      'mizanstoreUrl': mizanstoreUrl,
       'category': category,
     };
   }

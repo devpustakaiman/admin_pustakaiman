@@ -38,6 +38,9 @@ dependencies:
   supabase_flutter: ^2.16.0
   either_dart: ^1.0.0
   url_launcher: ^6.3.2
+  flutter_quill: ^11.5.0
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:

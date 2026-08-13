@@ -76,55 +76,67 @@ class BookController extends GetxController {
       clearForm();
     }
 
-    Get.defaultDialog(
-      title: editingBookId.value.isEmpty ? 'Tambah Buku Baru' : 'Edit Buku',
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Judul Buku'),
+    Get.dialog(
+      AlertDialog(
+        title: Text(editingBookId.value.isEmpty ? 'Tambah Buku Baru' : 'Edit Buku'),
+        content: SizedBox(
+          width: 500,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: 'Judul Buku'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: authorController,
+                  decoration: const InputDecoration(labelText: 'Penulis'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: categoryController,
+                  decoration: const InputDecoration(labelText: 'Kategori'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: synopsisController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(labelText: 'Sinopsis'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: coverUrlController,
+                  decoration: const InputDecoration(labelText: 'URL Cover'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: pdfPreviewUrlController,
+                  decoration: const InputDecoration(labelText: 'URL Preview PDF'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: mizanstoreUrlController,
+                  decoration: const InputDecoration(
+                    labelText: 'Link Pembelian MMU/Mizanstore',
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: authorController,
-              decoration: const InputDecoration(labelText: 'Penulis'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: categoryController,
-              decoration: const InputDecoration(labelText: 'Kategori'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: synopsisController,
-              maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Sinopsis'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: coverUrlController,
-              decoration: const InputDecoration(labelText: 'URL Cover'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: pdfPreviewUrlController,
-              decoration: const InputDecoration(labelText: 'URL Preview PDF'),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: mizanstoreUrlController,
-              decoration: const InputDecoration(
-                labelText: 'Link Pembelian MMU/Mizanstore',
-              ),
-            ),
-          ],
+          ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => saveBook(),
+            child: const Text('Simpan'),
+          ),
+        ],
       ),
-      textCancel: 'Batal',
-      textConfirm: 'Simpan',
-      onConfirm: () => saveBook(),
     );
   }
 

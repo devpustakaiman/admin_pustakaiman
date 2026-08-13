@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/main_layout_controller.dart';
+import 'article_management_page.dart';
+import 'author_management_page.dart';
 import 'book_management_page.dart';
 import 'submission_management_page.dart';
 
@@ -10,10 +12,11 @@ class MainLayoutPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<MainLayoutController>();
-
     final pages = const [
       BookManagementPage(),
       SubmissionManagementPage(),
+      AuthorManagementPage(),
+      ArticleManagementPage(),
     ];
 
     return Scaffold(
@@ -44,6 +47,16 @@ class MainLayoutPage extends StatelessWidget {
                   icon: Icon(Icons.inbox_outlined),
                   selectedIcon: Icon(Icons.inbox),
                   label: Text('Naskah Masuk'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person),
+                  label: Text('Penulis'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.article_outlined),
+                  selectedIcon: Icon(Icons.article),
+                  label: Text('Artikel'),
                 ),
               ],
             );

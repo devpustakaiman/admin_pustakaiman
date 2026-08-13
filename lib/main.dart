@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:get/get.dart';
 import 'core/config/supabase_config.dart';
 import 'core/routes/app_pages.dart';
@@ -24,6 +26,13 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: AppRoutes.initial,
       getPages: AppPages.pages,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        FlutterQuillLocalizations.delegate,
+      ],
+      supportedLocales: FlutterQuillLocalizations.supportedLocales,
     );
   }
 }

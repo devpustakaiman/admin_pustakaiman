@@ -5,6 +5,21 @@ import '../controllers/book_controller.dart';
 class BookManagementPage extends StatelessWidget {
   const BookManagementPage({super.key});
 
+  Widget _buildCoverImage(String coverUrl, {double width = 50, double height = 50}) {
+    final isValidUrl =
+        coverUrl.startsWith('http://') || coverUrl.startsWith('https://');
+    if (!isValidUrl) {
+      return const Icon(Icons.book);
+    }
+    return Image.network(
+      coverUrl,
+      width: width,
+      height: height,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const Icon(Icons.book),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<BookController>();
@@ -60,14 +75,7 @@ class BookManagementPage extends StatelessWidget {
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
               child: ListTile(
-                leading: book.coverUrl.isNotEmpty
-                    ? Image.network(
-                        book.coverUrl,
-                        width: 50,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.book),
-                      )
-                    : const Icon(Icons.book),
+                leading: _buildCoverImage(book.coverUrl),
                 title: Text(
                   book.title,
                   style: const TextStyle(fontWeight: FontWeight.bold),
