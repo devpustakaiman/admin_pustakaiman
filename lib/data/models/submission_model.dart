@@ -12,7 +12,7 @@ class SubmissionModel extends Submission {
   });
 
   factory SubmissionModel.fromJson(Map<String, dynamic> json) {
-    final createdAtRaw = json['created_at'] ?? json['createdAt'];
+    final createdAtRaw = json['created_at'] ?? json['createdAt'] ?? json['date'];
     DateTime parsedCreatedAt;
     if (createdAtRaw is String) {
       parsedCreatedAt = DateTime.tryParse(createdAtRaw) ?? DateTime.now();
@@ -23,12 +23,28 @@ class SubmissionModel extends Submission {
     }
 
     return SubmissionModel(
-      id: json['id'] as String? ?? '',
-      senderName: json['sender_name'] as String? ?? json['senderName'] as String? ?? '',
-      email: json['email'] as String? ?? '',
-      synopsis: json['synopsis'] as String? ?? '',
-      pdfDocumentUrl: json['pdf_document_url'] as String? ?? json['pdfDocumentUrl'] as String? ?? '',
-      status: json['status'] as String? ?? '',
+      id: json['id']?.toString() ?? '',
+      senderName: json['sender_name']?.toString() ??
+          json['senderName']?.toString() ??
+          json['name']?.toString() ??
+          json['author_name']?.toString() ??
+          json['nama_penulis']?.toString() ??
+          'Anonim',
+      email: json['email']?.toString() ??
+          json['email_address']?.toString() ??
+          '-',
+      synopsis: json['synopsis']?.toString() ??
+          json['description']?.toString() ??
+          json['sinopsis']?.toString() ??
+          '',
+      pdfDocumentUrl: json['pdf_document_url']?.toString() ??
+          json['pdfDocumentUrl']?.toString() ??
+          json['pdf_url']?.toString() ??
+          json['file_url']?.toString() ??
+          json['document_url']?.toString() ??
+          json['url_pdf']?.toString() ??
+          '',
+      status: json['status']?.toString() ?? 'pending',
       createdAt: parsedCreatedAt,
     );
   }

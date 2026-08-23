@@ -1,7 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/article.dart';
 import '../../domain/usecases/add_article_usecase.dart';
 import '../../domain/usecases/delete_article_usecase.dart';
@@ -23,8 +27,12 @@ class ArticleController extends GetxController {
 
   final RxList<Article> articles = <Article>[].obs;
   final RxBool isLoading = false.obs;
+  final RxBool isUploading = false.obs;
+  final RxString uploadStatusMessage = ''.obs;
   final RxString errorMessage = ''.obs;
   final RxString editingArticleId = ''.obs;
+
+  final Rx<PlatformFile?> selectedHeaderImageFile = Rx<PlatformFile?>(null);
 
   // Form Controllers
   final titleController = TextEditingController();
@@ -57,6 +65,54 @@ class ArticleController extends GetxController {
     imageUrlController.clear();
     selectedDate.value = DateTime.now();
     quillController.document = Document();
+    selectedHeaderImageFile.value = null;
+    uploadStatusMessage.value = '';
+    isUploading.value = false;
+  }
+
+  Future<void> pickHeaderImageFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
+        withData: true,
+      );
+      if (result != null && result.files.isNotEmpty) {
+        selectedHeaderImageFile.value = result.files.first;
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal memilih file gambar header: $e');
+    }
+  }
+
+  Future<String?> uploadHeaderImageToStorage(PlatformFile file) async {
+    Uint8List? bytes = file.bytes;
+    if (bytes == null && file.path != null) {
+      bytes = await File(file.path!).readAsBytes();
+    }
+    if (bytes == null) {
+      throw Exception('Data file gambar kosong');
+    }
+
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final extension = file.extension ?? 'jpg';
+    final sanitizedName = file.name
+        .replaceAll(RegExp(r'[^a-zA-Z0-9\._-]'), '_')
+        .toLowerCase();
+    final path = 'article-$timestamp-$sanitizedName';
+
+    final contentType = 'image/${extension == "png" ? "png" : "jpeg"}';
+    final supabase = Supabase.instance.client;
+    await supabase.storage.from('pustaka-assets').uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(
+            upsert: true,
+            contentType: contentType,
+          ),
+        );
+
+    return supabase.storage.from('pustaka-assets').getPublicUrl(path);
   }
 
   void setContent(String content) {
@@ -73,7 +129,6 @@ class ArticleController extends GetxController {
       }
     } catch (_) {}
 
-    // Fallback: load as plain text
     final doc = Document();
     doc.insert(0, content);
     quillController.document = doc;
@@ -92,6 +147,7 @@ class ArticleController extends GetxController {
       imageUrlController.text = article.imageUrl;
       selectedDate.value = article.date;
       setContent(article.content);
+      selectedHeaderImageFile.value = null;
     } else {
       editingArticleId.value = '';
       clearForm();
@@ -171,15 +227,79 @@ class ArticleController extends GetxController {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: imageUrlController,
-                        decoration: const InputDecoration(
-                          labelText: 'URL Gambar Header',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
                       const SizedBox(height: 16),
+
+                      // Header Image Upload Button
+                      const Text(
+                        'Gambar Header Artikel',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                      const SizedBox(height: 6),
+                      Obx(() {
+                        final file = selectedHeaderImageFile.value;
+                        final existingUrl = imageUrlController.text;
+                        return Row(
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: isUploading.value
+                                  ? null
+                                  : () => pickHeaderImageFile(),
+                              icon: const Icon(Icons.image, size: 18),
+                              label: const Text('Upload File Gambar'),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                file != null
+                                    ? 'File: ${file.name}'
+                                    : (existingUrl.isNotEmpty
+                                        ? 'URL: ${existingUrl.length > 35 ? "${existingUrl.substring(0, 35)}..." : existingUrl}'
+                                        : 'Belum ada gambar dipilih'),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: file != null
+                                      ? Colors.deepPurple
+                                      : Colors.grey[700],
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+
+                      const SizedBox(height: 16),
+                      Obx(() {
+                        if (!isUploading.value) return const SizedBox.shrink();
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  uploadStatusMessage.value.isNotEmpty
+                                      ? uploadStatusMessage.value
+                                      : 'Mengunggah gambar header ke Supabase Storage...',
+                                  style:
+                                      const TextStyle(fontSize: 12, color: Colors.blue),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 16),
+
                       const Text(
                         'Konten Artikel (Rich Text Editor):',
                         style: TextStyle(fontWeight: FontWeight.bold),
@@ -219,10 +339,23 @@ class ArticleController extends GetxController {
                     child: const Text('Batal'),
                   ),
                   const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () => saveArticle(),
-                    child: const Text('Simpan'),
-                  ),
+                  Obx(() {
+                    return ElevatedButton(
+                      onPressed: (isLoading.value || isUploading.value)
+                          ? null
+                          : () => saveArticle(),
+                      child: (isLoading.value || isUploading.value)
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Simpan'),
+                    );
+                  }),
                 ],
               ),
             ],
@@ -272,14 +405,39 @@ class ArticleController extends GetxController {
       return;
     }
 
-    if (Get.isDialogOpen ?? false) Get.back();
     isLoading.value = true;
+    isUploading.value = true;
     errorMessage.value = '';
 
-    if (editingArticleId.value.isEmpty) {
-      await addArticle();
-    } else {
-      await updateArticle();
+    try {
+      if (selectedHeaderImageFile.value != null) {
+        uploadStatusMessage.value = 'Mengunggah Gambar Header...';
+        final imageUrl =
+            await uploadHeaderImageToStorage(selectedHeaderImageFile.value!);
+        if (imageUrl != null) {
+          imageUrlController.text = imageUrl;
+        }
+      }
+
+      uploadStatusMessage.value = 'Menyimpan artikel...';
+
+      if (editingArticleId.value.isEmpty) {
+        await addArticle();
+      } else {
+        await updateArticle();
+      }
+
+      if (Get.isDialogOpen ?? false) Get.back();
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Gagal mengunggah gambar atau menyimpan artikel: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isUploading.value = false;
+      isLoading.value = false;
+      uploadStatusMessage.value = '';
     }
   }
 
