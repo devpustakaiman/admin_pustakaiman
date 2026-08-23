@@ -1,12 +1,18 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../domain/entities/submission.dart';
+import '../../domain/repositories/submission_repository.dart';
 import '../../domain/usecases/get_submissions_usecase.dart';
 
 class SubmissionController extends GetxController {
   final GetSubmissionsUseCase getSubmissionsUseCase;
+  final SubmissionRepository submissionRepository;
 
-  SubmissionController({required this.getSubmissionsUseCase});
+  SubmissionController({
+    required this.getSubmissionsUseCase,
+    SubmissionRepository? repository,
+  }) : submissionRepository = repository ?? Get.find<SubmissionRepository>();
 
   final RxList<Submission> submissions = <Submission>[].obs;
   final RxBool isLoading = false.obs;
@@ -34,6 +40,88 @@ class SubmissionController extends GetxController {
     );
   }
 
+  Future<void> deleteSubmission(String id) async {
+    Get.defaultDialog(
+      title: 'Hapus Submission',
+      middleText: 'Apakah Anda yakin ingin menghapus submission ini?',
+      textCancel: 'Batal',
+      textConfirm: 'Hapus',
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.red,
+      onConfirm: () async {
+        Get.back();
+        isLoading.value = true;
+        final result = await submissionRepository.deleteSubmission(id);
+        result.fold(
+          (failure) {
+            Get.snackbar(
+              'Error',
+              'Gagal menghapus submission: ${failure.message}',
+              snackPosition: SnackPosition.BOTTOM,
+            );
+            isLoading.value = false;
+          },
+          (_) async {
+            Get.snackbar(
+              'Sukses',
+              'Submission berhasil dihapus',
+              snackPosition: SnackPosition.BOTTOM,
+            );
+            await fetchSubmissions();
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> updateStatus(String id, String newStatus) async {
+    isLoading.value = true;
+    final result = await submissionRepository.updateSubmissionStatus(id, newStatus);
+    result.fold(
+      (failure) {
+        Get.snackbar(
+          'Error',
+          'Gagal memperbarui status: ${failure.message}',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        isLoading.value = false;
+      },
+      (_) async {
+        Get.snackbar(
+          'Sukses',
+          'Status submission diperbarui menjadi $newStatus',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        await fetchSubmissions();
+      },
+    );
+  }
+
+  Future<void> previewPdf(String url) async {
+    if (url.trim().isEmpty) {
+      Get.snackbar(
+        'Peringatan',
+        'URL dokumen PDF tidak tersedia',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    try {
+      final Uri uri = Uri.parse(url);
+      await launchUrl(
+        uri,
+        webOnlyWindowName: '_blank',
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Gagal membuka preview PDF: $e',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
   Future<void> downloadPdf(String url) async {
     if (url.isEmpty) {
       Get.snackbar(
@@ -49,7 +137,6 @@ class SubmissionController extends GetxController {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        // Fallback try to launch anyway if canLaunchUrl check fails on web/desktop
         await launchUrl(uri);
       }
     } catch (e) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../domain/entities/submission.dart';
 import '../controllers/submission_controller.dart';
 
 class SubmissionManagementPage extends StatelessWidget {
@@ -29,6 +30,77 @@ class SubmissionManagementPage extends StatelessWidget {
       default:
         return Colors.orange;
     }
+  }
+
+  Widget _buildStatusBadge(
+    BuildContext context,
+    Submission submission,
+    SubmissionController controller,
+  ) {
+    final color = _getStatusColor(submission.status);
+    final statusText = submission.status.toUpperCase();
+
+    return PopupMenuButton<String>(
+      tooltip: 'Ubah Status',
+      onSelected: (String newStatus) {
+        controller.updateStatus(submission.id, newStatus);
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'DITERIMA',
+          child: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 18),
+              SizedBox(width: 8),
+              Text('DITERIMA'),
+            ],
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'DITOLAK',
+          child: Row(
+            children: [
+              Icon(Icons.cancel, color: Colors.red, size: 18),
+              SizedBox(width: 8),
+              Text('DITOLAK'),
+            ],
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'PENDING',
+          child: Row(
+            children: [
+              Icon(Icons.hourglass_empty, color: Colors.orange, size: 18),
+              SizedBox(width: 8),
+              Text('PENDING'),
+            ],
+          ),
+        ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color, width: 1.5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              statusText,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.arrow_drop_down, color: color, size: 16),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -167,36 +239,34 @@ class SubmissionManagementPage extends StatelessWidget {
                               DataCell(Text(submission.senderName)),
                               DataCell(Text(submission.email)),
                               DataCell(
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: _getStatusColor(submission.status)
-                                        .withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(
-                                      color: _getStatusColor(submission.status),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    submission.status.toUpperCase(),
-                                    style: TextStyle(
-                                      color: _getStatusColor(submission.status),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
+                                _buildStatusBadge(context, submission, controller),
                               ),
                               DataCell(
-                                IconButton(
-                                  icon: const Icon(Icons.download, color: Colors.blue),
-                                  tooltip: 'Unduh Dokumen PDF',
-                                  onPressed: () => controller.downloadPdf(
-                                    submission.pdfDocumentUrl,
-                                  ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                     IconButton(
+                                       icon: const Icon(Icons.remove_red_eye, color: Colors.blue),
+                                       tooltip: 'Preview PDF (Tab Baru)',
+                                       onPressed: () => controller.previewPdf(
+                                         submission.pdfDocumentUrl,
+                                       ),
+                                     ),
+                                     IconButton(
+                                       icon: const Icon(Icons.download, color: Colors.indigo),
+                                       tooltip: 'Unduh Dokumen PDF',
+                                       onPressed: () => controller.downloadPdf(
+                                         submission.pdfDocumentUrl,
+                                       ),
+                                     ),
+                                     IconButton(
+                                       icon: const Icon(Icons.delete, color: Colors.red),
+                                       tooltip: 'Hapus Submission',
+                                       onPressed: () => controller.deleteSubmission(
+                                         submission.id,
+                                       ),
+                                     ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -214,7 +284,6 @@ class SubmissionManagementPage extends StatelessWidget {
               itemCount: controller.submissions.length,
               itemBuilder: (context, index) {
                 final submission = controller.submissions[index];
-                final statusColor = _getStatusColor(submission.status);
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -233,25 +302,7 @@ class SubmissionManagementPage extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: statusColor.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: statusColor),
-                              ),
-                              child: Text(
-                                submission.status.toUpperCase(),
-                                style: TextStyle(
-                                  color: statusColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ),
+                            _buildStatusBadge(context, submission, controller),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -274,15 +325,32 @@ class SubmissionManagementPage extends StatelessWidget {
                           ),
                         ],
                         const SizedBox(height: 12),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: ElevatedButton.icon(
-                            onPressed: () => controller.downloadPdf(
-                              submission.pdfDocumentUrl,
-                            ),
-                            icon: const Icon(Icons.download, size: 18),
-                            label: const Text('Unduh PDF'),
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                             IconButton(
+                               icon: const Icon(Icons.remove_red_eye, color: Colors.blue),
+                               tooltip: 'Preview PDF',
+                               onPressed: () => controller.previewPdf(
+                                 submission.pdfDocumentUrl,
+                               ),
+                             ),
+                             ElevatedButton.icon(
+                               onPressed: () => controller.downloadPdf(
+                                 submission.pdfDocumentUrl,
+                               ),
+                               icon: const Icon(Icons.download, size: 18),
+                               label: const Text('Unduh PDF'),
+                             ),
+                             const SizedBox(width: 8),
+                             IconButton(
+                               icon: const Icon(Icons.delete, color: Colors.red),
+                               tooltip: 'Hapus Submission',
+                               onPressed: () => controller.deleteSubmission(
+                                 submission.id,
+                               ),
+                             ),
+                          ],
                         ),
                       ],
                     ),

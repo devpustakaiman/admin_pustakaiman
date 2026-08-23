@@ -20,4 +20,25 @@ class SubmissionRepositoryImpl implements SubmissionRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> deleteSubmission(String id) async {
+    try {
+      await remoteDataSource.deleteSubmission(id);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateSubmissionStatus(String id, String status) async {
+    try {
+      await remoteDataSource.updateSubmissionStatus(id, status);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }
+

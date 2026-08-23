@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/routes/app_routes.dart';
 import '../controllers/main_layout_controller.dart';
 import 'article_management_page.dart';
 import 'author_management_page.dart';
@@ -35,6 +37,22 @@ class MainLayoutPage extends StatelessWidget {
                   Icons.admin_panel_settings,
                   size: 32,
                   color: Colors.deepPurple,
+                ),
+              ),
+              trailing: Expanded(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: IconButton(
+                      icon: const Icon(Icons.logout, color: Colors.red),
+                      tooltip: 'Keluar',
+                      onPressed: () async {
+                        await Supabase.instance.client.auth.signOut();
+                        Get.offAllNamed(AppRoutes.login);
+                      },
+                    ),
+                  ),
                 ),
               ),
               destinations: const [
