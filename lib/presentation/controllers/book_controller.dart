@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -104,6 +104,7 @@ class BookController extends GetxController {
   final pdfPreviewUrlController = TextEditingController();
   final mizanstoreUrlController = TextEditingController();
   final categoryController = TextEditingController();
+  final priceController = TextEditingController();
 
   @override
   void onInit() {
@@ -120,6 +121,7 @@ class BookController extends GetxController {
     pdfPreviewUrlController.dispose();
     mizanstoreUrlController.dispose();
     categoryController.dispose();
+    priceController.dispose();
     super.onClose();
   }
 
@@ -131,6 +133,7 @@ class BookController extends GetxController {
     pdfPreviewUrlController.clear();
     mizanstoreUrlController.clear();
     categoryController.clear();
+    priceController.clear();
     selectedCoverFile.value = null;
     selectedPdfFile.value = null;
     existingGalleryUrls.clear();
@@ -240,6 +243,7 @@ class BookController extends GetxController {
       pdfPreviewUrlController.text = book.pdfPreviewUrl;
       mizanstoreUrlController.text = book.mizanstoreUrl;
       categoryController.text = book.category;
+      priceController.text = book.price > 0 ? book.price.toString() : '';
       selectedCoverFile.value = null;
       selectedPdfFile.value = null;
       existingGalleryUrls.assignAll(book.galleryUrls);
@@ -336,6 +340,15 @@ class BookController extends GetxController {
                               ),
                             );
                           },
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: priceController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          decoration: const InputDecoration(
+                            labelText: 'Harga (Rp)',
+                          ),
                         ),
                         const SizedBox(height: 8),
                         TextField(
@@ -802,6 +815,7 @@ class BookController extends GetxController {
   }
 
   Future<void> addBook(List<String> galleryUrls) async {
+    final priceInt = int.tryParse(priceController.text.trim()) ?? 0;
     final newBook = Book(
       id: '',
       title: titleController.text.trim(),
@@ -812,6 +826,7 @@ class BookController extends GetxController {
       mizanstoreUrl: mizanstoreUrlController.text.trim(),
       category: categoryController.text.trim(),
       galleryUrls: galleryUrls,
+      price: priceInt,
     );
 
     final result = await addBookUseCase.call(newBook);
@@ -828,6 +843,7 @@ class BookController extends GetxController {
   }
 
   Future<void> updateBook(List<String> galleryUrls) async {
+    final priceInt = int.tryParse(priceController.text.trim()) ?? 0;
     final updatedBook = Book(
       id: editingBookId.value,
       title: titleController.text.trim(),
@@ -838,6 +854,7 @@ class BookController extends GetxController {
       mizanstoreUrl: mizanstoreUrlController.text.trim(),
       category: categoryController.text.trim(),
       galleryUrls: galleryUrls,
+      price: priceInt,
     );
 
     final result = await updateBookUseCase.call(updatedBook);

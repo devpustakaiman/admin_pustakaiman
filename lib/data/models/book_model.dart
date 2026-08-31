@@ -11,6 +11,7 @@ class BookModel extends Book {
     required super.mizanstoreUrl,
     required super.category,
     super.galleryUrls = const [],
+    super.price = 0,
   });
 
   factory BookModel.fromJson(Map<String, dynamic> json) {
@@ -18,6 +19,14 @@ class BookModel extends Book {
     List<String> parsedGallery = const [];
     if (rawGallery is List) {
       parsedGallery = rawGallery.map((e) => e.toString()).toList();
+    }
+
+    final rawPrice = json['price'];
+    int parsedPrice = 0;
+    if (rawPrice is num) {
+      parsedPrice = rawPrice.toInt();
+    } else if (rawPrice is String) {
+      parsedPrice = int.tryParse(rawPrice) ?? 0;
     }
 
     return BookModel(
@@ -30,6 +39,7 @@ class BookModel extends Book {
       mizanstoreUrl: json['mizanstoreUrl'] as String? ?? json['mizanstore_url'] as String? ?? '',
       category: json['category'] as String? ?? '',
       galleryUrls: parsedGallery,
+      price: parsedPrice,
     );
   }
 
@@ -44,6 +54,7 @@ class BookModel extends Book {
       'mizanstoreUrl': mizanstoreUrl,
       'category': category,
       'gallery_urls': galleryUrls,
+      'price': price,
     };
   }
 }

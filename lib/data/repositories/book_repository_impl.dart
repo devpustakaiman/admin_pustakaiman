@@ -34,6 +34,7 @@ class BookRepositoryImpl implements BookRepository {
         mizanstoreUrl: book.mizanstoreUrl,
         category: book.category,
         galleryUrls: book.galleryUrls,
+        price: book.price,
       );
       final bookMap = bookModel.toJson();
       if (book.id.isEmpty) {
@@ -59,6 +60,7 @@ class BookRepositoryImpl implements BookRepository {
         mizanstoreUrl: book.mizanstoreUrl,
         category: book.category,
         galleryUrls: book.galleryUrls,
+        price: book.price,
       );
       await remoteDataSource.updateBook(bookModel.toJson());
       return const Right(null);
