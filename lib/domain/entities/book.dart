@@ -7,6 +7,7 @@ class Book {
   final String pdfPreviewUrl;
   final String mizanstoreUrl;
   final String category;
+  final List<String> galleryUrls;
 
   const Book({
     required this.id,
@@ -17,5 +18,6 @@ class Book {
     required this.pdfPreviewUrl,
     required this.mizanstoreUrl,
     required this.category,
+    this.galleryUrls = const [],
   });
 }

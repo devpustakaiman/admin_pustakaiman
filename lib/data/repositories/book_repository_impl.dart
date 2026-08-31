@@ -33,6 +33,7 @@ class BookRepositoryImpl implements BookRepository {
         pdfPreviewUrl: book.pdfPreviewUrl,
         mizanstoreUrl: book.mizanstoreUrl,
         category: book.category,
+        galleryUrls: book.galleryUrls,
       );
       final bookMap = bookModel.toJson();
       if (book.id.isEmpty) {
@@ -57,6 +58,7 @@ class BookRepositoryImpl implements BookRepository {
         pdfPreviewUrl: book.pdfPreviewUrl,
         mizanstoreUrl: book.mizanstoreUrl,
         category: book.category,
+        galleryUrls: book.galleryUrls,
       );
       await remoteDataSource.updateBook(bookModel.toJson());
       return const Right(null);
