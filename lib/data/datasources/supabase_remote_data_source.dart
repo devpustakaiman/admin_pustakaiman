@@ -61,8 +61,16 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
 
   @override
   Future<List<Map<String, dynamic>>> getBooks() async {
-    final response = await supabaseClient.from('books').select();
-    return List<Map<String, dynamic>>.from(response);
+    try {
+      final response = await supabaseClient
+          .from('books')
+          .select()
+          .limit(50);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (_) {
+      final response = await supabaseClient.from('books').select().limit(50);
+      return List<Map<String, dynamic>>.from(response);
+    }
   }
 
   @override
@@ -71,10 +79,11 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
       final response = await supabaseClient
           .from('articles')
           .select()
-          .order('created_at', ascending: false);
+          .order('created_at', ascending: false)
+          .limit(50);
       return List<Map<String, dynamic>>.from(response);
     } catch (_) {
-      final response = await supabaseClient.from('articles').select();
+      final response = await supabaseClient.from('articles').select().limit(50);
       return List<Map<String, dynamic>>.from(response);
     }
   }
@@ -110,10 +119,11 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
       final response = await supabaseClient
           .from('submissions')
           .select()
-          .order('created_at', ascending: false);
+          .order('created_at', ascending: false)
+          .limit(50);
       return List<Map<String, dynamic>>.from(response);
     } catch (_) {
-      final response = await supabaseClient.from('submissions').select();
+      final response = await supabaseClient.from('submissions').select().limit(50);
       return List<Map<String, dynamic>>.from(response);
     }
   }
@@ -161,26 +171,38 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
 
   @override
   Future<void> addBook(Map<String, dynamic> bookMap) async {
-    await supabaseClient.from('books').insert(bookMap);
+    final mapToSave = Map<String, dynamic>.from(bookMap);
+    mapToSave['created_at'] = DateTime.now().toIso8601String();
+    mapToSave['updated_at'] = DateTime.now().toIso8601String();
+    await supabaseClient.from('books').insert(mapToSave);
   }
 
   @override
   Future<void> updateBook(Map<String, dynamic> bookMap) async {
-    await supabaseClient.from('books').update(bookMap).eq('id', bookMap['id']);
+    final mapToSave = Map<String, dynamic>.from(bookMap);
+    mapToSave['updated_at'] = DateTime.now().toIso8601String();
+    await supabaseClient.from('books').update(mapToSave).eq('id', bookMap['id']);
   }
 
   @override
   Future<void> deleteBook(String id) async {
     try {
-      final book = await supabaseClient.from('books').select().eq('id', id).maybeSingle();
-      if (book != null) {
-        final coverUrl = book['cover_url'] ?? book['coverUrl'];
-        final pdfUrl = book['pdf_preview_url'] ?? book['pdfPreviewUrl'];
-        await _deleteStorageFile('pustaka-assets', coverUrl?.toString());
-        await _deleteStorageFile('naskah', pdfUrl?.toString());
-      }
-    } catch (_) {}
-    await supabaseClient.from('books').delete().eq('id', id);
+      await supabaseClient
+          .from('books')
+          .update({'deleted_at': DateTime.now().toIso8601String()})
+          .eq('id', id);
+    } catch (_) {
+      try {
+        final book = await supabaseClient.from('books').select().eq('id', id).maybeSingle();
+        if (book != null) {
+          final coverUrl = book['coverUrl'] ?? book['cover_url'];
+          final pdfUrl = book['pdfPreviewUrl'] ?? book['pdf_preview_url'];
+          await _deleteStorageFile('pustaka-assets', coverUrl?.toString());
+          await _deleteStorageFile('naskah', pdfUrl?.toString());
+        }
+      } catch (_) {}
+      await supabaseClient.from('books').delete().eq('id', id);
+    }
   }
 
   @override
@@ -189,10 +211,11 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
       final response = await supabaseClient
           .from('authors')
           .select()
-          .order('created_at', ascending: false);
+          .order('created_at', ascending: false)
+          .limit(50);
       return List<Map<String, dynamic>>.from(response);
     } catch (_) {
-      final response = await supabaseClient.from('authors').select();
+      final response = await supabaseClient.from('authors').select().limit(50);
       return List<Map<String, dynamic>>.from(response);
     }
   }

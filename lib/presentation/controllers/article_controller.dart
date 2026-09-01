@@ -26,6 +26,44 @@ class ArticleController extends GetxController {
   });
 
   final RxList<Article> articles = <Article>[].obs;
+  final RxString searchQuery = ''.obs;
+  final RxString sortBy = 'date'.obs; // 'date', 'title', 'author'
+  final RxBool isAscending = false.obs; // false = newest first by default
+
+  List<Article> get filteredArticles {
+    List<Article> result = List.from(articles);
+
+    // 1. Text Search Filter
+    if (searchQuery.value.trim().isNotEmpty) {
+      final query = searchQuery.value.toLowerCase().trim();
+      result = result.where((article) {
+        final titleMatch = article.title.toLowerCase().contains(query);
+        final authorMatch = article.author.toLowerCase().contains(query);
+        return titleMatch || authorMatch;
+      }).toList();
+    }
+
+    // 2. Sorting
+    result.sort((a, b) {
+      int comparison = 0;
+      switch (sortBy.value) {
+        case 'title':
+          comparison = a.title.toLowerCase().compareTo(b.title.toLowerCase());
+          break;
+        case 'author':
+          comparison = a.author.toLowerCase().compareTo(b.author.toLowerCase());
+          break;
+        case 'date':
+        default:
+          comparison = a.date.compareTo(b.date);
+          break;
+      }
+      return isAscending.value ? comparison : -comparison;
+    });
+
+    return result;
+  }
+
   final RxBool isLoading = false.obs;
   final RxBool isUploading = false.obs;
   final RxString uploadStatusMessage = ''.obs;

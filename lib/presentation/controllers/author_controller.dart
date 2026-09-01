@@ -24,6 +24,38 @@ class AuthorController extends GetxController {
   });
 
   final RxList<Author> authors = <Author>[].obs;
+  final RxString searchQuery = ''.obs;
+  final RxString sortBy = 'name'.obs; // 'name', 'date'
+  final RxBool isAscending = true.obs;
+
+  List<Author> get filteredAuthors {
+    List<Author> result = List.from(authors);
+
+    // 1. Text Search Filter
+    if (searchQuery.value.trim().isNotEmpty) {
+      final query = searchQuery.value.toLowerCase().trim();
+      result = result.where((author) {
+        final nameMatch = author.name.toLowerCase().contains(query);
+        final bioMatch = author.bio.toLowerCase().contains(query);
+        return nameMatch || bioMatch;
+      }).toList();
+    }
+
+    // 2. Sorting
+    result.sort((a, b) {
+      int comparison = 0;
+      if (sortBy.value == 'date') {
+        comparison = a.createdAt.compareTo(b.createdAt);
+      } else {
+        // Default 'name'
+        comparison = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      }
+      return isAscending.value ? comparison : -comparison;
+    });
+
+    return result;
+  }
+
   final RxBool isLoading = false.obs;
   final RxBool isUploading = false.obs;
   final RxString uploadStatusMessage = ''.obs;

@@ -35,6 +35,13 @@ class BookRepositoryImpl implements BookRepository {
         category: book.category,
         galleryUrls: book.galleryUrls,
         price: book.price,
+        isPromo: book.isPromo,
+        promoPrice: book.promoPrice,
+        promoPercentage: book.promoPercentage,
+        isRecommended: book.isRecommended,
+        updatedAt: book.updatedAt,
+        createdAt: book.createdAt,
+        deletedAt: book.deletedAt,
       );
       final bookMap = bookModel.toJson();
       if (book.id.isEmpty) {
@@ -61,6 +68,13 @@ class BookRepositoryImpl implements BookRepository {
         category: book.category,
         galleryUrls: book.galleryUrls,
         price: book.price,
+        isPromo: book.isPromo,
+        promoPrice: book.promoPrice,
+        promoPercentage: book.promoPercentage,
+        isRecommended: book.isRecommended,
+        updatedAt: book.updatedAt,
+        createdAt: book.createdAt,
+        deletedAt: book.deletedAt,
       );
       await remoteDataSource.updateBook(bookModel.toJson());
       return const Right(null);

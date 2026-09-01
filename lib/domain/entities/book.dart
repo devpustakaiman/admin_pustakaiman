@@ -9,6 +9,13 @@ class Book {
   final String category;
   final List<String> galleryUrls;
   final int price;
+  final bool isPromo;
+  final int? promoPrice;
+  final int? promoPercentage;
+  final bool isRecommended;
+  final DateTime? updatedAt;
+  final DateTime? createdAt;
+  final DateTime? deletedAt;
 
   const Book({
     required this.id,
@@ -21,5 +28,12 @@ class Book {
     required this.category,
     this.galleryUrls = const [],
     this.price = 0,
+    this.isPromo = false,
+    this.promoPrice,
+    this.promoPercentage,
+    this.isRecommended = false,
+    this.updatedAt,
+    this.createdAt,
+    this.deletedAt,
   });
 }

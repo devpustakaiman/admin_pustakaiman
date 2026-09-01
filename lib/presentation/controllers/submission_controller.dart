@@ -15,6 +15,34 @@ class SubmissionController extends GetxController {
   }) : submissionRepository = repository ?? Get.find<SubmissionRepository>();
 
   final RxList<Submission> submissions = <Submission>[].obs;
+  final RxString statusFilter = 'Semua Status'.obs;
+  final RxString sortBy = 'date'.obs; // 'date', 'name'
+  final RxBool isAscending = false.obs; // false = newest first by default
+
+  List<Submission> get filteredSubmissions {
+    List<Submission> result = List.from(submissions);
+
+    // 1. Status Filter
+    if (statusFilter.value != 'Semua Status') {
+      final targetStatus = statusFilter.value.toLowerCase();
+      result = result.where((sub) => sub.status.toLowerCase() == targetStatus).toList();
+    }
+
+    // 2. Sorting
+    result.sort((a, b) {
+      int comparison = 0;
+      if (sortBy.value == 'name') {
+        comparison = a.senderName.toLowerCase().compareTo(b.senderName.toLowerCase());
+      } else {
+        // Default 'date'
+        comparison = a.createdAt.compareTo(b.createdAt);
+      }
+      return isAscending.value ? comparison : -comparison;
+    });
+
+    return result;
+  }
+
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 

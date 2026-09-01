@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'core/config/supabase_config.dart';
 import 'core/routes/app_pages.dart';
 import 'core/routes/app_routes.dart';
+import 'core/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,10 +21,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Pustaka Ilman Admin',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
       initialRoute: AppRoutes.initial,
       getPages: AppPages.pages,
       localizationsDelegates: const [

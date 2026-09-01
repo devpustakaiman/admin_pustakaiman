@@ -10,6 +10,7 @@ import '../../domain/usecases/add_book_usecase.dart';
 import '../../domain/usecases/delete_book_usecase.dart';
 import '../../domain/usecases/get_books_usecase.dart';
 import '../../domain/usecases/update_book_usecase.dart';
+import '../widgets/book_form_dialog.dart';
 
 class BookController extends GetxController {
   final GetBooksUseCase getBooksUseCase;
@@ -81,6 +82,85 @@ class BookController extends GetxController {
   ];
 
   final RxList<Book> books = <Book>[].obs;
+  final RxString searchQuery = ''.obs;
+  final RxString selectedCategoryFilter = 'Semua Kategori'.obs;
+  final Rxn<bool> recommendedFilter = Rxn<bool>(); // null: Semua, true: Ya, false: Tidak
+  final Rxn<bool> promoFilter = Rxn<bool>(); // null: Semua, true: Ya, false: Tidak
+  final RxString sortBy = 'title'.obs; // 'title', 'author', 'price', 'category', 'date'
+  final RxBool isAscending = true.obs;
+
+  List<Book> get filteredBooks {
+    List<Book> result = List.from(books);
+
+    // 1. Text Search Filter
+    if (searchQuery.value.trim().isNotEmpty) {
+      final query = searchQuery.value.toLowerCase().trim();
+      result = result.where((book) {
+        final titleMatch = book.title.toLowerCase().contains(query);
+        final authorMatch = book.author.toLowerCase().contains(query);
+        final categoryMatch = book.category.toLowerCase().contains(query);
+        return titleMatch || authorMatch || categoryMatch;
+      }).toList();
+    }
+
+    // 2. Category Filter Dropdown
+    if (selectedCategoryFilter.value != 'Semua Kategori') {
+      final selectedCat = selectedCategoryFilter.value;
+      if (selectedCat.endsWith(' (Semua)')) {
+        final mainGroup = selectedCat.replaceAll(' (Semua)', '').trim().toLowerCase();
+        result = result
+            .where((book) => book.category.toLowerCase().startsWith(mainGroup))
+            .toList();
+      } else {
+        result = result
+            .where((book) => book.category.toLowerCase() == selectedCat.toLowerCase())
+            .toList();
+      }
+    }
+
+    // 3. Recommended Filter (Tri-State)
+    if (recommendedFilter.value != null) {
+      result = result
+          .where((book) => book.isRecommended == recommendedFilter.value)
+          .toList();
+    }
+
+    // 4. Promo Filter (Tri-State)
+    if (promoFilter.value != null) {
+      result = result
+          .where((book) => book.isPromo == promoFilter.value)
+          .toList();
+    }
+
+    // 5. Sorting (Judul, Penulis, Harga, Kategori, Tanggal)
+    result.sort((a, b) {
+      int comparison = 0;
+      switch (sortBy.value) {
+        case 'date':
+          comparison = a.id.compareTo(b.id);
+          break;
+        case 'author':
+          comparison = a.author.toLowerCase().compareTo(b.author.toLowerCase());
+          break;
+        case 'price':
+          final priceA = a.isPromo && a.promoPrice != null ? a.promoPrice! : a.price;
+          final priceB = b.isPromo && b.promoPrice != null ? b.promoPrice! : b.price;
+          comparison = priceA.compareTo(priceB);
+          break;
+        case 'category':
+          comparison = a.category.toLowerCase().compareTo(b.category.toLowerCase());
+          break;
+        case 'title':
+        default:
+          comparison = a.title.toLowerCase().compareTo(b.title.toLowerCase());
+          break;
+      }
+      return isAscending.value ? comparison : -comparison;
+    });
+
+    return result;
+  }
+
   final RxBool isLoading = false.obs;
   final RxBool isUploading = false.obs;
   final RxString uploadStatusMessage = ''.obs;
@@ -105,6 +185,10 @@ class BookController extends GetxController {
   final mizanstoreUrlController = TextEditingController();
   final categoryController = TextEditingController();
   final priceController = TextEditingController();
+  final promoPriceController = TextEditingController();
+  final promoPercentageController = TextEditingController();
+  final RxBool isRecommended = false.obs;
+  final RxBool isPromo = false.obs;
 
   @override
   void onInit() {
@@ -122,6 +206,8 @@ class BookController extends GetxController {
     mizanstoreUrlController.dispose();
     categoryController.dispose();
     priceController.dispose();
+    promoPriceController.dispose();
+    promoPercentageController.dispose();
     super.onClose();
   }
 
@@ -134,12 +220,43 @@ class BookController extends GetxController {
     mizanstoreUrlController.clear();
     categoryController.clear();
     priceController.clear();
+    promoPriceController.clear();
+    promoPercentageController.clear();
+    isRecommended.value = false;
+    isPromo.value = false;
     selectedCoverFile.value = null;
     selectedPdfFile.value = null;
     existingGalleryUrls.clear();
     selectedGalleryFiles.clear();
     uploadStatusMessage.value = '';
     isUploading.value = false;
+  }
+
+  void onPromoPercentageChanged(String val) {
+    if (val.trim().isEmpty) {
+      promoPriceController.clear();
+      return;
+    }
+    final percentage = int.tryParse(val.trim());
+    final mainPrice = int.tryParse(priceController.text.trim()) ?? 0;
+    if (mainPrice > 0 && percentage != null) {
+      final p = percentage.clamp(0, 100);
+      final calculatedPrice = (mainPrice * (100 - p) / 100).round();
+      promoPriceController.text = calculatedPrice.toString();
+    }
+  }
+
+  void onPromoPriceChanged(String val) {
+    if (val.trim().isEmpty) {
+      promoPercentageController.clear();
+      return;
+    }
+    final promoPrice = int.tryParse(val.trim());
+    final mainPrice = int.tryParse(priceController.text.trim()) ?? 0;
+    if (mainPrice > 0 && promoPrice != null) {
+      final percentage = (((mainPrice - promoPrice) / mainPrice) * 100).round();
+      promoPercentageController.text = percentage.clamp(0, 100).toString();
+    }
   }
 
   Future<void> pickCoverFile() async {
@@ -244,6 +361,10 @@ class BookController extends GetxController {
       mizanstoreUrlController.text = book.mizanstoreUrl;
       categoryController.text = book.category;
       priceController.text = book.price > 0 ? book.price.toString() : '';
+      isRecommended.value = book.isRecommended;
+      isPromo.value = book.isPromo;
+      promoPriceController.text = book.promoPrice != null ? book.promoPrice.toString() : '';
+      promoPercentageController.text = book.promoPercentage != null ? book.promoPercentage.toString() : '';
       selectedCoverFile.value = null;
       selectedPdfFile.value = null;
       existingGalleryUrls.assignAll(book.galleryUrls);
@@ -254,455 +375,7 @@ class BookController extends GetxController {
     }
 
     Get.dialog(
-      Obx(() {
-        final isBusy = isLoading.value || isUploading.value;
-        return PopScope(
-          canPop: !isBusy,
-          child: Stack(
-            children: [
-              AlertDialog(
-                title: Text(
-                  editingBookId.value.isEmpty ? 'Tambah Buku Baru' : 'Edit Buku',
-                ),
-                content: SizedBox(
-                  width: 550,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextField(
-                          controller: titleController,
-                          decoration: const InputDecoration(labelText: 'Judul Buku'),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: authorController,
-                          decoration: const InputDecoration(labelText: 'Penulis'),
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Smart Category Autocomplete
-                        Autocomplete<String>(
-                          initialValue: TextEditingValue(text: categoryController.text),
-                          optionsBuilder: (TextEditingValue textEditingValue) {
-                            if (textEditingValue.text.isEmpty) {
-                              return mizanCategories;
-                            }
-                            return mizanCategories.where((String option) {
-                              return option
-                                  .toLowerCase()
-                                  .contains(textEditingValue.text.toLowerCase());
-                            });
-                          },
-                          onSelected: (String selection) {
-                            categoryController.text = selection;
-                          },
-                          optionsViewBuilder: (context, onSelected, options) {
-                            return Align(
-                              alignment: Alignment.topLeft,
-                              child: Material(
-                                elevation: 4.0,
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  constraints: const BoxConstraints(maxHeight: 220, maxWidth: 480),
-                                  child: ListView.builder(
-                                    padding: EdgeInsets.zero,
-                                    shrinkWrap: true,
-                                    itemCount: options.length,
-                                    itemBuilder: (BuildContext context, int index) {
-                                      final String option = options.elementAt(index);
-                                      return ListTile(
-                                        dense: true,
-                                        title: Text(option, style: const TextStyle(fontSize: 13)),
-                                        onTap: () {
-                                          onSelected(option);
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                          fieldViewBuilder:
-                              (context, textController, focusNode, onFieldSubmitted) {
-                            textController.addListener(() {
-                              categoryController.text = textController.text;
-                            });
-                            return TextField(
-                              controller: textController,
-                              focusNode: focusNode,
-                              decoration: const InputDecoration(
-                                labelText: 'Kategori Buku',
-                                hintText: 'Cari atau pilih kategori...',
-                                suffixIcon: Icon(Icons.arrow_drop_down),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: priceController,
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                          decoration: const InputDecoration(
-                            labelText: 'Harga (Rp)',
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: synopsisController,
-                          maxLines: 3,
-                          decoration: const InputDecoration(labelText: 'Sinopsis'),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Cover Image Visual Thumbnail Preview
-                        const Text(
-                          'Cover Buku (Gambar)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                        const SizedBox(height: 8),
-                        Obx(() {
-                          final file = selectedCoverFile.value;
-                          final existingUrl = coverUrlController.text.trim();
-
-                          Widget previewContent;
-                          if (file != null) {
-                            if (file.bytes != null) {
-                              previewContent = Image.memory(
-                                file.bytes!,
-                                width: 70,
-                                height: 95,
-                                fit: BoxFit.cover,
-                              );
-                            } else if (file.path != null) {
-                              previewContent = Image.file(
-                                File(file.path!),
-                                width: 70,
-                                height: 95,
-                                fit: BoxFit.cover,
-                              );
-                            } else {
-                              previewContent = Container(
-                                width: 70,
-                                height: 95,
-                                color: Colors.grey[200],
-                                child: const Icon(Icons.image, color: Colors.grey),
-                              );
-                            }
-                          } else if (existingUrl.isNotEmpty &&
-                              (existingUrl.startsWith('http://') || existingUrl.startsWith('https://'))) {
-                            previewContent = Image.network(
-                              existingUrl,
-                              width: 70,
-                              height: 95,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                width: 70,
-                                height: 95,
-                                color: Colors.grey[200],
-                                child: const Icon(Icons.broken_image, color: Colors.grey),
-                              ),
-                            );
-                          } else {
-                            previewContent = Container(
-                              width: 70,
-                              height: 95,
-                              color: Colors.grey[200],
-                              child: const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.add_photo_alternate_outlined, color: Colors.grey, size: 24),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    'Kosong',
-                                    style: TextStyle(fontSize: 10, color: Colors.grey),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey.shade300),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: previewContent,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    ElevatedButton.icon(
-                                      onPressed: isBusy ? null : () => pickCoverFile(),
-                                      icon: const Icon(Icons.image, size: 18),
-                                      label: const Text('Pilih File Cover'),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      file != null
-                                          ? 'File: ${file.name}'
-                                          : (existingUrl.isNotEmpty
-                                              ? 'URL: ${existingUrl.length > 35 ? "${existingUrl.substring(0, 35)}..." : existingUrl}'
-                                              : 'Belum ada file dipilih'),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: file != null ? Colors.deepPurple : Colors.grey[700],
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          );
-                        }),
-                        const SizedBox(height: 16),
-
-                        // Multi-Image Gallery Picker Section
-                        const Text(
-                          'Galeri Foto Buku (Multi-Image)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                        const SizedBox(height: 6),
-                        ElevatedButton.icon(
-                          onPressed: isBusy ? null : () => pickGalleryImages(),
-                          icon: const Icon(Icons.photo_library, size: 18),
-                          label: const Text('Pilih Foto Galeri'),
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Gallery Preview Grid
-                        Obx(() {
-                          final hasExisting = existingGalleryUrls.isNotEmpty;
-                          final hasSelected = selectedGalleryFiles.isNotEmpty;
-
-                          if (!hasExisting && !hasSelected) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 4.0),
-                              child: Text(
-                                'Belum ada gambar galeri dipilih',
-                                style: TextStyle(fontSize: 12, color: Colors.grey),
-                              ),
-                            );
-                          }
-
-                          return Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade300),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.all(8),
-                            child: Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                // Existing Gallery Images (From URL)
-                                for (int i = 0; i < existingGalleryUrls.length; i++)
-                                  Stack(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(6),
-                                        child: Image.network(
-                                          existingGalleryUrls[i],
-                                          width: 80,
-                                          height: 80,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => Container(
-                                            width: 80,
-                                            height: 80,
-                                            color: Colors.grey[300],
-                                            child: const Icon(Icons.broken_image),
-                                          ),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 2,
-                                        right: 2,
-                                        child: InkWell(
-                                          onTap: isBusy ? null : () => removeExistingGalleryUrl(i),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(2),
-                                            decoration: const BoxDecoration(
-                                              color: Colors.red,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(
-                                              Icons.close,
-                                              size: 14,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-
-                                // Newly Selected Gallery Files (Local XFile)
-                                for (int i = 0; i < selectedGalleryFiles.length; i++)
-                                  Stack(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(6),
-                                        child: FutureBuilder<Uint8List>(
-                                          future: selectedGalleryFiles[i].readAsBytes(),
-                                          builder: (context, snapshot) {
-                                            if (snapshot.hasData) {
-                                              return Image.memory(
-                                                snapshot.data!,
-                                                width: 80,
-                                                height: 80,
-                                                fit: BoxFit.cover,
-                                              );
-                                            }
-                                            return Container(
-                                              width: 80,
-                                              height: 80,
-                                              color: Colors.grey[200],
-                                              child: const Center(
-                                                child: SizedBox(
-                                                  width: 16,
-                                                  height: 16,
-                                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 2,
-                                        right: 2,
-                                        child: InkWell(
-                                          onTap: isBusy ? null : () => removeSelectedGalleryFile(i),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(2),
-                                            decoration: const BoxDecoration(
-                                              color: Colors.red,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: const Icon(
-                                              Icons.close,
-                                              size: 14,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                              ],
-                            ),
-                          );
-                        }),
-                        const SizedBox(height: 16),
-
-                        // PDF Preview File Upload Field
-                        const Text(
-                          'Preview PDF (Naskah)',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                        const SizedBox(height: 6),
-                        Obx(() {
-                          final file = selectedPdfFile.value;
-                          final existingUrl = pdfPreviewUrlController.text;
-                          return Row(
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: isBusy ? null : () => pickPdfFile(),
-                                icon: const Icon(Icons.picture_as_pdf, size: 18),
-                                label: const Text('Pilih File PDF'),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  file != null
-                                      ? 'File: ${file.name}'
-                                      : (existingUrl.isNotEmpty
-                                          ? 'URL: ${existingUrl.length > 35 ? "${existingUrl.substring(0, 35)}..." : existingUrl}'
-                                          : 'Belum ada file dipilih'),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: file != null ? Colors.deepPurple : Colors.grey[700],
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        }),
-                        const SizedBox(height: 16),
-
-                        TextField(
-                          controller: mizanstoreUrlController,
-                          decoration: const InputDecoration(
-                            labelText: 'Link Pembelian MMU/Mizanstore',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: isBusy ? null : () => Get.back(),
-                    child: const Text('Batal'),
-                  ),
-                  ElevatedButton(
-                    onPressed: isBusy ? null : () => saveBook(),
-                    child: const Text('Simpan'),
-                  ),
-                ],
-              ),
-
-              // Loading Overlay during submission/upload
-              if (isBusy)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    child: Center(
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32.0,
-                            vertical: 24.0,
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const CircularProgressIndicator(),
-                              const SizedBox(height: 16),
-                              Text(
-                                uploadStatusMessage.value.isNotEmpty
-                                    ? uploadStatusMessage.value
-                                    : 'Memproses data...',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      }),
+      BookFormDialog(controller: this),
       barrierDismissible: false,
     );
   }
@@ -816,6 +489,9 @@ class BookController extends GetxController {
 
   Future<void> addBook(List<String> galleryUrls) async {
     final priceInt = int.tryParse(priceController.text.trim()) ?? 0;
+    final promoPriceInt = isPromo.value ? int.tryParse(promoPriceController.text.trim()) : null;
+    final promoPercentInt = isPromo.value ? int.tryParse(promoPercentageController.text.trim()) : null;
+
     final newBook = Book(
       id: '',
       title: titleController.text.trim(),
@@ -827,6 +503,11 @@ class BookController extends GetxController {
       category: categoryController.text.trim(),
       galleryUrls: galleryUrls,
       price: priceInt,
+      isPromo: isPromo.value,
+      promoPrice: promoPriceInt,
+      promoPercentage: promoPercentInt,
+      isRecommended: isRecommended.value,
+      updatedAt: DateTime.now(),
     );
 
     final result = await addBookUseCase.call(newBook);
@@ -844,6 +525,9 @@ class BookController extends GetxController {
 
   Future<void> updateBook(List<String> galleryUrls) async {
     final priceInt = int.tryParse(priceController.text.trim()) ?? 0;
+    final promoPriceInt = isPromo.value ? int.tryParse(promoPriceController.text.trim()) : null;
+    final promoPercentInt = isPromo.value ? int.tryParse(promoPercentageController.text.trim()) : null;
+
     final updatedBook = Book(
       id: editingBookId.value,
       title: titleController.text.trim(),
@@ -855,6 +539,11 @@ class BookController extends GetxController {
       category: categoryController.text.trim(),
       galleryUrls: galleryUrls,
       price: priceInt,
+      isPromo: isPromo.value,
+      promoPrice: promoPriceInt,
+      promoPercentage: promoPercentInt,
+      isRecommended: isRecommended.value,
+      updatedAt: DateTime.now(),
     );
 
     final result = await updateBookUseCase.call(updatedBook);

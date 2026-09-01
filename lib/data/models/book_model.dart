@@ -12,6 +12,13 @@ class BookModel extends Book {
     required super.category,
     super.galleryUrls = const [],
     super.price = 0,
+    super.isPromo = false,
+    super.promoPrice,
+    super.promoPercentage,
+    super.isRecommended = false,
+    super.updatedAt,
+    super.createdAt,
+    super.deletedAt,
   });
 
   factory BookModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +36,20 @@ class BookModel extends Book {
       parsedPrice = int.tryParse(rawPrice) ?? 0;
     }
 
+    int? parseOptionalInt(dynamic val) {
+      if (val is num) return val.toInt();
+      if (val is String) return int.tryParse(val);
+      return null;
+    }
+
+    DateTime? parseDateTime(dynamic val) {
+      if (val == null) return null;
+      if (val is String && val.isNotEmpty) {
+        return DateTime.tryParse(val);
+      }
+      return null;
+    }
+
     return BookModel(
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
@@ -40,21 +61,46 @@ class BookModel extends Book {
       category: json['category'] as String? ?? '',
       galleryUrls: parsedGallery,
       price: parsedPrice,
+      isPromo: json['is_promo'] as bool? ?? json['isPromo'] as bool? ?? false,
+      promoPrice: parseOptionalInt(json['promo_price'] ?? json['promoPrice']),
+      promoPercentage: parseOptionalInt(json['promo_percentage'] ?? json['promoPercentage']),
+      isRecommended: json['is_recommended'] as bool? ?? json['isRecommended'] as bool? ?? false,
+      updatedAt: parseDateTime(json['updated_at'] ?? json['updatedAt']),
+      createdAt: parseDateTime(json['created_at'] ?? json['createdAt']),
+      deletedAt: parseDateTime(json['deleted_at'] ?? json['deletedAt']),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
+    final map = <String, dynamic>{
       'title': title,
       'author': author,
       'synopsis': synopsis,
+      'category': category,
+      'price': price,
+      // Old Columns (camelCase)
       'coverUrl': coverUrl,
       'pdfPreviewUrl': pdfPreviewUrl,
       'mizanstoreUrl': mizanstoreUrl,
-      'category': category,
       'gallery_urls': galleryUrls,
-      'price': price,
+      // New Marketing Columns (snake_case)
+      'is_promo': isPromo,
+      'promo_price': promoPrice,
+      'promo_percentage': promoPercentage,
+      'is_recommended': isRecommended,
     };
+    if (id.isNotEmpty) {
+      map['id'] = id;
+    }
+    if (updatedAt != null) {
+      map['updated_at'] = updatedAt!.toIso8601String();
+    }
+    if (createdAt != null) {
+      map['created_at'] = createdAt!.toIso8601String();
+    }
+    if (deletedAt != null) {
+      map['deleted_at'] = deletedAt!.toIso8601String();
+    }
+    return map;
   }
 }

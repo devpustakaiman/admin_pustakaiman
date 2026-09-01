@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import '../../core/theme/app_theme.dart';
 import '../../domain/entities/submission.dart';
 import '../controllers/submission_controller.dart';
 
@@ -21,14 +23,14 @@ class SubmissionManagementPage extends StatelessWidget {
       case 'accepted':
       case 'diterima':
       case 'approved':
-        return Colors.green;
+        return const Color(0xFF10B981);
       case 'rejected':
       case 'ditolak':
-        return Colors.red;
+        return Colors.redAccent;
       case 'pending':
       case 'menunggu':
       default:
-        return Colors.orange;
+        return Colors.orangeAccent;
     }
   }
 
@@ -41,7 +43,7 @@ class SubmissionManagementPage extends StatelessWidget {
     final statusText = submission.status.toUpperCase();
 
     return PopupMenuButton<String>(
-      tooltip: 'Ubah Status',
+      tooltip: 'Ubah Status Naskah',
       onSelected: (String newStatus) {
         controller.updateStatus(submission.id, newStatus);
       },
@@ -50,7 +52,7 @@ class SubmissionManagementPage extends StatelessWidget {
           value: 'DITERIMA',
           child: Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.green, size: 18),
+              Icon(LucideIcons.checkCircle, color: Color(0xFF10B981), size: 16),
               SizedBox(width: 8),
               Text('DITERIMA'),
             ],
@@ -60,7 +62,7 @@ class SubmissionManagementPage extends StatelessWidget {
           value: 'DITOLAK',
           child: Row(
             children: [
-              Icon(Icons.cancel, color: Colors.red, size: 18),
+              Icon(LucideIcons.xCircle, color: Colors.redAccent, size: 16),
               SizedBox(width: 8),
               Text('DITOLAK'),
             ],
@@ -70,7 +72,7 @@ class SubmissionManagementPage extends StatelessWidget {
           value: 'PENDING',
           child: Row(
             children: [
-              Icon(Icons.hourglass_empty, color: Colors.orange, size: 18),
+              Icon(LucideIcons.clock, color: Colors.orangeAccent, size: 16),
               SizedBox(width: 8),
               Text('PENDING'),
             ],
@@ -78,11 +80,11 @@ class SubmissionManagementPage extends StatelessWidget {
         ),
       ],
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: color, width: 1.5),
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -95,8 +97,8 @@ class SubmissionManagementPage extends StatelessWidget {
                 fontSize: 12,
               ),
             ),
-            const SizedBox(width: 4),
-            Icon(Icons.arrow_drop_down, color: color, size: 16),
+            const SizedBox(width: 6),
+            Icon(LucideIcons.chevronDown, color: color, size: 14),
           ],
         ),
       ),
@@ -108,259 +110,394 @@ class SubmissionManagementPage extends StatelessWidget {
     final controller = Get.find<SubmissionController>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manajemen Submission Naskah'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => controller.fetchSubmissions(),
-            tooltip: 'Refresh Data',
-          ),
-        ],
-      ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-
-        if (controller.errorMessage.value.isNotEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    color: Colors.red,
-                    size: 48,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Terjadi Kesalahan:\n${controller.errorMessage.value}',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.red, fontSize: 16),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => controller.fetchSubmissions(),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Coba Lagi'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        if (controller.submissions.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: AppTheme.backgroundColor,
+      body: Padding(
+        padding: const EdgeInsets.all(28.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Title
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.inbox_outlined,
-                  size: 64,
-                  color: Colors.grey,
+                Text(
+                  'Submission Naskah',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Belum ada data submission naskah.',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => controller.fetchSubmissions(),
-                  child: const Text('Muat Ulang'),
+                SizedBox(height: 4),
+                Text(
+                  'Kelola naskah buku yang dikirimkan oleh calon penulis',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppTheme.textSecondary,
+                  ),
                 ),
               ],
             ),
-          );
-        }
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final isWideScreen = constraints.maxWidth > 700;
+            const SizedBox(height: 20),
 
-            if (isWideScreen) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+            // Unified Filter & Action Bar
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Status Filter Dropdown (Height 44)
+                Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.borderColor),
+                    boxShadow: AppTheme.softShadow,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: DataTable(
-                        headingRowColor: WidgetStateProperty.all(
-                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                  child: Obx(() {
+                    const statuses = ['Semua Status', 'DITERIMA', 'DITOLAK', 'PENDING'];
+                    return DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: controller.statusFilter.value,
+                        icon: const Icon(LucideIcons.chevronDown, size: 16, color: AppTheme.textSecondary),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.textPrimary,
                         ),
-                        columns: const [
-                          DataColumn(
-                            label: Text(
-                              'Tanggal Masuk',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'Nama Penulis',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'Email',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'Status',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'Aksi',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                        rows: controller.submissions.map((submission) {
-                          return DataRow(
-                            cells: [
-                              DataCell(Text(_formatDate(submission.createdAt))),
-                              DataCell(Text(submission.senderName)),
-                              DataCell(Text(submission.email)),
-                              DataCell(
-                                _buildStatusBadge(context, submission, controller),
-                              ),
-                              DataCell(
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                     IconButton(
-                                       icon: const Icon(Icons.remove_red_eye, color: Colors.blue),
-                                       tooltip: 'Preview PDF (Tab Baru)',
-                                       onPressed: () => controller.previewPdf(
-                                         submission.pdfDocumentUrl,
-                                       ),
-                                     ),
-                                     IconButton(
-                                       icon: const Icon(Icons.download, color: Colors.indigo),
-                                       tooltip: 'Unduh Dokumen PDF',
-                                       onPressed: () => controller.downloadPdf(
-                                         submission.pdfDocumentUrl,
-                                       ),
-                                     ),
-                                     IconButton(
-                                       icon: const Icon(Icons.delete, color: Colors.red),
-                                       tooltip: 'Hapus Submission',
-                                       onPressed: () => controller.deleteSubmission(
-                                         submission.id,
-                                       ),
-                                     ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            controller.statusFilter.value = newValue;
+                          }
+                        },
+                        items: statuses.map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
                           );
                         }).toList(),
                       ),
+                    );
+                  }),
+                ),
+
+                const SizedBox(width: 12),
+
+                // Sort By Dropdown (Height 44)
+                Container(
+                  height: 44,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.borderColor),
+                    boxShadow: AppTheme.softShadow,
+                  ),
+                  child: Obx(() {
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(LucideIcons.arrowUpDown, size: 16, color: AppTheme.primaryColor),
+                        const SizedBox(width: 8),
+                        DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: controller.sortBy.value,
+                            icon: const Icon(LucideIcons.chevronDown, size: 16, color: AppTheme.textSecondary),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textPrimary,
+                            ),
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                controller.sortBy.value = newValue;
+                              }
+                            },
+                            items: const [
+                              DropdownMenuItem(value: 'date', child: Text('Urut: Tanggal')),
+                              DropdownMenuItem(value: 'name', child: Text('Urut: Nama Penulis')),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ),
+
+                const SizedBox(width: 12),
+
+                // Asc / Desc Toggle Button (Height 44)
+                Obx(() {
+                  final isAsc = controller.isAscending.value;
+                  return InkWell(
+                    onTap: () => controller.isAscending.value = !isAsc,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.borderColor),
+                        boxShadow: AppTheme.softShadow,
+                      ),
+                      child: Icon(
+                        isAsc ? LucideIcons.arrowUp : LucideIcons.arrowDown,
+                        size: 18,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                  );
+                }),
+
+                // Pushes Refresh Button to the far right!
+                const Spacer(),
+
+                // Refresh Button (IconButton, Height 44)
+                IconButton(
+                  onPressed: () => controller.fetchSubmissions(),
+                  icon: const Icon(LucideIcons.refreshCw, size: 18),
+                  tooltip: 'Segarkan Data',
+                  style: IconButton.styleFrom(
+                    fixedSize: const Size(44, 44),
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: AppTheme.borderColor),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                 ),
-              );
-            }
+              ],
+            ),
 
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: controller.submissions.length,
-              itemBuilder: (context, index) {
-                final submission = controller.submissions[index];
+            const SizedBox(height: 24),
 
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              submission.senderName,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            _buildStatusBadge(context, submission, controller),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Email: ${submission.email}',
-                          style: TextStyle(color: Colors.grey[700]),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Tanggal Masuk: ${_formatDate(submission.createdAt)}',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                        ),
-                        if (submission.synopsis.isNotEmpty) ...[
-                          const SizedBox(height: 8),
+            // Content List
+            Expanded(
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: AppTheme.primaryColor),
+                  );
+                }
+
+                if (controller.errorMessage.value.isNotEmpty) {
+                  return Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(LucideIcons.alertCircle, color: Colors.redAccent, size: 40),
+                          const SizedBox(height: 12),
                           Text(
-                            submission.synopsis,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontStyle: FontStyle.italic),
+                            'Terjadi Kesalahan:\n${controller.errorMessage.value}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.redAccent),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () => controller.fetchSubmissions(),
+                            icon: const Icon(LucideIcons.refreshCw, size: 16),
+                            label: const Text('Coba Lagi'),
                           ),
                         ],
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                             IconButton(
-                               icon: const Icon(Icons.remove_red_eye, color: Colors.blue),
-                               tooltip: 'Preview PDF',
-                               onPressed: () => controller.previewPdf(
-                                 submission.pdfDocumentUrl,
-                               ),
-                             ),
-                             ElevatedButton.icon(
-                               onPressed: () => controller.downloadPdf(
-                                 submission.pdfDocumentUrl,
-                               ),
-                               icon: const Icon(Icons.download, size: 18),
-                               label: const Text('Unduh PDF'),
-                             ),
-                             const SizedBox(width: 8),
-                             IconButton(
-                               icon: const Icon(Icons.delete, color: Colors.red),
-                               tooltip: 'Hapus Submission',
-                               onPressed: () => controller.deleteSubmission(
-                                 submission.id,
-                               ),
-                             ),
-                          ],
+                      ),
+                    ),
+                  );
+                }
+
+                final displaySubmissions = controller.filteredSubmissions;
+
+                if (displaySubmissions.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            LucideIcons.inbox,
+                            size: 48,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Belum ada data submission naskah masuk.',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textSecondary,
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: displaySubmissions.length,
+                  itemBuilder: (context, index) {
+                    final submission = displaySubmissions[index];
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppTheme.borderColor),
+                        boxShadow: AppTheme.softShadow,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const CircleAvatar(
+                                  radius: 20,
+                                  backgroundColor: AppTheme.inputFillColor,
+                                  child: Icon(LucideIcons.user, size: 20, color: AppTheme.primaryColor),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        submission.senderName,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Row(
+                                        children: [
+                                          const Icon(LucideIcons.mail, size: 13, color: AppTheme.textSecondary),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            submission.email,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppTheme.textSecondary,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          const Icon(LucideIcons.clock, size: 13, color: AppTheme.textMuted),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            _formatDate(submission.createdAt),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppTheme.textMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                _buildStatusBadge(context, submission, controller),
+                              ],
+                            ),
+
+                            if (submission.synopsis.isNotEmpty) ...[
+                              const SizedBox(height: 14),
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.inputFillColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  submission.synopsis,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: AppTheme.textPrimary,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ],
+
+                            const SizedBox(height: 16),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: () => controller.previewPdf(
+                                    submission.pdfDocumentUrl,
+                                  ),
+                                  icon: const Icon(LucideIcons.eye, size: 16),
+                                  label: const Text('Preview PDF'),
+                                ),
+                                const SizedBox(width: 10),
+                                ElevatedButton.icon(
+                                  onPressed: () => controller.downloadPdf(
+                                    submission.pdfDocumentUrl,
+                                  ),
+                                  icon: const Icon(LucideIcons.download, size: 16),
+                                  label: const Text('Unduh PDF'),
+                                ),
+                                const SizedBox(width: 10),
+                                IconButton(
+                                  icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.redAccent),
+                                  tooltip: 'Hapus Submission',
+                                  onPressed: () => _confirmDelete(controller, submission),
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
-              },
-            );
-          },
-        );
-      }),
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDelete(SubmissionController controller, Submission submission) {
+    Get.defaultDialog(
+      title: 'Hapus Submission',
+      middleText: 'Apakah Anda yakin ingin menghapus submission naskah dari "${submission.senderName}"?',
+      titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+      middleTextStyle: const TextStyle(fontSize: 14),
+      textCancel: 'Batal',
+      textConfirm: 'Hapus',
+      confirmTextColor: Colors.white,
+      buttonColor: Colors.redAccent,
+      onConfirm: () {
+        Get.back();
+        controller.deleteSubmission(submission.id);
+      },
     );
   }
 }
