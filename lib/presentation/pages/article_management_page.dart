@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/app_toast.dart';
 import '../../domain/entities/article.dart';
 import '../controllers/article_controller.dart';
 
@@ -392,7 +393,7 @@ class ArticleManagementPage extends StatelessWidget {
                             IconButton(
                               icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.redAccent),
                               tooltip: 'Hapus Artikel',
-                              onPressed: () => _confirmDelete(controller, article),
+                              onPressed: () => _confirmDelete(context, controller, article),
                               style: IconButton.styleFrom(
                                 backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
                                 shape: RoundedRectangleBorder(
@@ -414,20 +415,31 @@ class ArticleManagementPage extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(ArticleController controller, Article article) {
-    Get.defaultDialog(
-      title: 'Hapus Artikel',
-      middleText: 'Apakah Anda yakin ingin menghapus artikel "${article.title}"?',
-      titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-      middleTextStyle: const TextStyle(fontSize: 14),
-      textCancel: 'Batal',
-      textConfirm: 'Hapus',
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.redAccent,
-      onConfirm: () {
-        Get.back();
-        controller.deleteArticle(article.id);
-      },
+  void _confirmDelete(BuildContext context, ArticleController controller, Article article) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Hapus Artikel', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text('Apakah Anda yakin ingin memindahkan artikel "${article.title}" ke Keranjang Sampah?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Batal', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await controller.deleteArticle(article.id);
+              if (context.mounted) {
+                AppToast.showSuccess(context, 'Artikel "${article.title}" dipindahkan ke Keranjang Sampah.');
+              }
+            },
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -94,4 +94,35 @@ class BookRepositoryImpl implements BookRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, List<Book>>> getDeletedBooks() async {
+    try {
+      final data = await remoteDataSource.getDeletedBooks();
+      final books = data.map((json) => BookModel.fromJson(json)).toList();
+      return Right(books);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> restoreBooks(List<String> ids) async {
+    try {
+      await remoteDataSource.restoreBooks(ids);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> permanentlyDeleteBooks(List<String> ids) async {
+    try {
+      await remoteDataSource.permanentlyDeleteBooks(ids);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
 }

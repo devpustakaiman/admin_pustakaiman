@@ -4,7 +4,10 @@ import '../entities/book.dart';
 
 abstract class BookRepository {
   Future<Either<Failure, List<Book>>> getBooks();
+  Future<Either<Failure, List<Book>>> getDeletedBooks();
   Future<Either<Failure, void>> addBook(Book book);
   Future<Either<Failure, void>> updateBook(Book book);
   Future<Either<Failure, void>> deleteBook(String id);
+  Future<Either<Failure, void>> restoreBooks(List<String> ids);
+  Future<Either<Failure, void>> permanentlyDeleteBooks(List<String> ids);
 }

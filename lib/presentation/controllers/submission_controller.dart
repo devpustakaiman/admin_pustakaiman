@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../domain/entities/submission.dart';
@@ -22,19 +21,16 @@ class SubmissionController extends GetxController {
   List<Submission> get filteredSubmissions {
     List<Submission> result = List.from(submissions);
 
-    // 1. Status Filter
     if (statusFilter.value != 'Semua Status') {
       final targetStatus = statusFilter.value.toLowerCase();
       result = result.where((sub) => sub.status.toLowerCase() == targetStatus).toList();
     }
 
-    // 2. Sorting
     result.sort((a, b) {
       int comparison = 0;
       if (sortBy.value == 'name') {
         comparison = a.senderName.toLowerCase().compareTo(b.senderName.toLowerCase());
       } else {
-        // Default 'date'
         comparison = a.createdAt.compareTo(b.createdAt);
       }
       return isAscending.value ? comparison : -comparison;
@@ -68,98 +64,52 @@ class SubmissionController extends GetxController {
     );
   }
 
-  Future<void> deleteSubmission(String id) async {
-    Get.defaultDialog(
-      title: 'Hapus Submission',
-      middleText: 'Apakah Anda yakin ingin menghapus submission ini?',
-      textCancel: 'Batal',
-      textConfirm: 'Hapus',
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.red,
-      onConfirm: () async {
-        Get.back();
-        isLoading.value = true;
-        final result = await submissionRepository.deleteSubmission(id);
-        result.fold(
-          (failure) {
-            Get.snackbar(
-              'Error',
-              'Gagal menghapus submission: ${failure.message}',
-              snackPosition: SnackPosition.BOTTOM,
-            );
-            isLoading.value = false;
-          },
-          (_) async {
-            Get.snackbar(
-              'Sukses',
-              'Submission berhasil dihapus',
-              snackPosition: SnackPosition.BOTTOM,
-            );
-            await fetchSubmissions();
-          },
-        );
+  Future<bool> deleteSubmission(String id) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    final result = await submissionRepository.deleteSubmission(id);
+    return result.fold(
+      (failure) {
+        errorMessage.value = failure.message;
+        isLoading.value = false;
+        return false;
+      },
+      (_) async {
+        await fetchSubmissions();
+        return true;
       },
     );
   }
 
-  Future<void> updateStatus(String id, String newStatus) async {
+  Future<bool> updateStatus(String id, String newStatus) async {
     isLoading.value = true;
     final result = await submissionRepository.updateSubmissionStatus(id, newStatus);
-    result.fold(
+    return result.fold(
       (failure) {
-        Get.snackbar(
-          'Error',
-          'Gagal memperbarui status: ${failure.message}',
-          snackPosition: SnackPosition.BOTTOM,
-        );
+        errorMessage.value = failure.message;
         isLoading.value = false;
+        return false;
       },
       (_) async {
-        Get.snackbar(
-          'Sukses',
-          'Status submission diperbarui menjadi $newStatus',
-          snackPosition: SnackPosition.BOTTOM,
-        );
         await fetchSubmissions();
+        return true;
       },
     );
   }
 
   Future<void> previewPdf(String url) async {
-    if (url.trim().isEmpty) {
-      Get.snackbar(
-        'Peringatan',
-        'URL dokumen PDF tidak tersedia',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
+    if (url.trim().isEmpty) return;
     try {
       final Uri uri = Uri.parse(url);
       await launchUrl(
         uri,
         webOnlyWindowName: '_blank',
       );
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Gagal membuka preview PDF: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    }
+    } catch (_) {}
   }
 
   Future<void> downloadPdf(String url) async {
-    if (url.isEmpty) {
-      Get.snackbar(
-        'Peringatan',
-        'URL dokumen PDF tidak tersedia',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
+    if (url.isEmpty) return;
     try {
       final Uri uri = Uri.parse(url);
       if (await canLaunchUrl(uri)) {
@@ -167,12 +117,6 @@ class SubmissionController extends GetxController {
       } else {
         await launchUrl(uri);
       }
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Gagal membuka PDF: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    }
+    } catch (_) {}
   }
 }

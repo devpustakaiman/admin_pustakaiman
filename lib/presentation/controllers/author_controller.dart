@@ -31,7 +31,6 @@ class AuthorController extends GetxController {
   List<Author> get filteredAuthors {
     List<Author> result = List.from(authors);
 
-    // 1. Text Search Filter
     if (searchQuery.value.trim().isNotEmpty) {
       final query = searchQuery.value.toLowerCase().trim();
       result = result.where((author) {
@@ -41,13 +40,11 @@ class AuthorController extends GetxController {
       }).toList();
     }
 
-    // 2. Sorting
     result.sort((a, b) {
       int comparison = 0;
       if (sortBy.value == 'date') {
         comparison = a.createdAt.compareTo(b.createdAt);
       } else {
-        // Default 'name'
         comparison = a.name.toLowerCase().compareTo(b.name.toLowerCase());
       }
       return isAscending.value ? comparison : -comparison;
@@ -103,7 +100,7 @@ class AuthorController extends GetxController {
         selectedPhotoFile.value = result.files.first;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Gagal memilih file foto: $e');
+      errorMessage.value = 'Gagal memilih file foto: $e';
     }
   }
 
@@ -178,8 +175,6 @@ class AuthorController extends GetxController {
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                // Photo Upload Button
                 const Text(
                   'Foto Penulis',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
@@ -213,7 +208,6 @@ class AuthorController extends GetxController {
                     ],
                   );
                 }),
-
                 const SizedBox(height: 16),
                 Obx(() {
                   if (!isUploading.value) return const SizedBox.shrink();
@@ -290,16 +284,10 @@ class AuthorController extends GetxController {
     );
   }
 
-  Future<void> saveAuthor() async {
+  Future<bool> saveAuthor() async {
     if (nameController.text.trim().isEmpty) {
-      Get.snackbar(
-        'Peringatan',
-        'Nama penulis tidak boleh kosong',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
-      return;
+      errorMessage.value = 'Nama penulis tidak boleh kosong';
+      return false;
     }
 
     isLoading.value = true;
@@ -317,19 +305,18 @@ class AuthorController extends GetxController {
 
       uploadStatusMessage.value = 'Menyimpan data penulis...';
 
+      bool success = false;
       if (editingAuthorId.value.isEmpty) {
-        await addAuthor();
+        success = await addAuthor();
       } else {
-        await updateAuthor();
+        success = await updateAuthor();
       }
 
-      if (Get.isDialogOpen ?? false) Get.back();
+      if (success && (Get.isDialogOpen ?? false)) Get.back();
+      return success;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Gagal mengunggah foto atau menyimpan penulis: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      errorMessage.value = 'Gagal menyimpan penulis: $e';
+      return false;
     } finally {
       isUploading.value = false;
       isLoading.value = false;
@@ -337,7 +324,7 @@ class AuthorController extends GetxController {
     }
   }
 
-  Future<void> addAuthor() async {
+  Future<bool> addAuthor() async {
     final newAuthor = Author(
       id: '',
       name: nameController.text.trim(),
@@ -347,31 +334,21 @@ class AuthorController extends GetxController {
     );
 
     final result = await addAuthorUseCase.call(newAuthor);
-    result.fold(
+    return result.fold(
       (failure) {
         errorMessage.value = failure.message;
         isLoading.value = false;
-        Get.snackbar(
-          'Gagal',
-          failure.message,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        return false;
       },
       (_) async {
         clearForm();
         await fetchAuthors();
-        Get.snackbar(
-          'Sukses',
-          'Penulis berhasil ditambahkan',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        return true;
       },
     );
   }
 
-  Future<void> updateAuthor() async {
+  Future<bool> updateAuthor() async {
     final updatedAuthor = Author(
       id: editingAuthorId.value,
       name: nameController.text.trim(),
@@ -381,54 +358,34 @@ class AuthorController extends GetxController {
     );
 
     final result = await updateAuthorUseCase.call(updatedAuthor);
-    result.fold(
+    return result.fold(
       (failure) {
         errorMessage.value = failure.message;
         isLoading.value = false;
-        Get.snackbar(
-          'Gagal',
-          failure.message,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        return false;
       },
       (_) async {
         clearForm();
         editingAuthorId.value = '';
         await fetchAuthors();
-        Get.snackbar(
-          'Sukses',
-          'Penulis berhasil diperbarui',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        return true;
       },
     );
   }
 
-  Future<void> deleteAuthor(String id) async {
+  Future<bool> deleteAuthor(String id) async {
     isLoading.value = true;
     errorMessage.value = '';
     final result = await deleteAuthorUseCase.call(id);
-    result.fold(
+    return result.fold(
       (failure) {
         errorMessage.value = failure.message;
         isLoading.value = false;
-        Get.snackbar(
-          'Gagal',
-          failure.message,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        return false;
       },
       (_) async {
         await fetchAuthors();
-        Get.snackbar(
-          'Sukses',
-          'Penulis berhasil dihapus',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        return true;
       },
     );
   }

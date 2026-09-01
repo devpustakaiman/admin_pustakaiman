@@ -6,6 +6,7 @@ class Submission {
   final String pdfDocumentUrl;
   final String status;
   final DateTime createdAt;
+  final DateTime? deletedAt;
 
   const Submission({
     required this.id,
@@ -15,5 +16,6 @@ class Submission {
     required this.pdfDocumentUrl,
     required this.status,
     required this.createdAt,
+    this.deletedAt,
   });
 }

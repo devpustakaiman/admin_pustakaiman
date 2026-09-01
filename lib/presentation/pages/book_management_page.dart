@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/app_toast.dart';
 import '../controllers/book_controller.dart';
 import '../widgets/category_filter_selector.dart';
 import '../widgets/tri_state_filter_button.dart';
@@ -701,19 +702,30 @@ class BookManagementPage extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context, BookController controller, dynamic book) {
-    Get.defaultDialog(
-      title: 'Hapus Buku',
-      middleText: 'Apakah Anda yakin ingin menghapus buku "${book.title}"?',
-      titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-      middleTextStyle: const TextStyle(fontSize: 14),
-      textCancel: 'Batal',
-      textConfirm: 'Hapus',
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.redAccent,
-      onConfirm: () {
-        Get.back();
-        controller.deleteBook(book.id);
-      },
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Hapus Buku', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text('Apakah Anda yakin ingin memindahkan buku "${book.title}" ke Keranjang Sampah?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Batal', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await controller.deleteBook(book.id);
+              if (context.mounted) {
+                AppToast.showSuccess(context, 'Buku "${book.title}" dipindahkan ke Keranjang Sampah.');
+              }
+            },
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
     );
   }
 }

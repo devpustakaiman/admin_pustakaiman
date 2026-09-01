@@ -17,7 +17,10 @@ import '../../domain/usecases/delete_book_usecase.dart';
 import '../../domain/usecases/get_articles_usecase.dart';
 import '../../domain/usecases/get_authors_usecase.dart';
 import '../../domain/usecases/get_books_usecase.dart';
+import '../../domain/usecases/get_deleted_books_usecase.dart';
 import '../../domain/usecases/get_submissions_usecase.dart';
+import '../../domain/usecases/permanently_delete_books_usecase.dart';
+import '../../domain/usecases/restore_books_usecase.dart';
 import '../../domain/usecases/update_article_usecase.dart';
 import '../../domain/usecases/update_author_usecase.dart';
 import '../../domain/usecases/update_book_usecase.dart';
@@ -26,6 +29,7 @@ import '../controllers/author_controller.dart';
 import '../controllers/book_controller.dart';
 import '../controllers/main_layout_controller.dart';
 import '../controllers/submission_controller.dart';
+import '../controllers/trash_controller.dart';
 
 class DashboardBinding extends Bindings {
   @override
@@ -54,6 +58,9 @@ class DashboardBinding extends Bindings {
     Get.lazyPut(() => AddBookUseCase(Get.find()));
     Get.lazyPut(() => UpdateBookUseCase(Get.find()));
     Get.lazyPut(() => DeleteBookUseCase(Get.find()));
+    Get.lazyPut(() => GetDeletedBooksUseCase(Get.find()));
+    Get.lazyPut(() => RestoreBooksUseCase(Get.find()));
+    Get.lazyPut(() => PermanentlyDeleteBooksUseCase(Get.find()));
     Get.lazyPut(() => GetSubmissionsUseCase(Get.find()));
 
     Get.lazyPut(() => GetAuthorsUseCase(Get.find()));
@@ -74,6 +81,14 @@ class DashboardBinding extends Bindings {
         addBookUseCase: Get.find(),
         updateBookUseCase: Get.find(),
         deleteBookUseCase: Get.find(),
+      ),
+    );
+    Get.lazyPut(
+      () => TrashController(
+        bookRepository: Get.find(),
+        authorRepository: Get.find(),
+        articleRepository: Get.find(),
+        submissionRepository: Get.find(),
       ),
     );
     Get.lazyPut(

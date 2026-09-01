@@ -119,7 +119,7 @@ class ArticleController extends GetxController {
         selectedHeaderImageFile.value = result.files.first;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Gagal memilih file gambar header: $e');
+      errorMessage.value = 'Gagal memilih file gambar header: $e';
     }
   }
 
@@ -431,16 +431,10 @@ class ArticleController extends GetxController {
     );
   }
 
-  Future<void> saveArticle() async {
+  Future<bool> saveArticle() async {
     if (titleController.text.trim().isEmpty) {
-      Get.snackbar(
-        'Peringatan',
-        'Judul artikel tidak boleh kosong',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
-      return;
+      errorMessage.value = 'Judul artikel tidak boleh kosong';
+      return false;
     }
 
     isLoading.value = true;
@@ -459,19 +453,18 @@ class ArticleController extends GetxController {
 
       uploadStatusMessage.value = 'Menyimpan artikel...';
 
+      bool success = false;
       if (editingArticleId.value.isEmpty) {
-        await addArticle();
+        success = await addArticle();
       } else {
-        await updateArticle();
+        success = await updateArticle();
       }
 
-      if (Get.isDialogOpen ?? false) Get.back();
+      if (success && (Get.isDialogOpen ?? false)) Get.back();
+      return success;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Gagal mengunggah gambar atau menyimpan artikel: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      errorMessage.value = 'Gagal menyimpan artikel: $e';
+      return false;
     } finally {
       isUploading.value = false;
       isLoading.value = false;
@@ -479,7 +472,7 @@ class ArticleController extends GetxController {
     }
   }
 
-  Future<void> addArticle() async {
+  Future<bool> addArticle() async {
     final newArticle = Article(
       id: '',
       title: titleController.text.trim(),
@@ -491,31 +484,21 @@ class ArticleController extends GetxController {
     );
 
     final result = await addArticleUseCase.call(newArticle);
-    result.fold(
+    return result.fold(
       (failure) {
         errorMessage.value = failure.message;
         isLoading.value = false;
-        Get.snackbar(
-          'Gagal',
-          failure.message,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        return false;
       },
       (_) async {
         clearForm();
         await fetchArticles();
-        Get.snackbar(
-          'Sukses',
-          'Artikel berhasil ditambahkan',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        return true;
       },
     );
   }
 
-  Future<void> updateArticle() async {
+  Future<bool> updateArticle() async {
     final updatedArticle = Article(
       id: editingArticleId.value,
       title: titleController.text.trim(),
@@ -527,54 +510,34 @@ class ArticleController extends GetxController {
     );
 
     final result = await updateArticleUseCase.call(updatedArticle);
-    result.fold(
+    return result.fold(
       (failure) {
         errorMessage.value = failure.message;
         isLoading.value = false;
-        Get.snackbar(
-          'Gagal',
-          failure.message,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        return false;
       },
       (_) async {
         clearForm();
         editingArticleId.value = '';
         await fetchArticles();
-        Get.snackbar(
-          'Sukses',
-          'Artikel berhasil diperbarui',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        return true;
       },
     );
   }
 
-  Future<void> deleteArticle(String id) async {
+  Future<bool> deleteArticle(String id) async {
     isLoading.value = true;
     errorMessage.value = '';
     final result = await deleteArticleUseCase.call(id);
-    result.fold(
+    return result.fold(
       (failure) {
         errorMessage.value = failure.message;
         isLoading.value = false;
-        Get.snackbar(
-          'Gagal',
-          failure.message,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        return false;
       },
       (_) async {
         await fetchArticles();
-        Get.snackbar(
-          'Sukses',
-          'Artikel berhasil dihapus',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        return true;
       },
     );
   }

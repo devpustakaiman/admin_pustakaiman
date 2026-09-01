@@ -18,6 +18,7 @@ class CustomSidebar extends StatelessWidget {
       _NavItemData('Naskah Masuk', LucideIcons.inbox, 1),
       _NavItemData('Data Penulis', LucideIcons.users, 2),
       _NavItemData('Artikel & Berita', LucideIcons.fileText, 3),
+      _NavItemData('Keranjang Sampah', LucideIcons.trash2, 4),
     ];
 
     return Container(

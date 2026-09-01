@@ -9,6 +9,7 @@ class SubmissionModel extends Submission {
     required super.pdfDocumentUrl,
     required super.status,
     required super.createdAt,
+    super.deletedAt,
   });
 
   factory SubmissionModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +21,14 @@ class SubmissionModel extends Submission {
       parsedCreatedAt = createdAtRaw;
     } else {
       parsedCreatedAt = DateTime.now();
+    }
+
+    DateTime? parseDateTime(dynamic val) {
+      if (val == null) return null;
+      if (val is String && val.isNotEmpty) {
+        return DateTime.tryParse(val);
+      }
+      return null;
     }
 
     return SubmissionModel(
@@ -46,11 +55,12 @@ class SubmissionModel extends Submission {
           '',
       status: json['status']?.toString() ?? 'pending',
       createdAt: parsedCreatedAt,
+      deletedAt: parseDateTime(json['deleted_at'] ?? json['deletedAt']),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final map = <String, dynamic>{
       'id': id,
       'sender_name': senderName,
       'email': email,
@@ -59,5 +69,9 @@ class SubmissionModel extends Submission {
       'status': status,
       'created_at': createdAt.toIso8601String(),
     };
+    if (deletedAt != null) {
+      map['deleted_at'] = deletedAt!.toIso8601String();
+    }
+    return map;
   }
 }

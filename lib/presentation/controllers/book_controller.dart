@@ -272,7 +272,7 @@ class BookController extends GetxController {
         selectedCoverFile.value = result.files.first;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Gagal memilih file gambar: $e');
+      errorMessage.value = 'Gagal memilih file gambar: $e';
     }
   }
 
@@ -287,7 +287,7 @@ class BookController extends GetxController {
         selectedPdfFile.value = result.files.first;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Gagal memilih file PDF: $e');
+      errorMessage.value = 'Gagal memilih file PDF: $e';
     }
   }
 
@@ -298,7 +298,7 @@ class BookController extends GetxController {
         selectedGalleryFiles.addAll(images);
       }
     } catch (e) {
-      Get.snackbar('Error', 'Gagal memilih gambar galeri: $e');
+      errorMessage.value = 'Gagal memilih gambar galeri: $e';
     }
   }
 
@@ -478,11 +478,7 @@ class BookController extends GetxController {
 
       if (Get.isDialogOpen ?? false) Get.back();
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Gagal mengunggah file atau menyimpan buku: $e',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      errorMessage.value = 'Gagal mengunggah file atau menyimpan buku: $e';
     } finally {
       isUploading.value = false;
       isLoading.value = false;

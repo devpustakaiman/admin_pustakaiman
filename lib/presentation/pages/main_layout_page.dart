@@ -6,6 +6,7 @@ import 'article_management_page.dart';
 import 'author_management_page.dart';
 import 'book_management_page.dart';
 import 'submission_management_page.dart';
+import 'trash_management_page.dart';
 
 class MainLayoutPage extends StatelessWidget {
   const MainLayoutPage({super.key});
@@ -18,6 +19,7 @@ class MainLayoutPage extends StatelessWidget {
       SubmissionManagementPage(),
       AuthorManagementPage(),
       ArticleManagementPage(),
+      TrashManagementPage(),
     ];
 
     return Scaffold(

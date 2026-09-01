@@ -6,6 +6,7 @@ class Article {
   final String author;
   final String imageUrl;
   final DateTime createdAt;
+  final DateTime? deletedAt;
 
   const Article({
     required this.id,
@@ -15,5 +16,6 @@ class Article {
     required this.author,
     required this.imageUrl,
     required this.createdAt,
+    this.deletedAt,
   });
 }

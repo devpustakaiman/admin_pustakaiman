@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/app_toast.dart';
 import '../../domain/entities/submission.dart';
 import '../controllers/submission_controller.dart';
 
@@ -460,7 +461,7 @@ class SubmissionManagementPage extends StatelessWidget {
                                 IconButton(
                                   icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.redAccent),
                                   tooltip: 'Hapus Submission',
-                                  onPressed: () => _confirmDelete(controller, submission),
+                                  onPressed: () => _confirmDelete(context, controller, submission),
                                   style: IconButton.styleFrom(
                                     backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
                                     shape: RoundedRectangleBorder(
@@ -484,20 +485,31 @@ class SubmissionManagementPage extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(SubmissionController controller, Submission submission) {
-    Get.defaultDialog(
-      title: 'Hapus Submission',
-      middleText: 'Apakah Anda yakin ingin menghapus submission naskah dari "${submission.senderName}"?',
-      titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-      middleTextStyle: const TextStyle(fontSize: 14),
-      textCancel: 'Batal',
-      textConfirm: 'Hapus',
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.redAccent,
-      onConfirm: () {
-        Get.back();
-        controller.deleteSubmission(submission.id);
-      },
+  void _confirmDelete(BuildContext context, SubmissionController controller, Submission submission) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Hapus Submission', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text('Apakah Anda yakin ingin memindahkan submission naskah dari "${submission.senderName}" ke Keranjang Sampah?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Batal', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await controller.deleteSubmission(submission.id);
+              if (context.mounted) {
+                AppToast.showSuccess(context, 'Submission dari "${submission.senderName}" dipindahkan ke Keranjang Sampah.');
+              }
+            },
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
     );
   }
 }

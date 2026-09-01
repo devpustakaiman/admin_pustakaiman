@@ -22,6 +22,17 @@ class SubmissionRepositoryImpl implements SubmissionRepository {
   }
 
   @override
+  Future<Either<Failure, List<Submission>>> getDeletedSubmissions() async {
+    try {
+      final data = await remoteDataSource.getDeletedSubmissions();
+      final submissions = data.map((json) => SubmissionModel.fromJson(json)).toList();
+      return Right(submissions);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> deleteSubmission(String id) async {
     try {
       await remoteDataSource.deleteSubmission(id);
@@ -40,5 +51,24 @@ class SubmissionRepositoryImpl implements SubmissionRepository {
       return Left(ServerFailure(e.toString()));
     }
   }
-}
 
+  @override
+  Future<Either<Failure, void>> restoreSubmissions(List<String> ids) async {
+    try {
+      await remoteDataSource.restoreSubmissions(ids);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> permanentlyDeleteSubmissions(List<String> ids) async {
+    try {
+      await remoteDataSource.permanentlyDeleteSubmissions(ids);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+}

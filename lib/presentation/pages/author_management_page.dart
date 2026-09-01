@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/app_toast.dart';
 import '../../domain/entities/author.dart';
 import '../controllers/author_controller.dart';
 
@@ -372,7 +373,7 @@ class AuthorManagementPage extends StatelessWidget {
                             IconButton(
                               icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.redAccent),
                               tooltip: 'Hapus Penulis',
-                              onPressed: () => _confirmDelete(controller, author),
+                              onPressed: () => _confirmDelete(context, controller, author),
                               style: IconButton.styleFrom(
                                 backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
                                 shape: RoundedRectangleBorder(
@@ -394,20 +395,31 @@ class AuthorManagementPage extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(AuthorController controller, Author author) {
-    Get.defaultDialog(
-      title: 'Hapus Penulis',
-      middleText: 'Apakah Anda yakin ingin menghapus penulis "${author.name}"?',
-      titleStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-      middleTextStyle: const TextStyle(fontSize: 14),
-      textCancel: 'Batal',
-      textConfirm: 'Hapus',
-      confirmTextColor: Colors.white,
-      buttonColor: Colors.redAccent,
-      onConfirm: () {
-        Get.back();
-        controller.deleteAuthor(author.id);
-      },
+  void _confirmDelete(BuildContext context, AuthorController controller, Author author) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Hapus Penulis', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text('Apakah Anda yakin ingin memindahkan penulis "${author.name}" ke Keranjang Sampah?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Batal', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await controller.deleteAuthor(author.id);
+              if (context.mounted) {
+                AppToast.showSuccess(context, 'Penulis "${author.name}" dipindahkan ke Keranjang Sampah.');
+              }
+            },
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
     );
   }
 }

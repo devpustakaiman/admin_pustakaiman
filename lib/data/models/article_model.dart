@@ -9,28 +9,32 @@ class ArticleModel extends Article {
     required super.author,
     required super.imageUrl,
     required super.createdAt,
+    super.deletedAt,
   });
 
   factory ArticleModel.fromJson(Map<String, dynamic> json) {
+    DateTime? parseDateTime(dynamic val) {
+      if (val == null) return null;
+      if (val is String && val.isNotEmpty) {
+        return DateTime.tryParse(val);
+      }
+      return null;
+    }
+
     return ArticleModel(
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
       content: json['content'] as String? ?? '',
-      date: json['date'] != null
-          ? DateTime.tryParse(json['date'].toString()) ?? DateTime.now()
-          : DateTime.now(),
+      date: parseDateTime(json['date']) ?? DateTime.now(),
       author: json['author'] as String? ?? '',
-      imageUrl: json['imageUrl'] as String? ?? '',
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
-          : (json['createdAt'] != null
-              ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
-              : DateTime.now()),
+      imageUrl: json['imageUrl'] as String? ?? json['image_url'] as String? ?? '',
+      createdAt: parseDateTime(json['created_at'] ?? json['createdAt']) ?? DateTime.now(),
+      deletedAt: parseDateTime(json['deleted_at'] ?? json['deletedAt']),
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final map = <String, dynamic>{
       'id': id,
       'title': title,
       'content': content,
@@ -39,6 +43,10 @@ class ArticleModel extends Article {
       'imageUrl': imageUrl,
       'created_at': createdAt.toIso8601String(),
     };
+    if (deletedAt != null) {
+      map['deleted_at'] = deletedAt!.toIso8601String();
+    }
+    return map;
   }
 
   factory ArticleModel.fromEntity(Article article) {
@@ -50,6 +58,7 @@ class ArticleModel extends Article {
       author: article.author,
       imageUrl: article.imageUrl,
       createdAt: article.createdAt,
+      deletedAt: article.deletedAt,
     );
   }
 }

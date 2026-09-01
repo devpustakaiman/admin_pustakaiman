@@ -22,6 +22,17 @@ class AuthorRepositoryImpl implements AuthorRepository {
   }
 
   @override
+  Future<Either<Failure, List<Author>>> getDeletedAuthors() async {
+    try {
+      final data = await remoteDataSource.getDeletedAuthors();
+      final authors = data.map((json) => AuthorModel.fromJson(json)).toList();
+      return Right(authors);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> addAuthor(Author author) async {
     try {
       final authorModel = AuthorModel.fromEntity(author);
@@ -51,6 +62,26 @@ class AuthorRepositoryImpl implements AuthorRepository {
   Future<Either<Failure, void>> deleteAuthor(String id) async {
     try {
       await remoteDataSource.deleteAuthor(id);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> restoreAuthors(List<String> ids) async {
+    try {
+      await remoteDataSource.restoreAuthors(ids);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> permanentlyDeleteAuthors(List<String> ids) async {
+    try {
+      await remoteDataSource.permanentlyDeleteAuthors(ids);
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));

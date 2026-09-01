@@ -22,6 +22,17 @@ class ArticleRepositoryImpl implements ArticleRepository {
   }
 
   @override
+  Future<Either<Failure, List<Article>>> getDeletedArticles() async {
+    try {
+      final data = await remoteDataSource.getDeletedArticles();
+      final articles = data.map((json) => ArticleModel.fromJson(json)).toList();
+      return Right(articles);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> addArticle(Article article) async {
     try {
       final articleModel = ArticleModel.fromEntity(article);
@@ -51,6 +62,26 @@ class ArticleRepositoryImpl implements ArticleRepository {
   Future<Either<Failure, void>> deleteArticle(String id) async {
     try {
       await remoteDataSource.deleteArticle(id);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> restoreArticles(List<String> ids) async {
+    try {
+      await remoteDataSource.restoreArticles(ids);
+      return const Right(null);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> permanentlyDeleteArticles(List<String> ids) async {
+    try {
+      await remoteDataSource.permanentlyDeleteArticles(ids);
       return const Right(null);
     } catch (e) {
       return Left(ServerFailure(e.toString()));

@@ -4,6 +4,7 @@ class Author {
   final String bio;
   final String photoUrl;
   final DateTime createdAt;
+  final DateTime? deletedAt;
 
   const Author({
     required this.id,
@@ -11,5 +12,6 @@ class Author {
     required this.bio,
     required this.photoUrl,
     required this.createdAt,
+    this.deletedAt,
   });
 }
