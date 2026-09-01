@@ -189,6 +189,7 @@ class BookController extends GetxController {
   final promoPercentageController = TextEditingController();
   final RxBool isRecommended = false.obs;
   final RxBool isPromo = false.obs;
+  final Rxn<DateTime> promoEndDate = Rxn<DateTime>();
 
   @override
   void onInit() {
@@ -224,6 +225,7 @@ class BookController extends GetxController {
     promoPercentageController.clear();
     isRecommended.value = false;
     isPromo.value = false;
+    promoEndDate.value = null;
     selectedCoverFile.value = null;
     selectedPdfFile.value = null;
     existingGalleryUrls.clear();
@@ -363,6 +365,7 @@ class BookController extends GetxController {
       priceController.text = book.price > 0 ? book.price.toString() : '';
       isRecommended.value = book.isRecommended;
       isPromo.value = book.isPromo;
+      promoEndDate.value = book.promoEndDate;
       promoPriceController.text = book.promoPrice != null ? book.promoPrice.toString() : '';
       promoPercentageController.text = book.promoPercentage != null ? book.promoPercentage.toString() : '';
       selectedCoverFile.value = null;
@@ -506,6 +509,7 @@ class BookController extends GetxController {
       isPromo: isPromo.value,
       promoPrice: promoPriceInt,
       promoPercentage: promoPercentInt,
+      promoEndDate: isPromo.value ? promoEndDate.value : null,
       isRecommended: isRecommended.value,
       updatedAt: DateTime.now(),
     );
@@ -542,6 +546,7 @@ class BookController extends GetxController {
       isPromo: isPromo.value,
       promoPrice: promoPriceInt,
       promoPercentage: promoPercentInt,
+      promoEndDate: isPromo.value ? promoEndDate.value : null,
       isRecommended: isRecommended.value,
       updatedAt: DateTime.now(),
     );

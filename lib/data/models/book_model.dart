@@ -15,6 +15,7 @@ class BookModel extends Book {
     super.isPromo = false,
     super.promoPrice,
     super.promoPercentage,
+    super.promoEndDate,
     super.isRecommended = false,
     super.updatedAt,
     super.createdAt,
@@ -64,6 +65,7 @@ class BookModel extends Book {
       isPromo: json['is_promo'] as bool? ?? json['isPromo'] as bool? ?? false,
       promoPrice: parseOptionalInt(json['promo_price'] ?? json['promoPrice']),
       promoPercentage: parseOptionalInt(json['promo_percentage'] ?? json['promoPercentage']),
+      promoEndDate: parseDateTime(json['promo_end_date'] ?? json['promoEndDate']),
       isRecommended: json['is_recommended'] as bool? ?? json['isRecommended'] as bool? ?? false,
       updatedAt: parseDateTime(json['updated_at'] ?? json['updatedAt']),
       createdAt: parseDateTime(json['created_at'] ?? json['createdAt']),
@@ -87,6 +89,7 @@ class BookModel extends Book {
       'is_promo': isPromo,
       'promo_price': promoPrice,
       'promo_percentage': promoPercentage,
+      'promo_end_date': promoEndDate?.toIso8601String(),
       'is_recommended': isRecommended,
     };
     if (id.isNotEmpty) {

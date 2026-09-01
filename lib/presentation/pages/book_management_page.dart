@@ -79,6 +79,13 @@ class BookManagementPage extends StatelessWidget {
     return '$day $month $year';
   }
 
+  String _formatShortDate(DateTime dt) {
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    final year = (dt.year % 100).toString().padLeft(2, '0');
+    return '$day/$month/$year';
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<BookController>();
@@ -567,9 +574,19 @@ class BookManagementPage extends StatelessWidget {
                                                 const Icon(LucideIcons.tag, size: 12, color: Colors.redAccent),
                                                 const SizedBox(width: 4),
                                                 Text(
-                                                  book.promoPercentage != null
-                                                      ? 'Promo (${book.promoPercentage}%)'
-                                                      : 'Promo',
+                                                  () {
+                                                    final parts = <String>[];
+                                                    if (book.promoPercentage != null) {
+                                                      parts.add('${book.promoPercentage}%');
+                                                    }
+                                                    if (book.promoEndDate != null) {
+                                                      parts.add('Ends: ${_formatShortDate(book.promoEndDate!)}');
+                                                    }
+                                                    if (parts.isEmpty) {
+                                                      return 'Promo';
+                                                    }
+                                                    return 'Promo (${parts.join(" • ")})';
+                                                  }(),
                                                   style: const TextStyle(
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.bold,

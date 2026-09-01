@@ -11,6 +11,14 @@ class BookFormDialog extends StatelessWidget {
 
   const BookFormDialog({super.key, required this.controller});
 
+  String _formatPromoDate(DateTime dt) {
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  }
+
   Widget _buildSectionHeader(String title, IconData icon) {
     return Row(
       children: [
@@ -339,48 +347,149 @@ class BookFormDialog extends StatelessWidget {
                                 );
                               }),
 
-                              // Bi-directional Promo Fields (Revealed when isPromo is true)
+                              // Bi-directional Promo Fields & Date Picker (Revealed when isPromo is true)
                               Obx(() {
                                 if (!controller.isPromo.value) return const SizedBox.shrink();
 
+                                final promoEndDate = controller.promoEndDate.value;
+
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 14),
-                                  child: Row(
+                                  child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Expanded(
-                                        child: TextFormField(
-                                          controller: controller.promoPriceController,
-                                          keyboardType: TextInputType.number,
-                                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                          onChanged: controller.onPromoPriceChanged,
-                                          decoration: const InputDecoration(
-                                            labelText: 'Harga Promo (Rp)',
-                                            hintText: 'Misal: 75000',
-                                            prefixIcon: Padding(
-                                              padding: EdgeInsets.all(12),
-                                              child: Text(
-                                                'Rp',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.redAccent,
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: TextFormField(
+                                              controller: controller.promoPriceController,
+                                              keyboardType: TextInputType.number,
+                                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                              onChanged: controller.onPromoPriceChanged,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Harga Promo (Rp)',
+                                                hintText: 'Misal: 75000',
+                                                prefixIcon: Padding(
+                                                  padding: EdgeInsets.all(12),
+                                                  child: Text(
+                                                    'Rp',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.redAccent,
+                                                    ),
+                                                  ),
                                                 ),
                                               ),
                                             ),
                                           ),
-                                        ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: TextFormField(
+                                              controller: controller.promoPercentageController,
+                                              keyboardType: TextInputType.number,
+                                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                              onChanged: controller.onPromoPercentageChanged,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Persentase Diskon (%)',
+                                                hintText: 'Misal: 20',
+                                                suffixIcon: Icon(LucideIcons.percent, size: 16, color: Colors.redAccent),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: TextFormField(
-                                          controller: controller.promoPercentageController,
-                                          keyboardType: TextInputType.number,
-                                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                          onChanged: controller.onPromoPercentageChanged,
-                                          decoration: const InputDecoration(
-                                            labelText: 'Persentase Diskon (%)',
-                                            hintText: 'Misal: 20',
-                                            suffixIcon: Icon(LucideIcons.percent, size: 16, color: Colors.redAccent),
+                                      const SizedBox(height: 12),
+                                      InkWell(
+                                        onTap: isBusy
+                                            ? null
+                                            : () async {
+                                                final now = DateTime.now();
+                                                final initial = promoEndDate ?? now;
+                                                final picked = await showDatePicker(
+                                                  context: context,
+                                                  initialDate: initial.isBefore(now) ? now : initial,
+                                                  firstDate: now,
+                                                  lastDate: DateTime(now.year + 5),
+                                                  builder: (context, child) {
+                                                    return Theme(
+                                                      data: Theme.of(context).copyWith(
+                                                        colorScheme: const ColorScheme.light(
+                                                          primary: AppTheme.primaryColor,
+                                                          onPrimary: Colors.white,
+                                                          onSurface: AppTheme.textPrimary,
+                                                        ),
+                                                      ),
+                                                      child: child!,
+                                                    );
+                                                  },
+                                                );
+                                                if (picked != null) {
+                                                  controller.promoEndDate.value = picked;
+                                                }
+                                              },
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.inputFillColor,
+                                            borderRadius: BorderRadius.circular(16),
+                                            border: Border.all(color: AppTheme.borderColor),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    const Text(
+                                                      'Tanggal Berakhir Promo',
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        fontWeight: FontWeight.w500,
+                                                        color: AppTheme.textSecondary,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 2),
+                                                    Text(
+                                                      promoEndDate != null
+                                                          ? _formatPromoDate(promoEndDate)
+                                                          : 'Pilih Tanggal Berakhir Promo (Opsional)',
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        fontWeight: promoEndDate != null
+                                                            ? FontWeight.w600
+                                                            : FontWeight.normal,
+                                                        color: promoEndDate != null
+                                                            ? AppTheme.textPrimary
+                                                            : AppTheme.textMuted,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  if (promoEndDate != null)
+                                                    IconButton(
+                                                      icon: const Icon(LucideIcons.x, size: 16, color: AppTheme.textSecondary),
+                                                      onPressed: () => controller.promoEndDate.value = null,
+                                                      tooltip: 'Hapus Tanggal',
+                                                      padding: EdgeInsets.zero,
+                                                      constraints: const BoxConstraints(),
+                                                    ),
+                                                  if (promoEndDate != null) const SizedBox(width: 8),
+                                                  const Icon(
+                                                    LucideIcons.calendar,
+                                                    size: 18,
+                                                    color: Colors.redAccent,
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ),
