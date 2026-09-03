@@ -10,6 +10,7 @@ import 'book_management_page.dart';
 import 'dashboard_page.dart';
 import 'submission_management_page.dart';
 import 'trash_management_page.dart';
+import 'video_management_page.dart';
 import 'web_settings_page.dart';
 
 class MainLayoutPage extends StatelessWidget {
@@ -24,6 +25,7 @@ class MainLayoutPage extends StatelessWidget {
       SubmissionManagementPage(),
       AuthorManagementPage(),
       ArticleManagementPage(),
+      VideoManagementPage(),
       WebSettingsPage(),
       TrashManagementPage(),
     ];
@@ -34,6 +36,7 @@ class MainLayoutPage extends StatelessWidget {
       'Naskah Masuk',
       'Data Penulis',
       'Artikel & Berita',
+      'Video Media',
       'Pengaturan Web',
       'Keranjang Sampah',
     ];

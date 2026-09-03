@@ -4,10 +4,12 @@ import '../../data/repositories/article_repository_impl.dart';
 import '../../data/repositories/author_repository_impl.dart';
 import '../../data/repositories/book_repository_impl.dart';
 import '../../data/repositories/submission_repository_impl.dart';
+import '../../data/repositories/video_repository_impl.dart';
 import '../../domain/repositories/article_repository.dart';
 import '../../domain/repositories/author_repository.dart';
 import '../../domain/repositories/book_repository.dart';
 import '../../domain/repositories/submission_repository.dart';
+import '../../domain/repositories/video_repository.dart';
 import '../../domain/usecases/add_article_usecase.dart';
 import '../../domain/usecases/add_author_usecase.dart';
 import '../../domain/usecases/add_book_usecase.dart';
@@ -31,6 +33,7 @@ import '../controllers/dashboard_controller.dart';
 import '../controllers/main_layout_controller.dart';
 import '../controllers/submission_controller.dart';
 import '../controllers/trash_controller.dart';
+import '../controllers/video_controller.dart';
 import '../controllers/web_settings_controller.dart';
 
 class DashboardBinding extends Bindings {
@@ -53,6 +56,9 @@ class DashboardBinding extends Bindings {
     );
     Get.lazyPut<ArticleRepository>(
       () => ArticleRepositoryImpl(remoteDataSource: Get.find()),
+    );
+    Get.lazyPut<VideoRepository>(
+      () => VideoRepositoryImpl(remoteDataSource: Get.find()),
     );
 
     // Use Cases
@@ -118,6 +124,11 @@ class DashboardBinding extends Bindings {
         addArticleUseCase: Get.find(),
         updateArticleUseCase: Get.find(),
         deleteArticleUseCase: Get.find(),
+      ),
+    );
+    Get.lazyPut(
+      () => VideoController(
+        videoRepository: Get.find(),
       ),
     );
     Get.lazyPut(

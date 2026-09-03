@@ -170,6 +170,7 @@ class BookController extends GetxController {
   final RxString uploadStatusMessage = ''.obs;
   final RxString errorMessage = ''.obs;
   final RxString editingBookId = ''.obs;
+  final RxString coverUrl = ''.obs;
 
   // Selected files for upload
   final Rx<PlatformFile?> selectedCoverFile = Rx<PlatformFile?>(null);
@@ -221,6 +222,7 @@ class BookController extends GetxController {
     authorController.clear();
     synopsisController.clear();
     coverUrlController.clear();
+    coverUrl.value = '';
     pdfPreviewUrlController.clear();
     mizanstoreUrlController.clear();
     categoryController.clear();
@@ -332,28 +334,43 @@ class BookController extends GetxController {
     }
 
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final extension = file.extension ?? (bucket == 'pustaka-assets' ? 'jpg' : 'pdf');
+    final extension = file.extension ?? (bucket == 'naskah' ? 'pdf' : 'jpg');
     final sanitizedName = file.name
         .replaceAll(RegExp(r'[^a-zA-Z0-9\._-]'), '_')
         .toLowerCase();
     final path = '$timestamp-$sanitizedName';
 
-    final contentType = bucket == 'pustaka-assets'
-        ? 'image/${extension == "png" ? "png" : "jpeg"}'
-        : 'application/pdf';
+    final contentType = bucket == 'naskah'
+        ? 'application/pdf'
+        : 'image/${extension == "png" ? "png" : (extension == "webp" ? "webp" : "jpeg")}';
 
     final supabase = Supabase.instance.client;
-    await supabase.storage.from(bucket).uploadBinary(
-          path,
-          bytes,
-          fileOptions: FileOptions(
-            upsert: true,
-            contentType: contentType,
-          ),
-        );
-
-    final publicUrl = supabase.storage.from(bucket).getPublicUrl(path);
-    return publicUrl;
+    try {
+      await supabase.storage.from(bucket).uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(
+              upsert: true,
+              contentType: contentType,
+            ),
+          );
+      return supabase.storage.from(bucket).getPublicUrl(path);
+    } catch (e) {
+      if (bucket != 'pustaka-assets') {
+        try {
+          await supabase.storage.from('pustaka-assets').uploadBinary(
+                path,
+                bytes,
+                fileOptions: FileOptions(
+                  upsert: true,
+                  contentType: contentType,
+                ),
+              );
+          return supabase.storage.from('pustaka-assets').getPublicUrl(path);
+        } catch (_) {}
+      }
+      rethrow;
+    }
   }
 
   void openFormDialog({Book? book}) {
@@ -363,6 +380,7 @@ class BookController extends GetxController {
       authorController.text = book.author;
       synopsisController.text = book.synopsis;
       coverUrlController.text = book.coverUrl;
+      coverUrl.value = book.coverUrl;
       pdfPreviewUrlController.text = book.pdfPreviewUrl;
       mizanstoreUrlController.text = book.mizanstoreUrl;
       categoryController.text = book.category;
@@ -382,10 +400,14 @@ class BookController extends GetxController {
         barrierDismissible: false,
       );
 
-      // On-demand: Fetch full book row (synopsis, gallery, preview PDF) if omitted from list query
+      // On-demand: Fetch full book row (cover_url, synopsis, gallery, preview PDF) if omitted from list query
       Get.find<BookRepository>().getBookById(book.id).then((res) {
         res.fold((_) {}, (full) {
           if (full != null) {
+            if (full.coverUrl.isNotEmpty) {
+              coverUrlController.text = full.coverUrl;
+              coverUrl.value = full.coverUrl;
+            }
             if (full.synopsis.isNotEmpty) synopsisController.text = full.synopsis;
             if (full.pdfPreviewUrl.isNotEmpty) pdfPreviewUrlController.text = full.pdfPreviewUrl;
             if (full.mizanstoreUrl.isNotEmpty) mizanstoreUrlController.text = full.mizanstoreUrl;
@@ -447,12 +469,13 @@ class BookController extends GetxController {
       // 1. Upload Cover Image if selected
       if (selectedCoverFile.value != null) {
         uploadStatusMessage.value = 'Mengunggah Cover Gambar...';
-        final coverUrl = await uploadFileToStorage(
-          bucket: 'pustaka-assets',
+        final uploadedCoverUrl = await uploadFileToStorage(
+          bucket: 'book-covers',
           file: selectedCoverFile.value!,
         );
-        if (coverUrl != null) {
-          coverUrlController.text = coverUrl;
+        if (uploadedCoverUrl != null && uploadedCoverUrl.isNotEmpty) {
+          coverUrlController.text = uploadedCoverUrl;
+          coverUrl.value = uploadedCoverUrl;
         }
       }
 
@@ -490,18 +513,32 @@ class BookController extends GetxController {
           final contentType =
               'image/${ext == "png" ? "png" : (ext == "webp" ? "webp" : "jpeg")}';
 
-          await supabase.storage.from('pustaka-assets').uploadBinary(
-                path,
-                bytes,
-                fileOptions: FileOptions(
-                  upsert: true,
-                  contentType: contentType,
-                ),
-              );
+          String? galleryUrl;
+          try {
+            await supabase.storage.from('book-covers').uploadBinary(
+                  path,
+                  bytes,
+                  fileOptions: FileOptions(
+                    upsert: true,
+                    contentType: contentType,
+                  ),
+                );
+            galleryUrl = supabase.storage.from('book-covers').getPublicUrl(path);
+          } catch (_) {
+            await supabase.storage.from('pustaka-assets').uploadBinary(
+                  path,
+                  bytes,
+                  fileOptions: FileOptions(
+                    upsert: true,
+                    contentType: contentType,
+                  ),
+                );
+            galleryUrl = supabase.storage.from('pustaka-assets').getPublicUrl(path);
+          }
 
-          final publicUrl =
-              supabase.storage.from('pustaka-assets').getPublicUrl(path);
-          uploadedGalleryUrls.add(publicUrl);
+          if (galleryUrl.isNotEmpty) {
+            uploadedGalleryUrls.add(galleryUrl);
+          }
         }
       }
 

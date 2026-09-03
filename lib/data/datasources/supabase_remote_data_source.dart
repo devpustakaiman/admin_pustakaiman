@@ -57,6 +57,18 @@ abstract class SupabaseRemoteDataSource {
   Future<void> updateSiteSettings(Map<String, dynamic> settings);
   Future<String> uploadSiteBanner(Uint8List bytes, String fileName, {String? contentType});
 
+  // Media Videos CRUD & Trash
+  Future<List<Map<String, dynamic>>> getMediaVideos({int page = 0, int pageSize = 30});
+  Future<Map<String, dynamic>?> getMediaVideoById(String id);
+  Future<int> getMediaVideosCount();
+  Future<List<Map<String, dynamic>>> getDeletedMediaVideos();
+  Future<void> addMediaVideo(Map<String, dynamic> videoMap);
+  Future<void> updateMediaVideo(Map<String, dynamic> videoMap);
+  Future<void> deleteMediaVideo(String id);
+  Future<void> setFeaturedMediaVideo(String id);
+  Future<void> restoreMediaVideos(List<String> ids);
+  Future<void> permanentlyDeleteMediaVideos(List<String> ids);
+
   // Storage Upload Helper
   Future<String> uploadStorageFile({
     required String bucket,
@@ -100,10 +112,10 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
     final from = page * pageSize;
     final to = from + pageSize - 1;
     try {
-      // Lightweight fetch: omit heavy synopsis, pdf preview, gallery, etc.
+      // Lightweight fetch: include cover_url and coverUrl gracefully
       final response = await supabaseClient
           .from('books')
-          .select('id, title, author, category, price, is_promo, promo_price, promo_percentage, promo_end_date, is_recommended, cover_url, coverUrl, created_at, updated_at')
+          .select('id, title, author, category, price, is_promo, promo_price, promo_percentage, promo_end_date, is_recommended, cover_url, created_at, updated_at')
           .isFilter('deleted_at', null)
           .order('created_at', ascending: false)
           .range(from, to);
@@ -112,7 +124,7 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
       try {
         final response = await supabaseClient
             .from('books')
-            .select('id, title, author, category, price, is_promo, promo_price, is_recommended, created_at')
+            .select('id, title, author, category, price, is_promo, promo_price, is_recommended, cover_url, created_at')
             .isFilter('deleted_at', null)
             .range(from, to);
         return List<Map<String, dynamic>>.from(response);
@@ -204,19 +216,78 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
     }
   }
 
+  Future<void> _safeSaveBookPayload({
+    required Map<String, dynamic> initialMap,
+    required Future<void> Function(Map<String, dynamic> payload) saveAction,
+  }) async {
+    final payload = Map<String, dynamic>.from(initialMap);
+
+    final cover = payload['cover_url'] ?? payload['coverUrl'] ?? '';
+    final pdf = payload['pdf_preview_url'] ?? payload['pdfPreviewUrl'] ?? '';
+    final mizan = payload['mizanstore_url'] ?? payload['mizanstoreUrl'] ?? '';
+    final gallery = payload['gallery_urls'] ?? payload['gallery_images'] ?? payload['galleryUrls'] ?? [];
+
+    if (cover.toString().isNotEmpty) {
+      payload['cover_url'] = cover;
+      payload['coverUrl'] = cover;
+    }
+    if (pdf.toString().isNotEmpty) {
+      payload['pdf_preview_url'] = pdf;
+      payload['pdfPreviewUrl'] = pdf;
+    }
+    if (mizan.toString().isNotEmpty) {
+      payload['mizanstore_url'] = mizan;
+      payload['mizanstoreUrl'] = mizan;
+    }
+    payload['gallery_urls'] = gallery;
+    payload['gallery_images'] = gallery;
+    payload['galleryUrls'] = gallery;
+
+    for (int attempt = 0; attempt < 10; attempt++) {
+      try {
+        await saveAction(payload);
+        return;
+      } catch (e) {
+        final errStr = e.toString();
+        final match = RegExp(r"Could not find the '([^']+)' column").firstMatch(errStr);
+        if (match != null && match.groupCount >= 1) {
+          final missingCol = match.group(1)!;
+          if (payload.containsKey(missingCol)) {
+            payload.remove(missingCol);
+            continue;
+          }
+        }
+        rethrow;
+      }
+    }
+  }
+
   @override
   Future<void> addBook(Map<String, dynamic> bookMap) async {
     final mapToSave = Map<String, dynamic>.from(bookMap);
     mapToSave['created_at'] = DateTime.now().toIso8601String();
     mapToSave['updated_at'] = DateTime.now().toIso8601String();
-    await supabaseClient.from('books').insert(mapToSave);
+
+    await _safeSaveBookPayload(
+      initialMap: mapToSave,
+      saveAction: (payload) async {
+        await supabaseClient.from('books').insert(payload);
+      },
+    );
   }
 
   @override
   Future<void> updateBook(Map<String, dynamic> bookMap) async {
     final mapToSave = Map<String, dynamic>.from(bookMap);
     mapToSave['updated_at'] = DateTime.now().toIso8601String();
-    await supabaseClient.from('books').update(mapToSave).eq('id', bookMap['id']);
+    final id = mapToSave['id'];
+
+    await _safeSaveBookPayload(
+      initialMap: mapToSave,
+      saveAction: (payload) async {
+        await supabaseClient.from('books').update(payload).eq('id', id);
+      },
+    );
   }
 
   @override
@@ -883,6 +954,190 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
         contentType: mimeType,
       );
     }
+  }
+
+  // ---------------- MEDIA VIDEOS METHODS ----------------
+  @override
+  Future<List<Map<String, dynamic>>> getMediaVideos({int page = 0, int pageSize = 30}) async {
+    final from = page * pageSize;
+    final to = from + pageSize - 1;
+    try {
+      final response = await supabaseClient
+          .from('media_videos')
+          .select()
+          .isFilter('deleted_at', null)
+          .order('order_index', ascending: true)
+          .order('created_at', ascending: false)
+          .range(from, to);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (_) {
+      try {
+        final response = await supabaseClient
+            .from('media_videos')
+            .select()
+            .isFilter('deleted_at', null)
+            .order('created_at', ascending: false)
+            .range(from, to);
+        return List<Map<String, dynamic>>.from(response);
+      } catch (_) {
+        final response = await supabaseClient
+            .from('media_videos')
+            .select()
+            .limit(pageSize);
+        return List<Map<String, dynamic>>.from(response);
+      }
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getMediaVideoById(String id) async {
+    try {
+      final response = await supabaseClient
+          .from('media_videos')
+          .select()
+          .eq('id', id)
+          .maybeSingle();
+      return response;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<int> getMediaVideosCount() async {
+    try {
+      final count = await supabaseClient
+          .from('media_videos')
+          .count(CountOption.exact)
+          .isFilter('deleted_at', null);
+      return count;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getDeletedMediaVideos() async {
+    try {
+      final response = await supabaseClient
+          .from('media_videos')
+          .select()
+          .not('deleted_at', 'is', null)
+          .order('deleted_at', ascending: false);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> _safeSaveMediaVideoPayload({
+    required Map<String, dynamic> initialMap,
+    required Future<void> Function(Map<String, dynamic> payload) saveAction,
+  }) async {
+    final payload = Map<String, dynamic>.from(initialMap);
+
+    for (int attempt = 0; attempt < 10; attempt++) {
+      try {
+        await saveAction(payload);
+        return;
+      } catch (e) {
+        final errStr = e.toString();
+        final match = RegExp(r"Could not find the '([^']+)' column").firstMatch(errStr);
+        if (match != null && match.groupCount >= 1) {
+          final missingCol = match.group(1)!;
+          if (payload.containsKey(missingCol)) {
+            payload.remove(missingCol);
+            continue;
+          }
+        }
+        rethrow;
+      }
+    }
+  }
+
+  @override
+  Future<void> addMediaVideo(Map<String, dynamic> videoMap) async {
+    final mapToSave = Map<String, dynamic>.from(videoMap);
+    mapToSave['created_at'] = DateTime.now().toIso8601String();
+    mapToSave['updated_at'] = DateTime.now().toIso8601String();
+    if (mapToSave['id'] == null || mapToSave['id'].toString().isEmpty) {
+      mapToSave.remove('id');
+    }
+
+    if (mapToSave['is_featured'] == true) {
+      try {
+        await supabaseClient
+            .from('media_videos')
+            .update({'is_featured': false})
+            .eq('is_featured', true);
+      } catch (_) {}
+    }
+
+    await _safeSaveMediaVideoPayload(
+      initialMap: mapToSave,
+      saveAction: (payload) async {
+        await supabaseClient.from('media_videos').insert(payload);
+      },
+    );
+  }
+
+  @override
+  Future<void> updateMediaVideo(Map<String, dynamic> videoMap) async {
+    final mapToSave = Map<String, dynamic>.from(videoMap);
+    mapToSave['updated_at'] = DateTime.now().toIso8601String();
+    final id = mapToSave['id'];
+
+    if (mapToSave['is_featured'] == true && id != null) {
+      try {
+        await supabaseClient
+            .from('media_videos')
+            .update({'is_featured': false})
+            .neq('id', id);
+      } catch (_) {}
+    }
+
+    await _safeSaveMediaVideoPayload(
+      initialMap: mapToSave,
+      saveAction: (payload) async {
+        await supabaseClient.from('media_videos').update(payload).eq('id', id);
+      },
+    );
+  }
+
+  @override
+  Future<void> deleteMediaVideo(String id) async {
+    await supabaseClient
+        .from('media_videos')
+        .update({'deleted_at': DateTime.now().toIso8601String()})
+        .eq('id', id);
+  }
+
+  @override
+  Future<void> setFeaturedMediaVideo(String id) async {
+    await supabaseClient
+        .from('media_videos')
+        .update({'is_featured': false})
+        .neq('id', id);
+
+    await supabaseClient
+        .from('media_videos')
+        .update({'is_featured': true})
+        .eq('id', id);
+  }
+
+  @override
+  Future<void> restoreMediaVideos(List<String> ids) async {
+    if (ids.isEmpty) return;
+    await supabaseClient
+        .from('media_videos')
+        .update({'deleted_at': null})
+        .inFilter('id', ids);
+  }
+
+  @override
+  Future<void> permanentlyDeleteMediaVideos(List<String> ids) async {
+    if (ids.isEmpty) return;
+    await supabaseClient.from('media_videos').delete().inFilter('id', ids);
   }
 
   // ---------------- STORAGE HELPER ----------------

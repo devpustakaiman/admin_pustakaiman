@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -520,7 +521,9 @@ class BookFormDialog extends StatelessWidget {
                               const SizedBox(height: 8),
                               Obx(() {
                                 final file = controller.selectedCoverFile.value;
-                                final existingUrl = controller.coverUrlController.text.trim();
+                                final rxCover = controller.coverUrl.value.trim();
+                                final textCover = controller.coverUrlController.text.trim();
+                                final existingUrl = rxCover.isNotEmpty ? rxCover : textCover;
 
                                 Widget previewWidget;
                                 if (file != null) {
@@ -546,14 +549,25 @@ class BookFormDialog extends StatelessWidget {
                                       child: const Icon(LucideIcons.image, color: AppTheme.textMuted),
                                     );
                                   }
-                                } else if (existingUrl.isNotEmpty &&
-                                    (existingUrl.startsWith('http://') || existingUrl.startsWith('https://'))) {
-                                  previewWidget = Image.network(
-                                    existingUrl,
+                                } else if (existingUrl.isNotEmpty) {
+                                  previewWidget = CachedNetworkImage(
+                                    imageUrl: existingUrl,
                                     width: 75,
                                     height: 105,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Container(
+                                    placeholder: (_, __) => Container(
+                                      width: 75,
+                                      height: 105,
+                                      color: AppTheme.inputFillColor,
+                                      child: const Center(
+                                        child: SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        ),
+                                      ),
+                                    ),
+                                    errorWidget: (_, __, ___) => Container(
                                       width: 75,
                                       height: 105,
                                       color: AppTheme.inputFillColor,
@@ -598,13 +612,13 @@ class BookFormDialog extends StatelessWidget {
                                           const SizedBox(height: 8),
                                           Text(
                                             file != null
-                                                ? 'File: ${file.name}'
+                                                ? 'File dipilih: ${file.name}'
                                                 : (existingUrl.isNotEmpty
-                                                    ? 'URL tersimpan'
+                                                    ? 'Cover URL tersimpan'
                                                     : 'Belum ada gambar cover dipilih'),
                                             style: TextStyle(
                                               fontSize: 12,
-                                              color: file != null
+                                              color: (file != null || existingUrl.isNotEmpty)
                                                   ? AppTheme.primaryColor
                                                   : AppTheme.textSecondary,
                                             ),
