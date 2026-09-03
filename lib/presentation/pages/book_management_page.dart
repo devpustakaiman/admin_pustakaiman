@@ -456,59 +456,68 @@ class BookManagementPage extends StatelessWidget {
                                   const SizedBox(height: 6),
 
                                   // Author & Price Row with Promo Support
-                                  Row(
+                                  Wrap(
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    spacing: 8,
+                                    runSpacing: 4,
                                     children: [
-                                      const Icon(LucideIcons.user, size: 14, color: AppTheme.textSecondary),
-                                      const SizedBox(width: 6),
-                                      Flexible(
-                                        child: Text(
-                                          book.author.isNotEmpty ? book.author : 'Penulis Tidak Diketahui',
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                            color: AppTheme.textSecondary,
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(LucideIcons.user, size: 14, color: AppTheme.textSecondary),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            book.author.isNotEmpty ? book.author : 'Penulis Tidak Diketahui',
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppTheme.textSecondary,
+                                            ),
                                           ),
-                                        ),
+                                        ],
                                       ),
-                                      const SizedBox(width: 12),
-                                      Container(
-                                        width: 4,
-                                        height: 4,
-                                        decoration: const BoxDecoration(
-                                          color: AppTheme.textMuted,
-                                          shape: BoxShape.circle,
-                                        ),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 4,
+                                            height: 4,
+                                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                                            decoration: const BoxDecoration(
+                                              color: AppTheme.textMuted,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          if (book.isPromo && book.promoPrice != null) ...[
+                                            Text(
+                                              _formatPrice(book.promoPrice!),
+                                              style: const TextStyle(
+                                                fontSize: 13.5,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.redAccent,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              _formatPrice(book.price),
+                                              style: const TextStyle(
+                                                fontSize: 11.5,
+                                                decoration: TextDecoration.lineThrough,
+                                                color: AppTheme.textMuted,
+                                              ),
+                                            ),
+                                          ] else ...[
+                                            Text(
+                                              _formatPrice(book.price),
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppTheme.primaryColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
-                                      const SizedBox(width: 12),
-                                      if (book.isPromo && book.promoPrice != null) ...[
-                                        Text(
-                                          _formatPrice(book.promoPrice!),
-                                          style: const TextStyle(
-                                            fontSize: 13.5,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.redAccent,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          _formatPrice(book.price),
-                                          style: const TextStyle(
-                                            fontSize: 11.5,
-                                            decoration: TextDecoration.lineThrough,
-                                            color: AppTheme.textMuted,
-                                          ),
-                                        ),
-                                      ] else ...[
-                                        Text(
-                                          _formatPrice(book.price),
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppTheme.primaryColor,
-                                          ),
-                                        ),
-                                      ],
                                     ],
                                   ),
 
@@ -695,6 +704,76 @@ class BookManagementPage extends StatelessWidget {
                 );
               }),
             ),
+
+            // Pagination Controls Footer Bar
+            Obx(() {
+              final total = controller.totalBooksCount.value;
+              final page = controller.currentPage.value;
+              final pageSize = controller.pageSize;
+              final start = total == 0 ? 0 : (page * pageSize) + 1;
+              final end = ((page + 1) * pageSize).clamp(0, total);
+              final hasPrev = page > 0;
+              final hasNext = (page + 1) * pageSize < total;
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                margin: const EdgeInsets.only(top: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.borderColor),
+                  boxShadow: AppTheme.softShadow,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      total > 0
+                          ? 'Menampilkan $start - $end dari $total buku (Halaman ${page + 1})'
+                          : 'Belum ada data buku',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: hasPrev ? controller.prevPage : null,
+                          icon: const Icon(LucideIcons.chevronLeft, size: 14),
+                          label: const Text('Sebelumnya'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'Halaman ${page + 1}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: hasNext ? controller.nextPage : null,
+                          icon: const Icon(LucideIcons.chevronRight, size: 14),
+                          label: const Text('Selanjutnya'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
         ),
       ),

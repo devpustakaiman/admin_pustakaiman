@@ -8,7 +8,7 @@ class GetArticlesUseCase {
 
   GetArticlesUseCase(this.repository);
 
-  Future<Either<Failure, List<Article>>> call() async {
-    return await repository.getArticles();
+  Future<Either<Failure, List<Article>>> call({int page = 0, int pageSize = 15}) async {
+    return await repository.getArticles(page: page, pageSize: pageSize);
   }
 }

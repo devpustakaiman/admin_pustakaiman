@@ -9,19 +9,22 @@ import '../../domain/usecases/add_author_usecase.dart';
 import '../../domain/usecases/delete_author_usecase.dart';
 import '../../domain/usecases/get_authors_usecase.dart';
 import '../../domain/usecases/update_author_usecase.dart';
+import '../../domain/repositories/author_repository.dart';
 
 class AuthorController extends GetxController {
   final GetAuthorsUseCase getAuthorsUseCase;
   final AddAuthorUseCase addAuthorUseCase;
   final UpdateAuthorUseCase updateAuthorUseCase;
   final DeleteAuthorUseCase deleteAuthorUseCase;
+  final AuthorRepository authorRepository;
 
   AuthorController({
     required this.getAuthorsUseCase,
     required this.addAuthorUseCase,
     required this.updateAuthorUseCase,
     required this.deleteAuthorUseCase,
-  });
+    AuthorRepository? repository,
+  }) : authorRepository = repository ?? Get.find<AuthorRepository>();
 
   final RxList<Author> authors = <Author>[].obs;
   final RxString searchQuery = ''.obs;
@@ -58,6 +61,9 @@ class AuthorController extends GetxController {
   final RxString uploadStatusMessage = ''.obs;
   final RxString errorMessage = ''.obs;
   final RxString editingAuthorId = ''.obs;
+  final RxInt currentPage = 0.obs;
+  final RxInt totalAuthorsCount = 0.obs;
+  final int pageSize = 15;
 
   final Rx<PlatformFile?> selectedPhotoFile = Rx<PlatformFile?>(null);
 
@@ -141,6 +147,15 @@ class AuthorController extends GetxController {
       bioController.text = author.bio;
       photoUrlController.text = author.photoUrl;
       selectedPhotoFile.value = null;
+
+      // On-demand: Fetch full author details (e.g. bio) if omitted from list query
+      authorRepository.getAuthorById(author.id).then((res) {
+        res.fold((_) {}, (fullAuthor) {
+          if (fullAuthor != null && fullAuthor.bio.isNotEmpty) {
+            bioController.text = fullAuthor.bio;
+          }
+        });
+      });
     } else {
       editingAuthorId.value = '';
       clearForm();
@@ -268,10 +283,17 @@ class AuthorController extends GetxController {
     );
   }
 
-  Future<void> fetchAuthors() async {
+  Future<void> fetchAuthors({int? page}) async {
+    if (page != null) currentPage.value = page;
     isLoading.value = true;
     errorMessage.value = '';
-    final result = await getAuthorsUseCase.call();
+
+    // Server-side exact count
+    final countRes = await authorRepository.getAuthorsCount();
+    countRes.fold((_) {}, (cnt) => totalAuthorsCount.value = cnt);
+
+    // 15-item lazy loading / pagination
+    final result = await getAuthorsUseCase.call(page: currentPage.value, pageSize: pageSize);
     result.fold(
       (failure) {
         errorMessage.value = failure.message;
@@ -282,6 +304,18 @@ class AuthorController extends GetxController {
         isLoading.value = false;
       },
     );
+  }
+
+  void nextPage() {
+    if ((currentPage.value + 1) * pageSize < totalAuthorsCount.value) {
+      fetchAuthors(page: currentPage.value + 1);
+    }
+  }
+
+  void prevPage() {
+    if (currentPage.value > 0) {
+      fetchAuthors(page: currentPage.value - 1);
+    }
   }
 
   Future<bool> saveAuthor() async {

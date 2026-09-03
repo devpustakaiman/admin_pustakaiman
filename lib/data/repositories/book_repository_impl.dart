@@ -11,11 +11,32 @@ class BookRepositoryImpl implements BookRepository {
   BookRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Either<Failure, List<Book>>> getBooks() async {
+  Future<Either<Failure, List<Book>>> getBooks({int page = 0, int pageSize = 15}) async {
     try {
-      final data = await remoteDataSource.getBooks();
+      final data = await remoteDataSource.getBooks(page: page, pageSize: pageSize);
       final books = data.map((json) => BookModel.fromJson(json)).toList();
       return Right(books);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Book?>> getBookById(String id) async {
+    try {
+      final data = await remoteDataSource.getBookById(id);
+      if (data == null) return const Right(null);
+      return Right(BookModel.fromJson(data));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, int>> getBooksCount() async {
+    try {
+      final count = await remoteDataSource.getBooksCount();
+      return Right(count);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

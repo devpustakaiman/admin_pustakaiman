@@ -27,9 +27,11 @@ import '../../domain/usecases/update_book_usecase.dart';
 import '../controllers/article_controller.dart';
 import '../controllers/author_controller.dart';
 import '../controllers/book_controller.dart';
+import '../controllers/dashboard_controller.dart';
 import '../controllers/main_layout_controller.dart';
 import '../controllers/submission_controller.dart';
 import '../controllers/trash_controller.dart';
+import '../controllers/web_settings_controller.dart';
 
 class DashboardBinding extends Bindings {
   @override
@@ -76,6 +78,12 @@ class DashboardBinding extends Bindings {
     // Controllers
     Get.lazyPut(() => MainLayoutController());
     Get.lazyPut(
+      () => DashboardController(
+        dataSource: Get.find<SupabaseRemoteDataSource>(),
+        subRepository: Get.find<SubmissionRepository>(),
+      ),
+    );
+    Get.lazyPut(
       () => BookController(
         getBooksUseCase: Get.find(),
         addBookUseCase: Get.find(),
@@ -110,6 +118,11 @@ class DashboardBinding extends Bindings {
         addArticleUseCase: Get.find(),
         updateArticleUseCase: Get.find(),
         deleteArticleUseCase: Get.find(),
+      ),
+    );
+    Get.lazyPut(
+      () => WebSettingsController(
+        dataSource: Get.find<SupabaseRemoteDataSource>(),
       ),
     );
   }

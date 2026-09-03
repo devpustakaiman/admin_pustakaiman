@@ -7,6 +7,7 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/article.dart';
+import '../../domain/repositories/article_repository.dart';
 import '../../domain/usecases/add_article_usecase.dart';
 import '../../domain/usecases/delete_article_usecase.dart';
 import '../../domain/usecases/get_articles_usecase.dart';
@@ -69,6 +70,9 @@ class ArticleController extends GetxController {
   final RxString uploadStatusMessage = ''.obs;
   final RxString errorMessage = ''.obs;
   final RxString editingArticleId = ''.obs;
+  final RxInt currentPage = 0.obs;
+  final RxInt totalArticlesCount = 0.obs;
+  final int pageSize = 15;
 
   final Rx<PlatformFile?> selectedHeaderImageFile = Rx<PlatformFile?>(null);
 
@@ -186,6 +190,15 @@ class ArticleController extends GetxController {
       selectedDate.value = article.date;
       setContent(article.content);
       selectedHeaderImageFile.value = null;
+
+      // On-demand: Fetch full Quill content if omitted from list query
+      Get.find<ArticleRepository>().getArticleById(article.id).then((res) {
+        res.fold((_) {}, (full) {
+          if (full != null && full.content.isNotEmpty) {
+            setContent(full.content);
+          }
+        });
+      });
     } else {
       editingArticleId.value = '';
       clearForm();
@@ -415,10 +428,17 @@ class ArticleController extends GetxController {
     }
   }
 
-  Future<void> fetchArticles() async {
+  Future<void> fetchArticles({int? page}) async {
+    if (page != null) currentPage.value = page;
     isLoading.value = true;
     errorMessage.value = '';
-    final result = await getArticlesUseCase.call();
+
+    // Server-side exact count
+    final countRes = await Get.find<ArticleRepository>().getArticlesCount();
+    countRes.fold((_) {}, (cnt) => totalArticlesCount.value = cnt);
+
+    // 15-item lazy loading / pagination
+    final result = await getArticlesUseCase.call(page: currentPage.value, pageSize: pageSize);
     result.fold(
       (failure) {
         errorMessage.value = failure.message;
@@ -429,6 +449,18 @@ class ArticleController extends GetxController {
         isLoading.value = false;
       },
     );
+  }
+
+  void nextPage() {
+    if ((currentPage.value + 1) * pageSize < totalArticlesCount.value) {
+      fetchArticles(page: currentPage.value + 1);
+    }
+  }
+
+  void prevPage() {
+    if (currentPage.value > 0) {
+      fetchArticles(page: currentPage.value - 1);
+    }
   }
 
   Future<bool> saveArticle() async {

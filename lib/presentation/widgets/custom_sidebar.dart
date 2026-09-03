@@ -14,11 +14,13 @@ class CustomSidebar extends StatelessWidget {
     final controller = Get.find<MainLayoutController>();
 
     final navItems = [
-      _NavItemData('Katalog Buku', LucideIcons.bookOpen, 0),
-      _NavItemData('Naskah Masuk', LucideIcons.inbox, 1),
-      _NavItemData('Data Penulis', LucideIcons.users, 2),
-      _NavItemData('Artikel & Berita', LucideIcons.fileText, 3),
-      _NavItemData('Keranjang Sampah', LucideIcons.trash2, 4),
+      _NavItemData('Dashboard', LucideIcons.layoutDashboard, 0),
+      _NavItemData('Katalog Buku', LucideIcons.bookOpen, 1),
+      _NavItemData('Naskah Masuk', LucideIcons.inbox, 2),
+      _NavItemData('Data Penulis', LucideIcons.users, 3),
+      _NavItemData('Artikel & Berita', LucideIcons.fileText, 4),
+      _NavItemData('Pengaturan Web', LucideIcons.layoutTemplate, 5),
+      _NavItemData('Keranjang Sampah', LucideIcons.trash2, 6),
     ];
 
     return Container(
@@ -132,7 +134,12 @@ class CustomSidebar extends StatelessWidget {
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () => controller.changePage(item.index),
+                        onTap: () {
+                          controller.changePage(item.index);
+                          if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+                            Navigator.of(context).pop();
+                          }
+                        },
                         borderRadius: BorderRadius.circular(14),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),

@@ -18,6 +18,10 @@ class SubmissionController extends GetxController {
   final RxString sortBy = 'date'.obs; // 'date', 'name'
   final RxBool isAscending = false.obs; // false = newest first by default
 
+  final RxInt currentPage = 0.obs;
+  final RxInt totalSubmissionsCount = 0.obs;
+  final int pageSize = 15;
+
   List<Submission> get filteredSubmissions {
     List<Submission> result = List.from(submissions);
 
@@ -48,10 +52,23 @@ class SubmissionController extends GetxController {
     fetchSubmissions();
   }
 
-  Future<void> fetchSubmissions() async {
+  Future<void> fetchSubmissions({int? page}) async {
+    if (page != null) currentPage.value = page;
     isLoading.value = true;
     errorMessage.value = '';
-    final result = await getSubmissionsUseCase.call();
+
+    // Server-side exact count
+    final countRes = await submissionRepository.getSubmissionsCount(
+      status: statusFilter.value == 'Semua Status' ? null : statusFilter.value,
+    );
+    countRes.fold((_) {}, (cnt) => totalSubmissionsCount.value = cnt);
+
+    // 15-item lazy loading / pagination
+    final result = await getSubmissionsUseCase.call(
+      page: currentPage.value,
+      pageSize: pageSize,
+      status: statusFilter.value == 'Semua Status' ? null : statusFilter.value,
+    );
     result.fold(
       (failure) {
         errorMessage.value = failure.message;
@@ -62,6 +79,18 @@ class SubmissionController extends GetxController {
         isLoading.value = false;
       },
     );
+  }
+
+  void nextPage() {
+    if ((currentPage.value + 1) * pageSize < totalSubmissionsCount.value) {
+      fetchSubmissions(page: currentPage.value + 1);
+    }
+  }
+
+  void prevPage() {
+    if (currentPage.value > 0) {
+      fetchSubmissions(page: currentPage.value - 1);
+    }
   }
 
   Future<bool> deleteSubmission(String id) async {

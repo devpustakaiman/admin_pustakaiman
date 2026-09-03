@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/entities/book.dart';
+import '../../domain/repositories/book_repository.dart';
 import '../../domain/usecases/add_book_usecase.dart';
 import '../../domain/usecases/delete_book_usecase.dart';
 import '../../domain/usecases/get_books_usecase.dart';
@@ -88,6 +89,9 @@ class BookController extends GetxController {
   final Rxn<bool> promoFilter = Rxn<bool>(); // null: Semua, true: Ya, false: Tidak
   final RxString sortBy = 'title'.obs; // 'title', 'author', 'price', 'category', 'date'
   final RxBool isAscending = true.obs;
+  final RxInt currentPage = 0.obs;
+  final RxInt totalBooksCount = 0.obs;
+  final int pageSize = 15;
 
   List<Book> get filteredBooks {
     List<Book> result = List.from(books);
@@ -372,21 +376,44 @@ class BookController extends GetxController {
       selectedPdfFile.value = null;
       existingGalleryUrls.assignAll(book.galleryUrls);
       selectedGalleryFiles.clear();
+
+      Get.dialog(
+        BookFormDialog(controller: this),
+        barrierDismissible: false,
+      );
+
+      // On-demand: Fetch full book row (synopsis, gallery, preview PDF) if omitted from list query
+      Get.find<BookRepository>().getBookById(book.id).then((res) {
+        res.fold((_) {}, (full) {
+          if (full != null) {
+            if (full.synopsis.isNotEmpty) synopsisController.text = full.synopsis;
+            if (full.pdfPreviewUrl.isNotEmpty) pdfPreviewUrlController.text = full.pdfPreviewUrl;
+            if (full.mizanstoreUrl.isNotEmpty) mizanstoreUrlController.text = full.mizanstoreUrl;
+            if (full.galleryUrls.isNotEmpty) existingGalleryUrls.assignAll(full.galleryUrls);
+          }
+        });
+      });
     } else {
       editingBookId.value = '';
       clearForm();
+      Get.dialog(
+        BookFormDialog(controller: this),
+        barrierDismissible: false,
+      );
     }
-
-    Get.dialog(
-      BookFormDialog(controller: this),
-      barrierDismissible: false,
-    );
   }
 
-  Future<void> fetchBooks() async {
+  Future<void> fetchBooks({int? page}) async {
+    if (page != null) currentPage.value = page;
     isLoading.value = true;
     errorMessage.value = '';
-    final result = await getBooksUseCase.call();
+
+    // Server-side exact count
+    final countResult = await Get.find<BookRepository>().getBooksCount();
+    countResult.fold((_) {}, (cnt) => totalBooksCount.value = cnt);
+
+    // 15-item lazy loading / pagination
+    final result = await getBooksUseCase.call(page: currentPage.value, pageSize: pageSize);
     result.fold(
       (failure) {
         errorMessage.value = failure.message;
@@ -397,6 +424,18 @@ class BookController extends GetxController {
         isLoading.value = false;
       },
     );
+  }
+
+  void nextPage() {
+    if ((currentPage.value + 1) * pageSize < totalBooksCount.value) {
+      fetchBooks(page: currentPage.value + 1);
+    }
+  }
+
+  void prevPage() {
+    if (currentPage.value > 0) {
+      fetchBooks(page: currentPage.value - 1);
+    }
   }
 
   Future<void> saveBook() async {

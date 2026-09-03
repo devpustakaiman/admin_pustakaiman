@@ -8,7 +8,15 @@ class GetSubmissionsUseCase {
 
   GetSubmissionsUseCase(this.repository);
 
-  Future<Either<Failure, List<Submission>>> call() async {
-    return await repository.getSubmissions();
+  Future<Either<Failure, List<Submission>>> call({
+    int page = 0,
+    int pageSize = 15,
+    String? status,
+  }) async {
+    return await repository.getSubmissions(
+      page: page,
+      pageSize: pageSize,
+      status: status,
+    );
   }
 }

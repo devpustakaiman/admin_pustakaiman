@@ -8,7 +8,7 @@ class GetBooksUseCase {
 
   GetBooksUseCase(this.repository);
 
-  Future<Either<Failure, List<Book>>> call() async {
-    return await repository.getBooks();
+  Future<Either<Failure, List<Book>>> call({int page = 0, int pageSize = 15}) async {
+    return await repository.getBooks(page: page, pageSize: pageSize);
   }
 }

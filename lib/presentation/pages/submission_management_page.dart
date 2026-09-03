@@ -142,9 +142,11 @@ class SubmissionManagementPage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Unified Filter & Action Bar
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            // Responsive Filter & Action Bar
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 // Status Filter Dropdown (Height 44)
                 Container(
@@ -182,8 +184,6 @@ class SubmissionManagementPage extends StatelessWidget {
                     );
                   }),
                 ),
-
-                const SizedBox(width: 12),
 
                 // Sort By Dropdown (Height 44)
                 Container(
@@ -226,8 +226,6 @@ class SubmissionManagementPage extends StatelessWidget {
                   }),
                 ),
 
-                const SizedBox(width: 12),
-
                 // Asc / Desc Toggle Button (Height 44)
                 Obx(() {
                   final isAsc = controller.isAscending.value;
@@ -251,9 +249,6 @@ class SubmissionManagementPage extends StatelessWidget {
                     ),
                   );
                 }),
-
-                // Pushes Refresh Button to the far right!
-                const Spacer(),
 
                 // Refresh Button (IconButton, Height 44)
                 IconButton(
@@ -386,26 +381,38 @@ class SubmissionManagementPage extends StatelessWidget {
                                         ),
                                       ),
                                       const SizedBox(height: 2),
-                                      Row(
+                                      Wrap(
+                                        spacing: 12,
+                                        runSpacing: 4,
+                                        crossAxisAlignment: WrapCrossAlignment.center,
                                         children: [
-                                          const Icon(LucideIcons.mail, size: 13, color: AppTheme.textSecondary),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            submission.email,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: AppTheme.textSecondary,
-                                            ),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(LucideIcons.mail, size: 13, color: AppTheme.textSecondary),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                submission.email,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: AppTheme.textSecondary,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(width: 12),
-                                          const Icon(LucideIcons.clock, size: 13, color: AppTheme.textMuted),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            _formatDate(submission.createdAt),
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: AppTheme.textMuted,
-                                            ),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(LucideIcons.clock, size: 13, color: AppTheme.textMuted),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                _formatDate(submission.createdAt),
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: AppTheme.textMuted,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
@@ -439,8 +446,11 @@ class SubmissionManagementPage extends StatelessWidget {
 
                             const SizedBox(height: 16),
 
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                            Wrap(
+                              alignment: WrapAlignment.end,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 10,
+                              runSpacing: 8,
                               children: [
                                 OutlinedButton.icon(
                                   onPressed: () => controller.previewPdf(
@@ -449,7 +459,6 @@ class SubmissionManagementPage extends StatelessWidget {
                                   icon: const Icon(LucideIcons.eye, size: 16),
                                   label: const Text('Preview PDF'),
                                 ),
-                                const SizedBox(width: 10),
                                 ElevatedButton.icon(
                                   onPressed: () => controller.downloadPdf(
                                     submission.pdfDocumentUrl,
@@ -457,7 +466,6 @@ class SubmissionManagementPage extends StatelessWidget {
                                   icon: const Icon(LucideIcons.download, size: 16),
                                   label: const Text('Unduh PDF'),
                                 ),
-                                const SizedBox(width: 10),
                                 IconButton(
                                   icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.redAccent),
                                   tooltip: 'Hapus Submission',
@@ -479,6 +487,76 @@ class SubmissionManagementPage extends StatelessWidget {
                 );
               }),
             ),
+
+            // Pagination Controls Footer Bar
+            Obx(() {
+              final total = controller.totalSubmissionsCount.value;
+              final page = controller.currentPage.value;
+              final pageSize = controller.pageSize;
+              final start = total == 0 ? 0 : (page * pageSize) + 1;
+              final end = ((page + 1) * pageSize).clamp(0, total);
+              final hasPrev = page > 0;
+              final hasNext = (page + 1) * pageSize < total;
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                margin: const EdgeInsets.only(top: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.borderColor),
+                  boxShadow: AppTheme.softShadow,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      total > 0
+                          ? 'Menampilkan $start - $end dari $total naskah (Halaman ${page + 1})'
+                          : 'Belum ada data naskah',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: hasPrev ? controller.prevPage : null,
+                          icon: const Icon(LucideIcons.chevronLeft, size: 14),
+                          label: const Text('Sebelumnya'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'Halaman ${page + 1}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: hasNext ? controller.nextPage : null,
+                          icon: const Icon(LucideIcons.chevronRight, size: 14),
+                          label: const Text('Selanjutnya'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
         ),
       ),

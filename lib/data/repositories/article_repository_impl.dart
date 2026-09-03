@@ -11,11 +11,32 @@ class ArticleRepositoryImpl implements ArticleRepository {
   ArticleRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Either<Failure, List<Article>>> getArticles() async {
+  Future<Either<Failure, List<Article>>> getArticles({int page = 0, int pageSize = 15}) async {
     try {
-      final data = await remoteDataSource.getArticles();
+      final data = await remoteDataSource.getArticles(page: page, pageSize: pageSize);
       final articles = data.map((json) => ArticleModel.fromJson(json)).toList();
       return Right(articles);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Article?>> getArticleById(String id) async {
+    try {
+      final data = await remoteDataSource.getArticleById(id);
+      if (data == null) return const Right(null);
+      return Right(ArticleModel.fromJson(data));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, int>> getArticlesCount() async {
+    try {
+      final count = await remoteDataSource.getArticlesCount();
+      return Right(count);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }

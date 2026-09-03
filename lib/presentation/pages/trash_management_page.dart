@@ -521,65 +521,75 @@ class TrashManagementPage extends StatelessWidget {
                     bottom: BorderSide(color: AppTheme.borderColor, width: 1),
                   ),
                 ),
-                child: Row(
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 10,
                   children: [
-                    InkWell(
-                      onTap: () => controller.toggleSelectAll(!isAllSelected),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                        child: Row(
-                          children: [
-                            Checkbox(
-                              value: isAllSelected
-                                  ? true
-                                  : (controller.isPartiallySelected ? null : false),
-                              tristate: true,
-                              activeColor: AppTheme.primaryColor,
-                              onChanged: (val) => controller.toggleSelectAll(val == true),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        InkWell(
+                          onTap: () => controller.toggleSelectAll(!isAllSelected),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Checkbox(
+                                  value: isAllSelected
+                                      ? true
+                                      : (controller.isPartiallySelected ? null : false),
+                                  tristate: true,
+                                  activeColor: AppTheme.primaryColor,
+                                  onChanged: (val) => controller.toggleSelectAll(val == true),
+                                ),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  'Pilih Semua',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 6),
-                            const Text(
-                              'Pilih Semua',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                                color: AppTheme.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(width: 16),
-
-                    if (isAnySelected)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'Terpilih $selectedCount dari ${list.length}',
-                          style: const TextStyle(
-                            color: AppTheme.primaryColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
 
-                    const Spacer(),
+                        if (isAnySelected) ...[
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Terpilih $selectedCount dari ${list.length}',
+                              style: const TextStyle(
+                                color: AppTheme.primaryColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
 
                     AnimatedOpacity(
                       duration: const Duration(milliseconds: 200),
                       opacity: isAnySelected ? 1.0 : 0.5,
-                      child: Row(
+                      child: Wrap(
+                        spacing: 10,
+                        runSpacing: 8,
                         children: [
                           ElevatedButton.icon(
                             onPressed: isAnySelected && !controller.isProcessing.value
@@ -622,8 +632,6 @@ class TrashManagementPage extends StatelessWidget {
                             ),
                           ),
 
-                          const SizedBox(width: 12),
-
                           ElevatedButton.icon(
                             onPressed: isAnySelected && !controller.isProcessing.value
                                 ? () => _showPermanentDeleteConfirmation(context, controller)
@@ -631,7 +639,7 @@ class TrashManagementPage extends StatelessWidget {
                             icon: const Icon(LucideIcons.trash2, size: 16),
                             label: Text(
                               selectedCount > 1
-                                  ? 'Hapus Permanen ($selectedCount)'
+                                  ? 'Hapus ($selectedCount)'
                                   : 'Hapus Permanen',
                             ),
                             style: ElevatedButton.styleFrom(

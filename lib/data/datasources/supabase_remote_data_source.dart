@@ -3,7 +3,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class SupabaseRemoteDataSource {
   // Books CRUD & Trash
-  Future<List<Map<String, dynamic>>> getBooks();
+  Future<List<Map<String, dynamic>>> getBooks({int page = 0, int pageSize = 15});
+  Future<Map<String, dynamic>?> getBookById(String id);
+  Future<int> getBooksCount();
+  Future<int> getActivePromosCount();
   Future<List<Map<String, dynamic>>> getDeletedBooks();
   Future<void> addBook(Map<String, dynamic> bookMap);
   Future<void> updateBook(Map<String, dynamic> bookMap);
@@ -12,7 +15,9 @@ abstract class SupabaseRemoteDataSource {
   Future<void> permanentlyDeleteBooks(List<String> ids);
 
   // Authors CRUD & Trash
-  Future<List<Map<String, dynamic>>> getAuthors();
+  Future<List<Map<String, dynamic>>> getAuthors({int page = 0, int pageSize = 15});
+  Future<Map<String, dynamic>?> getAuthorById(String id);
+  Future<int> getAuthorsCount();
   Future<List<Map<String, dynamic>>> getDeletedAuthors();
   Future<void> insertAuthor(Map<String, dynamic> authorMap);
   Future<void> updateAuthor(Map<String, dynamic> authorMap);
@@ -21,7 +26,9 @@ abstract class SupabaseRemoteDataSource {
   Future<void> permanentlyDeleteAuthors(List<String> ids);
 
   // Articles CRUD & Trash
-  Future<List<Map<String, dynamic>>> getArticles();
+  Future<List<Map<String, dynamic>>> getArticles({int page = 0, int pageSize = 15});
+  Future<Map<String, dynamic>?> getArticleById(String id);
+  Future<int> getArticlesCount();
   Future<List<Map<String, dynamic>>> getDeletedArticles();
   Future<void> insertArticle(Map<String, dynamic> articleMap);
   Future<void> updateArticle(Map<String, dynamic> articleMap);
@@ -30,12 +37,25 @@ abstract class SupabaseRemoteDataSource {
   Future<void> permanentlyDeleteArticles(List<String> ids);
 
   // Submissions CRUD & Trash
-  Future<List<Map<String, dynamic>>> getSubmissions();
+  Future<List<Map<String, dynamic>>> getSubmissions({int page = 0, int pageSize = 15, String? status});
+  Future<Map<String, dynamic>?> getSubmissionById(String id);
+  Future<int> getSubmissionsCount({String? status});
+  Future<int> getPendingSubmissionsCount();
+  Future<List<Map<String, dynamic>>> getRecentUnreviewedSubmissions({int limit = 5});
   Future<List<Map<String, dynamic>>> getDeletedSubmissions();
   Future<void> updateSubmissionStatus(String id, String status);
   Future<void> deleteSubmission(String id);
   Future<void> restoreSubmissions(List<String> ids);
   Future<void> permanentlyDeleteSubmissions(List<String> ids);
+
+  // Dashboard Aggregates
+  Future<Map<String, dynamic>> getDashboardMetrics();
+
+  // Web Settings (Landing Page CMS)
+  Future<List<Map<String, dynamic>>> getBooksForDropdown();
+  Future<Map<String, dynamic>?> getSiteSettings();
+  Future<void> updateSiteSettings(Map<String, dynamic> settings);
+  Future<String> uploadSiteBanner(Uint8List bytes, String fileName, {String? contentType});
 
   // Storage Upload Helper
   Future<String> uploadStorageFile({
@@ -76,18 +96,93 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
 
   // ---------------- BOOK METHODS ----------------
   @override
-  Future<List<Map<String, dynamic>>> getBooks() async {
+  Future<List<Map<String, dynamic>>> getBooks({int page = 0, int pageSize = 15}) async {
+    final from = page * pageSize;
+    final to = from + pageSize - 1;
+    try {
+      // Lightweight fetch: omit heavy synopsis, pdf preview, gallery, etc.
+      final response = await supabaseClient
+          .from('books')
+          .select('id, title, author, category, price, is_promo, promo_price, promo_percentage, promo_end_date, is_recommended, cover_url, coverUrl, created_at, updated_at')
+          .isFilter('deleted_at', null)
+          .order('created_at', ascending: false)
+          .range(from, to);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (_) {
+      try {
+        final response = await supabaseClient
+            .from('books')
+            .select('id, title, author, category, price, is_promo, promo_price, is_recommended, created_at')
+            .isFilter('deleted_at', null)
+            .range(from, to);
+        return List<Map<String, dynamic>>.from(response);
+      } catch (_) {
+        // Fallback
+        final response = await supabaseClient
+            .from('books')
+            .select()
+            .isFilter('deleted_at', null)
+            .limit(pageSize);
+        return List<Map<String, dynamic>>.from(response);
+      }
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getBookById(String id) async {
     try {
       final response = await supabaseClient
           .from('books')
           .select()
-          .isFilter('deleted_at', null)
-          .order('created_at', ascending: false)
-          .limit(100);
-      return List<Map<String, dynamic>>.from(response);
+          .eq('id', id)
+          .maybeSingle();
+      return response;
     } catch (_) {
-      final response = await supabaseClient.from('books').select().isFilter('deleted_at', null).limit(100);
-      return List<Map<String, dynamic>>.from(response);
+      return null;
+    }
+  }
+
+  @override
+  Future<int> getBooksCount() async {
+    try {
+      final count = await supabaseClient
+          .from('books')
+          .count(CountOption.exact)
+          .isFilter('deleted_at', null);
+      return count;
+    } catch (_) {
+      try {
+        final res = await supabaseClient
+            .from('books')
+            .select('id')
+            .isFilter('deleted_at', null);
+        return res.length;
+      } catch (_) {
+        return 0;
+      }
+    }
+  }
+
+  @override
+  Future<int> getActivePromosCount() async {
+    try {
+      final count = await supabaseClient
+          .from('books')
+          .count(CountOption.exact)
+          .isFilter('deleted_at', null)
+          .eq('is_promo', true);
+      return count;
+    } catch (_) {
+      try {
+        final res = await supabaseClient
+            .from('books')
+            .select('id')
+            .isFilter('deleted_at', null)
+            .eq('is_promo', true);
+        return res.length;
+      } catch (_) {
+        return 0;
+      }
     }
   }
 
@@ -173,18 +268,69 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
 
   // ---------------- AUTHOR METHODS ----------------
   @override
-  Future<List<Map<String, dynamic>>> getAuthors() async {
+  Future<List<Map<String, dynamic>>> getAuthors({int page = 0, int pageSize = 15}) async {
+    final from = page * pageSize;
+    final to = from + pageSize - 1;
+    try {
+      // Lightweight fetch: omit heavy bio column on list cards
+      final response = await supabaseClient
+          .from('authors')
+          .select('id, name, photo_url, photoUrl, created_at')
+          .isFilter('deleted_at', null)
+          .order('created_at', ascending: false)
+          .range(from, to);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (_) {
+      try {
+        final response = await supabaseClient
+            .from('authors')
+            .select('id, name, created_at')
+            .isFilter('deleted_at', null)
+            .range(from, to);
+        return List<Map<String, dynamic>>.from(response);
+      } catch (_) {
+        final response = await supabaseClient
+            .from('authors')
+            .select()
+            .isFilter('deleted_at', null)
+            .limit(pageSize);
+        return List<Map<String, dynamic>>.from(response);
+      }
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getAuthorById(String id) async {
     try {
       final response = await supabaseClient
           .from('authors')
           .select()
-          .isFilter('deleted_at', null)
-          .order('created_at', ascending: false)
-          .limit(100);
-      return List<Map<String, dynamic>>.from(response);
+          .eq('id', id)
+          .maybeSingle();
+      return response;
     } catch (_) {
-      final response = await supabaseClient.from('authors').select().limit(100);
-      return List<Map<String, dynamic>>.from(response);
+      return null;
+    }
+  }
+
+  @override
+  Future<int> getAuthorsCount() async {
+    try {
+      final count = await supabaseClient
+          .from('authors')
+          .count(CountOption.exact)
+          .isFilter('deleted_at', null);
+      return count;
+    } catch (_) {
+      try {
+        final res = await supabaseClient
+            .from('authors')
+            .select('id')
+            .isFilter('deleted_at', null);
+        return res.length;
+      } catch (_) {
+        return 0;
+      }
     }
   }
 
@@ -264,18 +410,69 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
 
   // ---------------- ARTICLE METHODS ----------------
   @override
-  Future<List<Map<String, dynamic>>> getArticles() async {
+  Future<List<Map<String, dynamic>>> getArticles({int page = 0, int pageSize = 15}) async {
+    final from = page * pageSize;
+    final to = from + pageSize - 1;
+    try {
+      // Lightweight fetch: omit heavy Quill Delta JSON content on list cards
+      final response = await supabaseClient
+          .from('articles')
+          .select('id, title, author, date, image_url, imageUrl, created_at')
+          .isFilter('deleted_at', null)
+          .order('created_at', ascending: false)
+          .range(from, to);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (_) {
+      try {
+        final response = await supabaseClient
+            .from('articles')
+            .select('id, title, author, date, created_at')
+            .isFilter('deleted_at', null)
+            .range(from, to);
+        return List<Map<String, dynamic>>.from(response);
+      } catch (_) {
+        final response = await supabaseClient
+            .from('articles')
+            .select()
+            .isFilter('deleted_at', null)
+            .limit(pageSize);
+        return List<Map<String, dynamic>>.from(response);
+      }
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getArticleById(String id) async {
     try {
       final response = await supabaseClient
           .from('articles')
           .select()
-          .isFilter('deleted_at', null)
-          .order('created_at', ascending: false)
-          .limit(100);
-      return List<Map<String, dynamic>>.from(response);
+          .eq('id', id)
+          .maybeSingle();
+      return response;
     } catch (_) {
-      final response = await supabaseClient.from('articles').select().limit(100);
-      return List<Map<String, dynamic>>.from(response);
+      return null;
+    }
+  }
+
+  @override
+  Future<int> getArticlesCount() async {
+    try {
+      final count = await supabaseClient
+          .from('articles')
+          .count(CountOption.exact)
+          .isFilter('deleted_at', null);
+      return count;
+    } catch (_) {
+      try {
+        final res = await supabaseClient
+            .from('articles')
+            .select('id')
+            .isFilter('deleted_at', null);
+        return res.length;
+      } catch (_) {
+        return 0;
+      }
     }
   }
 
@@ -355,18 +552,123 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
 
   // ---------------- SUBMISSION METHODS ----------------
   @override
-  Future<List<Map<String, dynamic>>> getSubmissions() async {
+  Future<List<Map<String, dynamic>>> getSubmissions({
+    int page = 0,
+    int pageSize = 15,
+    String? status,
+  }) async {
+    final from = page * pageSize;
+    final to = from + pageSize - 1;
+    try {
+      // Lightweight fetch: omit heavy synopsis and pdf document url on list cards
+      var query = supabaseClient
+          .from('submissions')
+          .select('id, sender_name, email, status, created_at')
+          .isFilter('deleted_at', null);
+
+      if (status != null &&
+          status.trim().isNotEmpty &&
+          status.toLowerCase() != 'semua status') {
+        query = query.eq('status', status.toLowerCase());
+      }
+
+      final response = await query
+          .order('created_at', ascending: false)
+          .range(from, to);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (_) {
+      try {
+        final response = await supabaseClient
+            .from('submissions')
+            .select('id, sender_name, email, status, created_at')
+            .isFilter('deleted_at', null)
+            .range(from, to);
+        return List<Map<String, dynamic>>.from(response);
+      } catch (_) {
+        final response = await supabaseClient
+            .from('submissions')
+            .select()
+            .isFilter('deleted_at', null)
+            .limit(pageSize);
+        return List<Map<String, dynamic>>.from(response);
+      }
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getSubmissionById(String id) async {
     try {
       final response = await supabaseClient
           .from('submissions')
           .select()
+          .eq('id', id)
+          .maybeSingle();
+      return response;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<int> getSubmissionsCount({String? status}) async {
+    try {
+      var query = supabaseClient
+          .from('submissions')
+          .count(CountOption.exact)
+          .isFilter('deleted_at', null);
+      if (status != null &&
+          status.trim().isNotEmpty &&
+          status.toLowerCase() != 'semua status') {
+        query = query.eq('status', status.toLowerCase());
+      }
+      final count = await query;
+      return count;
+    } catch (_) {
+      try {
+        var query = supabaseClient
+            .from('submissions')
+            .select('id')
+            .isFilter('deleted_at', null);
+        if (status != null &&
+            status.trim().isNotEmpty &&
+            status.toLowerCase() != 'semua status') {
+          query = query.eq('status', status.toLowerCase());
+        }
+        final res = await query;
+        return res.length;
+      } catch (_) {
+        return 0;
+      }
+    }
+  }
+
+  @override
+  Future<int> getPendingSubmissionsCount() async {
+    return await getSubmissionsCount(status: 'pending');
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getRecentUnreviewedSubmissions({int limit = 5}) async {
+    try {
+      final response = await supabaseClient
+          .from('submissions')
+          .select('id, sender_name, email, synopsis, pdf_document_url, status, created_at')
           .isFilter('deleted_at', null)
+          .eq('status', 'pending')
           .order('created_at', ascending: false)
-          .limit(100);
+          .limit(limit);
       return List<Map<String, dynamic>>.from(response);
     } catch (_) {
-      final response = await supabaseClient.from('submissions').select().limit(100);
-      return List<Map<String, dynamic>>.from(response);
+      try {
+        final response = await supabaseClient
+            .from('submissions')
+            .select()
+            .isFilter('deleted_at', null)
+            .limit(limit);
+        return List<Map<String, dynamic>>.from(response);
+      } catch (_) {
+        return [];
+      }
     }
   }
 
@@ -443,6 +745,144 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
       } catch (_) {}
     }
     await supabaseClient.from('submissions').delete().inFilter('id', ids);
+  }
+
+  // ---------------- DASHBOARD AGGREGATES ----------------
+  @override
+  Future<Map<String, dynamic>> getDashboardMetrics() async {
+    // Run counts concurrently with server-side head/exact queries
+    final results = await Future.wait([
+      getBooksCount(),
+      getPendingSubmissionsCount(),
+      getAuthorsCount(),
+      getActivePromosCount(),
+      getRecentUnreviewedSubmissions(limit: 5),
+    ]);
+
+    // Fetch dates for monthly growth trend calculation
+    List<DateTime> bookDates = [];
+    List<DateTime> submissionDates = [];
+
+    try {
+      final booksDatesRes = await supabaseClient
+          .from('books')
+          .select('created_at')
+          .isFilter('deleted_at', null)
+          .order('created_at', ascending: false)
+          .limit(200);
+
+      bookDates = (booksDatesRes as List)
+          .map((e) => DateTime.tryParse(e['created_at']?.toString() ?? ''))
+          .whereType<DateTime>()
+          .toList();
+    } catch (_) {}
+
+    try {
+      final subDatesRes = await supabaseClient
+          .from('submissions')
+          .select('created_at')
+          .isFilter('deleted_at', null)
+          .order('created_at', ascending: false)
+          .limit(200);
+
+      submissionDates = (subDatesRes as List)
+          .map((e) => DateTime.tryParse(e['created_at']?.toString() ?? ''))
+          .whereType<DateTime>()
+          .toList();
+    } catch (_) {}
+
+    return {
+      'totalBooks': results[0] as int,
+      'pendingSubmissions': results[1] as int,
+      'totalAuthors': results[2] as int,
+      'activePromos': results[3] as int,
+      'recentSubmissions': results[4] as List<Map<String, dynamic>>,
+      'bookDates': bookDates,
+      'submissionDates': submissionDates,
+    };
+  }
+
+  // ---------------- SITE SETTINGS (WEB CMS) ----------------
+  @override
+  Future<List<Map<String, dynamic>>> getBooksForDropdown() async {
+    try {
+      final res = await supabaseClient
+          .from('books')
+          .select('id, title, price, promo_price, cover_url, coverUrl')
+          .isFilter('deleted_at', null)
+          .order('title', ascending: true);
+      return List<Map<String, dynamic>>.from(res);
+    } catch (_) {
+      try {
+        final res = await supabaseClient
+            .from('books')
+            .select('id, title, price, discount_price, cover_url')
+            .isFilter('deleted_at', null)
+            .order('title', ascending: true);
+        return List<Map<String, dynamic>>.from(res);
+      } catch (_) {
+        try {
+          final res = await supabaseClient
+              .from('books')
+              .select('id, title, price')
+              .isFilter('deleted_at', null)
+              .order('title', ascending: true);
+          return List<Map<String, dynamic>>.from(res);
+        } catch (_) {
+          return [];
+        }
+      }
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getSiteSettings() async {
+    try {
+      final res = await supabaseClient
+          .from('site_settings')
+          .select()
+          .limit(1)
+          .maybeSingle();
+      return res;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> updateSiteSettings(Map<String, dynamic> settings) async {
+    final payload = Map<String, dynamic>.from(settings);
+    payload['updated_at'] = DateTime.now().toIso8601String();
+    if (!payload.containsKey('id') || payload['id'] == null) {
+      payload['id'] = 'default';
+    }
+    await supabaseClient.from('site_settings').upsert(payload);
+  }
+
+  @override
+  Future<String> uploadSiteBanner(Uint8List bytes, String fileName, {String? contentType}) async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final extension = fileName.contains('.') ? fileName.split('.').last.toLowerCase() : 'jpg';
+    final sanitizedName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9\._-]'), '_').toLowerCase();
+    final path = 'hero/$timestamp-$sanitizedName';
+    final mimeType = contentType ?? (extension == 'png' ? 'image/png' : (extension == 'webp' ? 'image/webp' : 'image/jpeg'));
+
+    try {
+      return await uploadStorageFile(
+        bucket: 'public_assets',
+        path: path,
+        bytes: bytes,
+        contentType: mimeType,
+      );
+    } catch (_) {
+      // Fallback to pustaka-assets if public_assets bucket is not created
+      return await uploadStorageFile(
+        bucket: 'pustaka-assets',
+        path: path,
+        bytes: bytes,
+        contentType: mimeType,
+      );
+    }
   }
 
   // ---------------- STORAGE HELPER ----------------

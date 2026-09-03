@@ -8,7 +8,7 @@ class GetAuthorsUseCase {
 
   GetAuthorsUseCase(this.repository);
 
-  Future<Either<Failure, List<Author>>> call() async {
-    return await repository.getAuthors();
+  Future<Either<Failure, List<Author>>> call({int page = 0, int pageSize = 15}) async {
+    return await repository.getAuthors(page: page, pageSize: pageSize);
   }
 }

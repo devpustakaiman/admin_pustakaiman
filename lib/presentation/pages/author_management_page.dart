@@ -82,148 +82,148 @@ class AuthorManagementPage extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Unified Action Bar (Search, Sort, Spacer, Refresh, Add)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            // Responsive Two-Tier Action Bar (Top Tier: Search & Primary Actions, Bottom Tier: Sort Filters)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Compact Search Input Field (Height 44)
-                SizedBox(
-                  width: 280,
-                  height: 44,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.borderColor),
-                      boxShadow: AppTheme.softShadow,
-                    ),
-                    child: Obx(() {
-                      return TextField(
-                        onChanged: (val) => controller.searchQuery.value = val,
-                        textAlignVertical: TextAlignVertical.center,
-                        decoration: InputDecoration(
-                          hintText: 'Cari penulis, biografi...',
-                          prefixIcon: const Icon(LucideIcons.search, size: 16, color: AppTheme.textSecondary),
-                          suffixIcon: controller.searchQuery.value.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(LucideIcons.x, size: 14, color: AppTheme.textSecondary),
-                                  onPressed: () {
-                                    controller.searchQuery.value = '';
-                                  },
-                                )
-                              : null,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
-                          fillColor: Colors.white,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                // Sort By Dropdown (Height 44)
-                Container(
-                  height: 44,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.borderColor),
-                    boxShadow: AppTheme.softShadow,
-                  ),
-                  child: Obx(() {
-                    return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(LucideIcons.arrowUpDown, size: 16, color: AppTheme.primaryColor),
-                        const SizedBox(width: 8),
-                        DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: controller.sortBy.value,
-                            icon: const Icon(LucideIcons.chevronDown, size: 16, color: AppTheme.textSecondary),
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimary,
-                            ),
-                            onChanged: (String? newValue) {
-                              if (newValue != null) {
-                                controller.sortBy.value = newValue;
-                              }
-                            },
-                            items: const [
-                              DropdownMenuItem(value: 'name', child: Text('Urut: Nama')),
-                              DropdownMenuItem(value: 'date', child: Text('Urut: Tanggal Dibuat')),
-                            ],
+                // Top Tier: Search (Expanded) + Refresh IconButton + Tambah Penulis Button
+                Row(
+                  children: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 44,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppTheme.borderColor),
+                            boxShadow: AppTheme.softShadow,
                           ),
+                          child: Obx(() {
+                            return TextField(
+                              onChanged: (val) => controller.searchQuery.value = val,
+                              textAlignVertical: TextAlignVertical.center,
+                              decoration: InputDecoration(
+                                hintText: 'Cari penulis, biografi...',
+                                prefixIcon: const Icon(LucideIcons.search, size: 16, color: AppTheme.textSecondary),
+                                suffixIcon: controller.searchQuery.value.isNotEmpty
+                                    ? IconButton(
+                                        icon: const Icon(LucideIcons.x, size: 14, color: AppTheme.textSecondary),
+                                        onPressed: () {
+                                          controller.searchQuery.value = '';
+                                        },
+                                      )
+                                    : null,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 0.0),
+                                fillColor: Colors.white,
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                              ),
+                            );
+                          }),
                         ),
-                      ],
-                    );
-                  }),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    IconButton(
+                      onPressed: () => controller.fetchAuthors(),
+                      icon: const Icon(LucideIcons.refreshCw, size: 18),
+                      tooltip: 'Segarkan Data',
+                      style: IconButton.styleFrom(
+                        fixedSize: const Size(44, 44),
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: AppTheme.borderColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => controller.openFormDialog(),
+                      icon: const Icon(LucideIcons.plus, size: 18),
+                      label: const Text('Tambah Penulis'),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(0, 44),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 12),
 
-                const SizedBox(width: 12),
-
-                // Asc / Desc Toggle Button (Height 44)
-                Obx(() {
-                  final isAsc = controller.isAscending.value;
-                  return InkWell(
-                    onTap: () => controller.isAscending.value = !isAsc,
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      width: 44,
+                // Bottom Tier: Sort Dropdown & Asc/Desc Toggle
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Container(
                       height: 44,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppTheme.borderColor),
                         boxShadow: AppTheme.softShadow,
                       ),
-                      child: Icon(
-                        isAsc ? LucideIcons.arrowUp : LucideIcons.arrowDown,
-                        size: 18,
-                        color: AppTheme.primaryColor,
-                      ),
+                      child: Obx(() {
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(LucideIcons.arrowUpDown, size: 16, color: AppTheme.primaryColor),
+                            const SizedBox(width: 8),
+                            DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: controller.sortBy.value,
+                                icon: const Icon(LucideIcons.chevronDown, size: 16, color: AppTheme.textSecondary),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textPrimary,
+                                ),
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    controller.sortBy.value = newValue;
+                                  }
+                                },
+                                items: const [
+                                  DropdownMenuItem(value: 'name', child: Text('Urut: Nama')),
+                                  DropdownMenuItem(value: 'date', child: Text('Urut: Tanggal Dibuat')),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
                     ),
-                  );
-                }),
-
-                // Pushes Refresh and Add buttons neatly to the far right!
-                const Spacer(),
-
-                // Refresh Button (IconButton, Height 44)
-                IconButton(
-                  onPressed: () => controller.fetchAuthors(),
-                  icon: const Icon(LucideIcons.refreshCw, size: 18),
-                  tooltip: 'Segarkan Data',
-                  style: IconButton.styleFrom(
-                    fixedSize: const Size(44, 44),
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: AppTheme.borderColor),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                // Tambah Penulis Baru Button (ElevatedButton, Height 44)
-                ElevatedButton.icon(
-                  onPressed: () => controller.openFormDialog(),
-                  icon: const Icon(LucideIcons.plus, size: 18),
-                  label: const Text('Tambah Penulis Baru'),
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(0, 44),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
+                    Obx(() {
+                      final isAsc = controller.isAscending.value;
+                      return InkWell(
+                        onTap: () => controller.isAscending.value = !isAsc,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppTheme.borderColor),
+                            boxShadow: AppTheme.softShadow,
+                          ),
+                          child: Icon(
+                            isAsc ? LucideIcons.arrowUp : LucideIcons.arrowDown,
+                            size: 18,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
                 ),
               ],
             ),
@@ -389,6 +389,76 @@ class AuthorManagementPage extends StatelessWidget {
                 );
               }),
             ),
+
+            // Pagination Controls Footer Bar
+            Obx(() {
+              final total = controller.totalAuthorsCount.value;
+              final page = controller.currentPage.value;
+              final pageSize = controller.pageSize;
+              final start = total == 0 ? 0 : (page * pageSize) + 1;
+              final end = ((page + 1) * pageSize).clamp(0, total);
+              final hasPrev = page > 0;
+              final hasNext = (page + 1) * pageSize < total;
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                margin: const EdgeInsets.only(top: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.borderColor),
+                  boxShadow: AppTheme.softShadow,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      total > 0
+                          ? 'Menampilkan $start - $end dari $total penulis (Halaman ${page + 1})'
+                          : 'Belum ada data penulis',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: hasPrev ? controller.prevPage : null,
+                          icon: const Icon(LucideIcons.chevronLeft, size: 14),
+                          label: const Text('Sebelumnya'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            'Halaman ${page + 1}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: hasNext ? controller.nextPage : null,
+                          icon: const Icon(LucideIcons.chevronRight, size: 14),
+                          label: const Text('Selanjutnya'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
         ),
       ),

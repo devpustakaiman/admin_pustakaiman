@@ -11,11 +11,32 @@ class AuthorRepositoryImpl implements AuthorRepository {
   AuthorRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Either<Failure, List<Author>>> getAuthors() async {
+  Future<Either<Failure, List<Author>>> getAuthors({int page = 0, int pageSize = 15}) async {
     try {
-      final data = await remoteDataSource.getAuthors();
+      final data = await remoteDataSource.getAuthors(page: page, pageSize: pageSize);
       final authors = data.map((json) => AuthorModel.fromJson(json)).toList();
       return Right(authors);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Author?>> getAuthorById(String id) async {
+    try {
+      final data = await remoteDataSource.getAuthorById(id);
+      if (data == null) return const Right(null);
+      return Right(AuthorModel.fromJson(data));
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, int>> getAuthorsCount() async {
+    try {
+      final count = await remoteDataSource.getAuthorsCount();
+      return Right(count);
     } catch (e) {
       return Left(ServerFailure(e.toString()));
     }
