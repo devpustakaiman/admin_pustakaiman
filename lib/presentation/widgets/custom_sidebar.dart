@@ -16,12 +16,13 @@ class CustomSidebar extends StatelessWidget {
     final navItems = [
       _NavItemData('Dashboard', LucideIcons.layoutDashboard, 0),
       _NavItemData('Katalog Buku', LucideIcons.bookOpen, 1),
-      _NavItemData('Naskah Masuk', LucideIcons.inbox, 2),
-      _NavItemData('Data Penulis', LucideIcons.users, 3),
-      _NavItemData('Artikel & Berita', LucideIcons.fileText, 4),
-      _NavItemData('Video Media', LucideIcons.video, 5),
-      _NavItemData('Pengaturan Web', LucideIcons.layoutTemplate, 6),
-      _NavItemData('Keranjang Sampah', LucideIcons.trash2, 7),
+      _NavItemData('Pesanan Pre-Order', LucideIcons.shoppingBag, 2),
+      _NavItemData('Naskah Masuk', LucideIcons.inbox, 3),
+      _NavItemData('Data Penulis', LucideIcons.users, 4),
+      _NavItemData('Artikel & Berita', LucideIcons.fileText, 5),
+      _NavItemData('Video Media', LucideIcons.video, 6),
+      _NavItemData('Pengaturan Web', LucideIcons.layoutTemplate, 7),
+      _NavItemData('Keranjang Sampah', LucideIcons.trash2, 8),
     ];
 
     return Container(

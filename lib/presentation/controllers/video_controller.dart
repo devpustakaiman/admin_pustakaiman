@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/utils/app_toast.dart';
 import '../../domain/entities/media_video.dart';
 import '../../domain/repositories/video_repository.dart';
 import '../widgets/video_form_dialog.dart';
@@ -217,22 +218,16 @@ class VideoController extends GetxController {
     final yUrl = youtubeUrlController.text.trim();
 
     if (title.isEmpty) {
-      Get.snackbar(
-        'Peringatan',
-        'Judul Video wajib diisi',
-        backgroundColor: Colors.orangeAccent,
-        colorText: Colors.white,
-      );
+      if (Get.context != null) {
+        AppToast.showError(Get.context!, 'Judul Video wajib diisi');
+      }
       return;
     }
 
     if (yUrl.isEmpty) {
-      Get.snackbar(
-        'Peringatan',
-        'Link YouTube wajib diisi',
-        backgroundColor: Colors.orangeAccent,
-        colorText: Colors.white,
-      );
+      if (Get.context != null) {
+        AppToast.showError(Get.context!, 'Link YouTube wajib diisi');
+      }
       return;
     }
 
@@ -285,25 +280,22 @@ class VideoController extends GetxController {
       result.fold(
         (failure) {
           errorMessage.value = failure.message;
-          Get.snackbar(
-            'Gagal',
-            'Gagal menyimpan video: ${failure.message}',
-            backgroundColor: Colors.redAccent,
-            colorText: Colors.white,
-          );
+          if (Get.context != null) {
+            AppToast.showError(Get.context!, 'Gagal menyimpan video: ${failure.message}');
+          }
         },
         (_) async {
           clearForm();
           await fetchVideos();
           if (Get.isDialogOpen ?? false) Get.back();
-          Get.snackbar(
-            'Sukses',
-            editingVideoId.value.isEmpty
-                ? 'Video media berhasil ditambahkan'
-                : 'Data video berhasil diperbarui',
-            backgroundColor: Colors.teal,
-            colorText: Colors.white,
-          );
+          if (Get.context != null) {
+            AppToast.showSuccess(
+              Get.context!,
+              editingVideoId.value.isEmpty
+                  ? 'Video media berhasil ditambahkan'
+                  : 'Data video berhasil diperbarui',
+            );
+          }
         },
       );
     } catch (e) {
@@ -333,23 +325,20 @@ class VideoController extends GetxController {
     final result = await videoRepository.updateVideo(updatedVideo);
     result.fold(
       (failure) {
-        Get.snackbar(
-          'Gagal',
-          'Gagal mengubah status unggulan: ${failure.message}',
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
-        );
+        if (Get.context != null) {
+          AppToast.showError(Get.context!, 'Gagal mengubah status unggulan: ${failure.message}');
+        }
       },
       (_) async {
         await fetchVideos();
-        Get.snackbar(
-          'Sukses',
-          newFeaturedStatus
-              ? '"${video.title}" kini menjadi Video Utama (Featured)'
-              : 'Status Video Utama dinonaktifkan',
-          backgroundColor: Colors.teal,
-          colorText: Colors.white,
-        );
+        if (Get.context != null) {
+          AppToast.showSuccess(
+            Get.context!,
+            newFeaturedStatus
+                ? '"${video.title}" kini menjadi Video Utama (Featured)'
+                : 'Status Video Utama dinonaktifkan',
+          );
+        }
       },
     );
   }
@@ -378,21 +367,18 @@ class VideoController extends GetxController {
               final result = await videoRepository.deleteVideo(video.id);
               result.fold(
                 (failure) {
-                  Get.snackbar(
-                    'Gagal',
-                    'Gagal menghapus video: ${failure.message}',
-                    backgroundColor: Colors.redAccent,
-                    colorText: Colors.white,
-                  );
+                  if (Get.context != null) {
+                    AppToast.showError(Get.context!, 'Gagal menghapus video: ${failure.message}');
+                  }
                 },
                 (_) async {
                   await fetchVideos();
-                  Get.snackbar(
-                    'Sukses',
-                    'Video berhasil dipindahkan ke Keranjang Sampah',
-                    backgroundColor: Colors.teal,
-                    colorText: Colors.white,
-                  );
+                  if (Get.context != null) {
+                    AppToast.showSuccess(
+                      Get.context!,
+                      'Video berhasil dipindahkan ke Keranjang Sampah',
+                    );
+                  }
                 },
               );
             },
@@ -403,3 +389,4 @@ class VideoController extends GetxController {
     );
   }
 }
+

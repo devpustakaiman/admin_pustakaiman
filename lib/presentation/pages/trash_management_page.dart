@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
+import '../../data/models/preorder_model.dart';
 import '../../domain/entities/article.dart';
 import '../../domain/entities/author.dart';
 import '../../domain/entities/book.dart';
@@ -126,6 +127,34 @@ class TrashManagementPage extends StatelessWidget {
           if (item.pdfDocumentUrl.isNotEmpty)
             _detailRow('Link PDF Document', item.pdfDocumentUrl),
           _detailRow('Tanggal Kirim', item.createdAt.toString().split('.').first),
+          _detailRow('Tanggal Dihapus', _formatDeletedAt(item.deletedAt)),
+        ],
+      );
+    } else if (item is PreorderModel) {
+      title = 'Detail Pre-Order: ${item.customerName}';
+      contentWidget = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (item.paymentProofUrl.isNotEmpty)
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: CachedNetworkImage(
+                  imageUrl: item.paymentProofUrl,
+                  height: 160,
+                  fit: BoxFit.cover,
+                  errorWidget: (_, __, ___) => const Icon(LucideIcons.image, size: 60),
+                ),
+              ),
+            ),
+          const SizedBox(height: 16),
+          _detailRow('Nama Pemesan', item.customerName),
+          _detailRow('Email Pemesan', item.email),
+          _detailRow('No HP / WhatsApp', item.phone.isNotEmpty ? item.phone : '-'),
+          _detailRow('Judul Buku', item.bookTitle),
+          _detailRow('Kuantiti', '${item.quantity} eks'),
+          _detailRow('Status Pesanan', item.status.toUpperCase()),
+          _detailRow('Tanggal Pemesanan', item.createdAt.toString().split('.').first),
           _detailRow('Tanggal Dihapus', _formatDeletedAt(item.deletedAt)),
         ],
       );
@@ -388,7 +417,8 @@ class TrashManagementPage extends StatelessWidget {
                                   final totalCount = controller.deletedBooks.length +
                                       controller.deletedAuthors.length +
                                       controller.deletedArticles.length +
-                                      controller.deletedSubmissions.length;
+                                      controller.deletedSubmissions.length +
+                                      controller.deletedPreorders.length;
                                   return Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 10,
@@ -412,7 +442,7 @@ class TrashManagementPage extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             const Text(
-                              'Kelola dan pulihkan data terhapus (Buku, Penulis, Artikel, Naskah Masuk)',
+                              'Kelola dan pulihkan data terhapus (Buku, Penulis, Artikel, Naskah Masuk, Pre-Order)',
                               style: TextStyle(
                                 color: AppTheme.textSecondary,
                                 fontSize: 13,
@@ -469,6 +499,14 @@ class TrashManagementPage extends StatelessWidget {
                             label: 'Naskah Masuk',
                             icon: LucideIcons.inbox,
                             count: controller.deletedSubmissions.length,
+                          ),
+                          const SizedBox(width: 10),
+                          _buildCategoryChip(
+                            controller,
+                            category: TrashCategory.preorders,
+                            label: 'Pesanan Pre-Order',
+                            icon: LucideIcons.shoppingBag,
+                            count: controller.deletedPreorders.length,
                           ),
                         ],
                       ),
@@ -974,6 +1012,12 @@ class TrashManagementPage extends StatelessWidget {
         backgroundColor: Colors.orangeAccent.withValues(alpha: 0.1),
         child: const Icon(LucideIcons.inbox, color: Colors.orangeAccent, size: 20),
       );
+    } else if (item is PreorderModel) {
+      return CircleAvatar(
+        radius: 24,
+        backgroundColor: const Color(0xFFCCFBF1),
+        child: const Icon(LucideIcons.shoppingBag, color: Color(0xFF0F766E), size: 20),
+      );
     }
     return const Icon(LucideIcons.file);
   }
@@ -998,6 +1042,10 @@ class TrashManagementPage extends StatelessWidget {
     } else if (item is Submission) {
       title = 'Naskah: ${item.senderName}';
       subtitle = 'Email: ${item.email} • Status: ${item.status.toUpperCase()}';
+      deletedAt = item.deletedAt;
+    } else if (item is PreorderModel) {
+      title = 'Pre-Order: ${item.customerName}';
+      subtitle = 'Buku: ${item.bookTitle} • WA: ${item.phone.isNotEmpty ? item.phone : '-'}';
       deletedAt = item.deletedAt;
     }
 
@@ -1048,6 +1096,7 @@ class TrashManagementPage extends StatelessWidget {
     if (item is Author) return item.id;
     if (item is Article) return item.id;
     if (item is Submission) return item.id;
+    if (item is PreorderModel) return item.id;
     return '';
   }
 
@@ -1056,6 +1105,7 @@ class TrashManagementPage extends StatelessWidget {
     if (item is Author) return item.name;
     if (item is Article) return item.title;
     if (item is Submission) return item.senderName;
+    if (item is PreorderModel) return 'Pre-Order ${item.customerName}';
     return 'Item';
   }
 }

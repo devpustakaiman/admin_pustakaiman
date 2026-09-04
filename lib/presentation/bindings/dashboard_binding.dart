@@ -31,6 +31,7 @@ import '../controllers/author_controller.dart';
 import '../controllers/book_controller.dart';
 import '../controllers/dashboard_controller.dart';
 import '../controllers/main_layout_controller.dart';
+import '../controllers/preorder_controller.dart';
 import '../controllers/submission_controller.dart';
 import '../controllers/trash_controller.dart';
 import '../controllers/video_controller.dart';
@@ -133,6 +134,11 @@ class DashboardBinding extends Bindings {
     );
     Get.lazyPut(
       () => WebSettingsController(
+        dataSource: Get.find<SupabaseRemoteDataSource>(),
+      ),
+    );
+    Get.lazyPut(
+      () => PreorderController(
         dataSource: Get.find<SupabaseRemoteDataSource>(),
       ),
     );

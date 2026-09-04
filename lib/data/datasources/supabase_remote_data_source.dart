@@ -51,10 +51,18 @@ abstract class SupabaseRemoteDataSource {
   // Dashboard Aggregates
   Future<Map<String, dynamic>> getDashboardMetrics();
 
-  // Web Settings (Landing Page CMS)
+  // Web Settings (Landing Page CMS) & Pre-Order Settings
   Future<List<Map<String, dynamic>>> getBooksForDropdown();
   Future<Map<String, dynamic>?> getSiteSettings();
   Future<void> updateSiteSettings(Map<String, dynamic> settings);
+  Future<String> getPreorderNotificationEmail();
+  Future<void> updatePreorderNotificationEmail(String email);
+  Future<List<Map<String, dynamic>>> getPreorders();
+  Future<List<Map<String, dynamic>>> getDeletedPreorders();
+  Future<void> updatePreorderStatus(String id, String status);
+  Future<void> deletePreorder(String id);
+  Future<void> restorePreorders(List<String> ids);
+  Future<void> permanentlyDeletePreorders(List<String> ids);
   Future<String> uploadSiteBanner(Uint8List bytes, String fileName, {String? contentType});
 
   // Media Videos CRUD & Trash
@@ -928,6 +936,171 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
       payload['id'] = 'default';
     }
     await supabaseClient.from('site_settings').upsert(payload);
+  }
+
+  @override
+  Future<String> getPreorderNotificationEmail() async {
+    try {
+      final res = await supabaseClient
+          .from('site_settings')
+          .select('preorder_notification_email')
+          .eq('id', 'default')
+          .maybeSingle();
+
+      if (res != null &&
+          res['preorder_notification_email'] != null &&
+          res['preorder_notification_email'].toString().trim().isNotEmpty) {
+        return res['preorder_notification_email'].toString().trim();
+      }
+    } catch (_) {
+      try {
+        final res = await supabaseClient
+            .from('site_settings')
+            .select()
+            .limit(1)
+            .maybeSingle();
+
+        if (res != null) {
+          final emailCol = res['preorder_notification_email'] ?? res['value'];
+          if (emailCol != null && emailCol.toString().trim().isNotEmpty) {
+            return emailCol.toString().trim();
+          }
+        }
+      } catch (_) {}
+    }
+
+    return 'admin@pustakaiman.com';
+  }
+
+  @override
+  Future<void> updatePreorderNotificationEmail(String email) async {
+    final trimmedEmail = email.trim();
+    final now = DateTime.now().toIso8601String();
+
+    try {
+      await supabaseClient
+          .from('site_settings')
+          .update({
+            'preorder_notification_email': trimmedEmail,
+            'updated_at': now,
+          })
+          .eq('id', 'default');
+    } catch (_) {
+      await supabaseClient.from('site_settings').upsert({
+        'id': 'default',
+        'preorder_notification_email': trimmedEmail,
+        'updated_at': now,
+      });
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getPreorders() async {
+    try {
+      final res = await supabaseClient
+          .from('preorders')
+          .select()
+          .isFilter('deleted_at', null)
+          .order('created_at', ascending: false);
+      return List<Map<String, dynamic>>.from(res);
+    } catch (_) {
+      try {
+        final res = await supabaseClient
+            .from('pre_orders')
+            .select()
+            .isFilter('deleted_at', null)
+            .order('created_at', ascending: false);
+        return List<Map<String, dynamic>>.from(res);
+      } catch (_) {
+        return [];
+      }
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getDeletedPreorders() async {
+    try {
+      final res = await supabaseClient
+          .from('preorders')
+          .select()
+          .not('deleted_at', 'is', null)
+          .order('deleted_at', ascending: false);
+      return List<Map<String, dynamic>>.from(res);
+    } catch (_) {
+      try {
+        final res = await supabaseClient
+            .from('pre_orders')
+            .select()
+            .not('deleted_at', 'is', null)
+            .order('deleted_at', ascending: false);
+        return List<Map<String, dynamic>>.from(res);
+      } catch (_) {
+        return [];
+      }
+    }
+  }
+
+  @override
+  Future<void> updatePreorderStatus(String id, String status) async {
+    try {
+      await supabaseClient
+          .from('preorders')
+          .update({
+            'status': status,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', id);
+    } catch (_) {
+      await supabaseClient
+          .from('pre_orders')
+          .update({
+            'status': status,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', id);
+    }
+  }
+
+  @override
+  Future<void> deletePreorder(String id) async {
+    final now = DateTime.now().toIso8601String();
+    try {
+      await supabaseClient
+          .from('preorders')
+          .update({'deleted_at': now})
+          .eq('id', id);
+    } catch (_) {
+      await supabaseClient
+          .from('pre_orders')
+          .update({'deleted_at': now})
+          .eq('id', id);
+    }
+  }
+
+  @override
+  Future<void> restorePreorders(List<String> ids) async {
+    if (ids.isEmpty) return;
+    try {
+      await supabaseClient
+          .from('preorders')
+          .update({'deleted_at': null})
+          .inFilter('id', ids);
+    } catch (_) {
+      await supabaseClient
+          .from('pre_orders')
+          .update({'deleted_at': null})
+          .inFilter('id', ids);
+    }
+  }
+
+  @override
+  Future<void> permanentlyDeletePreorders(List<String> ids) async {
+    if (ids.isEmpty) return;
+    try {
+      await supabaseClient.from('preorders').delete().inFilter('id', ids);
+    } catch (_) {
+      await supabaseClient.from('pre_orders').delete().inFilter('id', ids);
+    }
   }
 
   @override

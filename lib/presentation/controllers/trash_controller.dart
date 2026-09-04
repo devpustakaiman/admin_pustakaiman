@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../data/datasources/supabase_remote_data_source.dart';
+import '../../data/models/preorder_model.dart';
 import '../../domain/entities/article.dart';
 import '../../domain/entities/author.dart';
 import '../../domain/entities/book.dart';
@@ -11,28 +13,32 @@ import '../../domain/repositories/submission_repository.dart';
 import 'article_controller.dart';
 import 'author_controller.dart';
 import 'book_controller.dart';
+import 'preorder_controller.dart';
 import 'submission_controller.dart';
 
-enum TrashCategory { books, authors, articles, submissions }
+enum TrashCategory { books, authors, articles, submissions, preorders }
 
 class TrashController extends GetxController {
   final BookRepository bookRepository;
   final AuthorRepository authorRepository;
   final ArticleRepository articleRepository;
   final SubmissionRepository submissionRepository;
+  final SupabaseRemoteDataSource remoteDataSource;
 
   TrashController({
     required this.bookRepository,
     required this.authorRepository,
     required this.articleRepository,
     required this.submissionRepository,
-  });
+    SupabaseRemoteDataSource? dataSource,
+  }) : remoteDataSource = dataSource ?? Get.find<SupabaseRemoteDataSource>();
 
   final Rx<TrashCategory> activeCategory = TrashCategory.books.obs;
   final RxList<Book> deletedBooks = <Book>[].obs;
   final RxList<Author> deletedAuthors = <Author>[].obs;
   final RxList<Article> deletedArticles = <Article>[].obs;
   final RxList<Submission> deletedSubmissions = <Submission>[].obs;
+  final RxList<PreorderModel> deletedPreorders = <PreorderModel>[].obs;
 
   final RxSet<String> selectedIds = <String>{}.obs;
   final RxBool isLoading = false.obs;
@@ -60,6 +66,7 @@ class TrashController extends GetxController {
       _fetchDeletedAuthors(),
       _fetchDeletedArticles(),
       _fetchDeletedSubmissions(),
+      _fetchDeletedPreorders(),
     ]);
     isLoading.value = false;
   }
@@ -79,6 +86,9 @@ class TrashController extends GetxController {
         break;
       case TrashCategory.submissions:
         await _fetchDeletedSubmissions();
+        break;
+      case TrashCategory.preorders:
+        await _fetchDeletedPreorders();
         break;
     }
     isLoading.value = false;
@@ -140,6 +150,20 @@ class TrashController extends GetxController {
     );
   }
 
+  Future<void> _fetchDeletedPreorders() async {
+    try {
+      final rawData = await remoteDataSource.getDeletedPreorders();
+      final data = rawData.map((j) => PreorderModel.fromJson(j)).toList();
+      deletedPreorders.assignAll(data);
+      if (activeCategory.value == TrashCategory.preorders) {
+        final validIds = data.map((p) => p.id).toSet();
+        selectedIds.retainWhere((id) => validIds.contains(id));
+      }
+    } catch (e) {
+      errorMessage.value = e.toString();
+    }
+  }
+
   // Filtered items getter
   List<dynamic> get currentFilteredList {
     final query = searchQuery.value.toLowerCase().trim();
@@ -171,6 +195,14 @@ class TrashController extends GetxController {
               s.email.toLowerCase().contains(query) ||
               s.synopsis.toLowerCase().contains(query);
         }).toList();
+      case TrashCategory.preorders:
+        if (query.isEmpty) return deletedPreorders;
+        return deletedPreorders.where((p) {
+          return p.customerName.toLowerCase().contains(query) ||
+              p.email.toLowerCase().contains(query) ||
+              p.phone.toLowerCase().contains(query) ||
+              p.bookTitle.toLowerCase().contains(query);
+        }).toList();
     }
   }
 
@@ -192,6 +224,7 @@ class TrashController extends GetxController {
     if (item is Author) return item.id;
     if (item is Article) return item.id;
     if (item is Submission) return item.id;
+    if (item is PreorderModel) return item.id;
     return '';
   }
 
@@ -258,6 +291,20 @@ class TrashController extends GetxController {
           }
         });
         break;
+      case TrashCategory.preorders:
+        try {
+          await remoteDataSource.restorePreorders(idsToRestore);
+          isProcessing.value = false;
+          selectedIds.removeAll(idsToRestore);
+          await fetchCurrentCategory();
+          if (Get.isRegistered<PreorderController>()) {
+            Get.find<PreorderController>().loadData();
+          }
+        } catch (e) {
+          isProcessing.value = false;
+          errorMessage.value = e.toString();
+        }
+        break;
     }
   }
 
@@ -304,6 +351,17 @@ class TrashController extends GetxController {
         final result = await submissionRepository.permanentlyDeleteSubmissions(idsToDelete);
         _handlePermanentDeleteResult(result, idsToDelete, 'Naskah');
         break;
+      case TrashCategory.preorders:
+        try {
+          await remoteDataSource.permanentlyDeletePreorders(idsToDelete);
+          isProcessing.value = false;
+          selectedIds.removeAll(idsToDelete);
+          await fetchCurrentCategory();
+        } catch (e) {
+          isProcessing.value = false;
+          errorMessage.value = e.toString();
+        }
+        break;
     }
   }
 
@@ -324,3 +382,4 @@ class TrashController extends GetxController {
     );
   }
 }
+
