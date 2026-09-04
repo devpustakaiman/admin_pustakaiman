@@ -28,6 +28,8 @@ class AuthorManagementPage extends StatelessWidget {
           width: radius * 2,
           height: radius * 2,
           fit: BoxFit.cover,
+          memCacheWidth: (radius * 4).toInt(),
+          memCacheHeight: (radius * 4).toInt(),
           placeholder: (context, url) => Container(
             width: radius * 2,
             height: radius * 2,

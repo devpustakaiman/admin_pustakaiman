@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -130,9 +129,6 @@ class ArticleController extends GetxController {
 
   Future<String?> uploadHeaderImageToStorage(PlatformFile file) async {
     Uint8List? bytes = file.bytes;
-    if (bytes == null && file.path != null) {
-      bytes = await File(file.path!).readAsBytes();
-    }
     if (bytes == null) {
       throw Exception('Data file gambar kosong');
     }

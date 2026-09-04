@@ -893,11 +893,11 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
     try {
       final res = await supabaseClient
           .from('preorders')
-          .select()
+          .select('id, customer_name, name, pemesan, book_title, title, buku, total_price, price, status, created_at')
           .isFilter('deleted_at', null)
           .order('created_at', ascending: false)
           .limit(limit);
-      return List<Map<String, dynamic>>.from(res);
+      return (res as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
     } catch (_) {
       return [];
     }
@@ -977,11 +977,11 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
     try {
       final response = await supabaseClient
           .from('books')
-          .select()
+          .select('id, title, category, price, cover_url, coverUrl, is_promo, stock, created_at')
           .isFilter('deleted_at', null)
           .order('created_at', ascending: false)
           .limit(limit);
-      return List<Map<String, dynamic>>.from(response);
+      return (response as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
     } catch (_) {
       return [];
     }
@@ -1029,7 +1029,8 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
           .select()
           .limit(1)
           .maybeSingle();
-      return res;
+      if (res == null) return null;
+      return Map<String, dynamic>.from(res);
     } catch (e) {
       return null;
     }

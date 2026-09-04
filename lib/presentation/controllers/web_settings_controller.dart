@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -521,9 +520,6 @@ class WebSettingsController extends GetxController {
         final file = selectedBannerFile.value!;
 
         Uint8List? bytes = file.bytes;
-        if (bytes == null && file.path != null) {
-          bytes = await File(file.path!).readAsBytes();
-        }
 
         if (bytes != null) {
           final uploadedUrl = await remoteDataSource.uploadSiteBanner(
@@ -740,9 +736,6 @@ class WebSettingsController extends GetxController {
       if (selectedCatalogPromoFile.value != null) {
         final file = selectedCatalogPromoFile.value!;
         Uint8List? bytes = file.bytes;
-        if (bytes == null && file.path != null) {
-          bytes = await File(file.path!).readAsBytes();
-        }
 
         if (bytes != null) {
           final uploadedUrl = await remoteDataSource.uploadSiteBanner(

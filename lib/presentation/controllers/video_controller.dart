@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -135,9 +134,6 @@ class VideoController extends GetxController {
 
   Future<String?> uploadThumbnailStorage(PlatformFile file) async {
     Uint8List? bytes = file.bytes;
-    if (bytes == null && file.path != null) {
-      bytes = await File(file.path!).readAsBytes();
-    }
     if (bytes == null) {
       throw Exception('File thumbnail kosong atau tidak dapat dibaca');
     }

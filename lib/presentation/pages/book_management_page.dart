@@ -32,6 +32,8 @@ class BookManagementPage extends StatelessWidget {
         width: width,
         height: height,
         fit: BoxFit.cover,
+        memCacheWidth: (width * 2.5).toInt(),
+        memCacheHeight: (height * 2.5).toInt(),
         placeholder: (context, url) => Container(
           width: width,
           height: height,

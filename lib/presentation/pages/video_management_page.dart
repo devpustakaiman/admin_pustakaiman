@@ -313,6 +313,8 @@ class VideoManagementPage extends GetView<VideoController> {
                                       width: 140,
                                       height: 85,
                                       fit: BoxFit.cover,
+                                      memCacheWidth: 350,
+                                      memCacheHeight: 210,
                                       placeholder: (_, __) => Container(color: Colors.grey.shade200),
                                       errorWidget: (_, __, ___) => Container(
                                         color: Colors.grey.shade200,

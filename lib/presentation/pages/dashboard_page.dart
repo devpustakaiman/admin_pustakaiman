@@ -176,67 +176,69 @@ class DashboardPage extends StatelessWidget {
       final crossAxisCount = isWide ? 4 : (constraints.maxWidth > 640 ? 2 : 1);
       final aspectRatio = isWide ? 1.5 : (constraints.maxWidth > 640 ? 1.6 : 2.4);
 
-      return GridView.count(
-        crossAxisCount: crossAxisCount,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: aspectRatio,
-        children: [
-          // Card 1: Pre-Order
-          _buildStatCard(
-            title: 'Pesanan Pre-Order',
-            value: '${controller.totalPreorders.value}',
-            subtitle: 'Estimasi Omzet: Rp ${_formatPrice(controller.totalRevenue.value)}',
-            icon: LucideIcons.shoppingBag,
-            iconColor: const Color(0xFF059669),
-            badgeText: controller.pendingPreorders.value > 0
-                ? '${controller.pendingPreorders.value} Butuh Verifikasi'
-                : 'Semua Terverifikasi',
-            badgeColor: controller.pendingPreorders.value > 0 ? Colors.amber[800]! : const Color(0xFF059669),
-            onTap: () => controller.navigateToPage(2),
-          ),
+      return Obx(() {
+        return GridView.count(
+          crossAxisCount: crossAxisCount,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: aspectRatio,
+          children: [
+            // Card 1: Pre-Order
+            _buildStatCard(
+              title: 'Pesanan Pre-Order',
+              value: '${controller.totalPreorders.value}',
+              subtitle: 'Estimasi Omzet: Rp ${_formatPrice(controller.totalRevenue.value)}',
+              icon: LucideIcons.shoppingBag,
+              iconColor: const Color(0xFF059669),
+              badgeText: controller.pendingPreorders.value > 0
+                  ? '${controller.pendingPreorders.value} Butuh Verifikasi'
+                  : 'Semua Terverifikasi',
+              badgeColor: controller.pendingPreorders.value > 0 ? Colors.amber[800]! : const Color(0xFF059669),
+              onTap: () => controller.navigateToPage(2),
+            ),
 
-          // Card 2: Katalog Buku
-          _buildStatCard(
-            title: 'Katalog Buku',
-            value: '${controller.totalBooks.value}',
-            subtitle: 'Koleksi judul buku terbit aktif',
-            icon: LucideIcons.bookOpen,
-            iconColor: AppTheme.primaryColor,
-            badgeText: 'Katalog Aktif',
-            badgeColor: AppTheme.primaryColor,
-            onTap: () => controller.navigateToPage(1),
-          ),
+            // Card 2: Katalog Buku
+            _buildStatCard(
+              title: 'Katalog Buku',
+              value: '${controller.totalBooks.value}',
+              subtitle: 'Koleksi judul buku terbit aktif',
+              icon: LucideIcons.bookOpen,
+              iconColor: AppTheme.primaryColor,
+              badgeText: 'Katalog Aktif',
+              badgeColor: AppTheme.primaryColor,
+              onTap: () => controller.navigateToPage(1),
+            ),
 
-          // Card 3: Naskah Masuk
-          _buildStatCard(
-            title: 'Naskah Masuk',
-            value: '${controller.totalSubmissions.value}',
-            subtitle: 'Pengajuan karya dari calon penulis',
-            icon: LucideIcons.inbox,
-            iconColor: Colors.purple[600]!,
-            badgeText: controller.pendingSubmissions.value > 0
-                ? '${controller.pendingSubmissions.value} Pending Kurasi'
-                : 'Semua Terbaca',
-            badgeColor: controller.pendingSubmissions.value > 0 ? Colors.orange[800]! : Colors.purple[600]!,
-            onTap: () => controller.navigateToPage(3),
-          ),
+            // Card 3: Naskah Masuk
+            _buildStatCard(
+              title: 'Naskah Masuk',
+              value: '${controller.totalSubmissions.value}',
+              subtitle: 'Pengajuan karya dari calon penulis',
+              icon: LucideIcons.inbox,
+              iconColor: Colors.purple[600]!,
+              badgeText: controller.pendingSubmissions.value > 0
+                  ? '${controller.pendingSubmissions.value} Pending Kurasi'
+                  : 'Semua Terbaca',
+              badgeColor: controller.pendingSubmissions.value > 0 ? Colors.orange[800]! : Colors.purple[600]!,
+              onTap: () => controller.navigateToPage(3),
+            ),
 
-          // Card 4: Penulis & Konten Media
-          _buildStatCard(
-            title: 'Penulis & Konten Media',
-            value: '${controller.totalAuthors.value}',
-            subtitle: '${controller.totalArticles.value} Artikel • ${controller.totalVideos.value} Video',
-            icon: LucideIcons.users,
-            iconColor: Colors.blue[600]!,
-            badgeText: 'Mitra & Media',
-            badgeColor: Colors.blue[600]!,
-            onTap: () => controller.navigateToPage(4),
-          ),
-        ],
-      );
+            // Card 4: Penulis & Konten Media
+            _buildStatCard(
+              title: 'Penulis & Konten Media',
+              value: '${controller.totalAuthors.value}',
+              subtitle: '${controller.totalArticles.value} Artikel • ${controller.totalVideos.value} Video',
+              icon: LucideIcons.users,
+              iconColor: Colors.blue[600]!,
+              badgeText: 'Mitra & Media',
+              badgeColor: Colors.blue[600]!,
+              onTap: () => controller.navigateToPage(4),
+            ),
+          ],
+        );
+      });
     });
   }
 
@@ -1267,6 +1269,8 @@ class DashboardPage extends StatelessWidget {
                               coverUrl,
                               width: 38,
                               height: 50,
+                              cacheWidth: 114,
+                              cacheHeight: 150,
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => Container(
                                 width: 38,

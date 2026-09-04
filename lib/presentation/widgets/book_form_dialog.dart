@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -530,13 +529,6 @@ class BookFormDialog extends StatelessWidget {
                                   if (file.bytes != null) {
                                     previewWidget = Image.memory(
                                       file.bytes!,
-                                      width: 75,
-                                      height: 105,
-                                      fit: BoxFit.cover,
-                                    );
-                                  } else if (file.path != null) {
-                                    previewWidget = Image.file(
-                                      File(file.path!),
                                       width: 75,
                                       height: 105,
                                       fit: BoxFit.cover,

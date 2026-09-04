@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -311,13 +310,6 @@ class VideoFormDialog extends StatelessWidget {
                                   if (file.bytes != null) {
                                     previewWidget = Image.memory(
                                       file.bytes!,
-                                      width: 160,
-                                      height: 100,
-                                      fit: BoxFit.cover,
-                                    );
-                                  } else if (file.path != null) {
-                                    previewWidget = Image.file(
-                                      File(file.path!),
                                       width: 160,
                                       height: 100,
                                       fit: BoxFit.cover,

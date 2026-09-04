@@ -535,6 +535,8 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
                         child: CachedNetworkImage(
                           imageUrl: item.paymentProofUrl,
                           fit: BoxFit.cover,
+                          memCacheWidth: 120,
+                          memCacheHeight: 120,
                           placeholder: (context, url) => const Center(
                             child: SizedBox(
                               width: 14,
