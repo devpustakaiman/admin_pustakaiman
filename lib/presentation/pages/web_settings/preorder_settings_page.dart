@@ -17,58 +17,57 @@ class PreorderSettingsPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryColor),
-          );
-        }
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(28.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Page Header Title & Primary Action
-              CmsPageHeader(
-                title: 'Kelola Halaman > Pre-Order',
-                subtitle: 'Kelola alamat email notifikasi transaksi pre-order dan daftar akun rekening bank penerima pembayaran',
-                isSaving: controller.isSavingPreorderEmail.value,
-                onSave: () async {
-                  final success = await controller.savePreorderEmail();
-                  if (context.mounted) {
-                    if (success) {
-                      AppToast.showSuccess(
-                        context,
-                        'Email notifikasi pre-order berhasil disimpan!',
-                      );
-                    } else {
-                      AppToast.showError(
-                        context,
-                        controller.errorMessage.value.isNotEmpty
-                            ? controller.errorMessage.value
-                            : 'Gagal menyimpan email notifikasi.',
-                      );
-                    }
-                  }
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // Card 1: Pre-Order Notification Email Setting
-              _buildNotificationEmailCard(context, controller),
-
-              const SizedBox(height: 24),
-
-              // Card 2: Bank Accounts Management Card
-              _buildBankAccountsCard(context, controller),
-            ],
-          ),
-        );
-      }),
+      body: Obx(() => controller.isLoading.value
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          : _buildContent(context, controller)),
     );
   }
+
+  Widget _buildContent(BuildContext context, WebSettingsController controller) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Page Header Title & Primary Action
+          CmsPageHeader(
+            title: 'Kelola Halaman > Pre-Order',
+            subtitle: 'Kelola alamat email notifikasi transaksi pre-order dan daftar akun rekening bank penerima pembayaran',
+            isSaving: controller.isSavingPreorderEmail.value,
+            onSave: () async {
+              final success = await controller.savePreorderEmail();
+              if (context.mounted) {
+                if (success) {
+                  AppToast.showSuccess(
+                    context,
+                    'Email notifikasi pre-order berhasil disimpan!',
+                  );
+                } else {
+                  AppToast.showError(
+                    context,
+                    controller.errorMessage.value.isNotEmpty
+                        ? controller.errorMessage.value
+                        : 'Gagal menyimpan email notifikasi.',
+                  );
+                }
+              }
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          // Card 1: Pre-Order Notification Email Setting
+          _buildNotificationEmailCard(context, controller),
+
+          const SizedBox(height: 24),
+
+          // Card 2: Bank Accounts Management Card
+          _buildBankAccountsCard(context, controller),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildNotificationEmailCard(BuildContext context, WebSettingsController controller) {
     return Container(

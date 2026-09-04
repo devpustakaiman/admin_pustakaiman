@@ -15,51 +15,49 @@ class ContactSettingsPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryColor),
-          );
-        }
+      body: Obx(() => controller.isLoading.value
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          : _buildContent(context, controller)),
+    );
+  }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(28.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Page Header Title & Primary Action
-              CmsPageHeader(
-                title: 'Kelola Halaman > Kontak & Layanan',
-                subtitle: 'Kelola alamat kantor, nomor kontak telepon, WhatsApp customer care, dan email resmi',
-                isSaving: controller.isSavingContactInfo.value,
-                onSave: () async {
-                  final success = await controller.saveContactInfo();
-                  if (context.mounted) {
-                    if (success) {
-                      AppToast.showSuccess(
-                        context,
-                        'Informasi Kontak & Layanan berhasil disimpan!',
-                      );
-                    } else {
-                      AppToast.showError(
-                        context,
-                        controller.errorMessage.value.isNotEmpty
-                            ? controller.errorMessage.value
-                            : 'Gagal menyimpan informasi kontak.',
-                      );
-                    }
-                  }
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // Card: Contact Info
-              _buildContactInfoCard(context, controller),
-            ],
+  Widget _buildContent(BuildContext context, WebSettingsController controller) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Page Header Title & Primary Action
+          CmsPageHeader(
+            title: 'Kelola Halaman > Kontak & Layanan',
+            subtitle: 'Kelola alamat kantor, nomor kontak telepon, WhatsApp customer care, dan email resmi',
+            isSaving: controller.isSavingContactInfo.value,
+            onSave: () async {
+              final success = await controller.saveContactInfo();
+              if (context.mounted) {
+                if (success) {
+                  AppToast.showSuccess(
+                    context,
+                    'Informasi Kontak & Layanan berhasil disimpan!',
+                  );
+                } else {
+                  AppToast.showError(
+                    context,
+                    controller.errorMessage.value.isNotEmpty
+                        ? controller.errorMessage.value
+                        : 'Gagal menyimpan informasi kontak.',
+                  );
+                }
+              }
+            },
           ),
-        );
-      }),
+
+          const SizedBox(height: 24),
+
+          // Card: Contact Info
+          _buildContactInfoCard(context, controller),
+        ],
+      ),
     );
   }
 

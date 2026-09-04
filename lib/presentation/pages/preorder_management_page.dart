@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import 'dart:ui';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -16,11 +16,16 @@ class PreorderManagementPage extends StatefulWidget {
 
 class _PreorderManagementPageState extends State<PreorderManagementPage> {
   late final ScrollController _horizontalScrollController;
+  late final PreorderController _controller;
 
   @override
   void initState() {
     super.initState();
     _horizontalScrollController = ScrollController();
+    // Register or find the controller – NEVER call Get.put inside build()
+    _controller = Get.isRegistered<PreorderController>()
+        ? Get.find<PreorderController>()
+        : Get.put(PreorderController());
   }
 
   @override
@@ -31,7 +36,7 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(PreorderController());
+    final controller = _controller;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),

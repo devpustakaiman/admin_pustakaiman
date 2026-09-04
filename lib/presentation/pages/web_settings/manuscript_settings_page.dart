@@ -15,51 +15,49 @@ class ManuscriptSettingsPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryColor),
-          );
-        }
+      body: Obx(() => controller.isLoading.value
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          : _buildContent(context, controller)),
+    );
+  }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(28.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Page Header Title & Primary Action
-              CmsPageHeader(
-                title: 'Kelola Halaman > Kirim Naskah',
-                subtitle: 'Kelola alur pengiriman naskah, kriteria kelayakan, deskripsi bantuan redaksi, dan kontak WhatsApp redaksi',
-                isSaving: controller.isSavingManuscriptInfo.value,
-                onSave: () async {
-                  final success = await controller.saveManuscriptInfo();
-                  if (context.mounted) {
-                    if (success) {
-                      AppToast.showSuccess(
-                        context,
-                        'Pengaturan Kirim Naskah berhasil disimpan!',
-                      );
-                    } else {
-                      AppToast.showError(
-                        context,
-                        controller.errorMessage.value.isNotEmpty
-                            ? controller.errorMessage.value
-                            : 'Gagal menyimpan pengaturan kirim naskah.',
-                      );
-                    }
-                  }
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // Card: Manuscript Settings
-              _buildManuscriptSettingsCard(context, controller),
-            ],
+  Widget _buildContent(BuildContext context, WebSettingsController controller) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Page Header Title & Primary Action
+          CmsPageHeader(
+            title: 'Kelola Halaman > Kirim Naskah',
+            subtitle: 'Kelola alur pengiriman naskah, kriteria kelayakan, deskripsi bantuan redaksi, dan kontak WhatsApp redaksi',
+            isSaving: controller.isSavingManuscriptInfo.value,
+            onSave: () async {
+              final success = await controller.saveManuscriptInfo();
+              if (context.mounted) {
+                if (success) {
+                  AppToast.showSuccess(
+                    context,
+                    'Pengaturan Kirim Naskah berhasil disimpan!',
+                  );
+                } else {
+                  AppToast.showError(
+                    context,
+                    controller.errorMessage.value.isNotEmpty
+                        ? controller.errorMessage.value
+                        : 'Gagal menyimpan pengaturan kirim naskah.',
+                  );
+                }
+              }
+            },
           ),
-        );
-      }),
+
+          const SizedBox(height: 24),
+
+          // Card: Manuscript Settings
+          _buildManuscriptSettingsCard(context, controller),
+        ],
+      ),
     );
   }
 

@@ -38,86 +38,89 @@ class DashboardPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return _buildSkeletonLoading();
-        }
+      // Use a targeted Obx only for the loading skeleton swap.
+      // The inner cards (_buildMetricSummaryGrid, recent lists) each have
+      // their own scoped Obx, so only those leaf widgets rebuild on data changes.
+      body: Obx(() => controller.isLoading.value
+          ? _buildSkeletonLoading()
+          : _buildContent(context, controller)),
+    );
+  }
 
-        return RefreshIndicator(
-          onRefresh: controller.fetchDashboardData,
-          color: AppTheme.primaryColor,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(28.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. Header Bar
-                _buildHeader(context, controller),
-                const SizedBox(height: 24),
+  Widget _buildContent(BuildContext context, DashboardController controller) {
+    return RefreshIndicator(
+      onRefresh: controller.fetchDashboardData,
+      color: AppTheme.primaryColor,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(28.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Header Bar
+            _buildHeader(context, controller),
+            const SizedBox(height: 24),
 
-                // 2. Metric Summary Grid (4 Stat Cards)
-                _buildMetricSummaryGrid(controller),
-                const SizedBox(height: 24),
+            // 2. Metric Summary Grid (4 Stat Cards) – internally scoped Obx
+            _buildMetricSummaryGrid(controller),
+            const SizedBox(height: 24),
 
-                // 3. Trend Chart Section
-                _buildTrendChartSection(controller),
-                const SizedBox(height: 24),
+            // 3. Trend Chart Section
+            _buildTrendChartSection(controller),
+            const SizedBox(height: 24),
 
-                // 4. Split Activity Feed (2-Column Desktop Layout)
-                LayoutBuilder(builder: (context, constraints) {
-                  final isDesktop = constraints.maxWidth >= 1024;
+            // 4. Split Activity Feed (2-Column Desktop Layout)
+            LayoutBuilder(builder: (context, constraints) {
+              final isDesktop = constraints.maxWidth >= 1024;
 
-                  if (isDesktop) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Left Column (~60%): Recent Pre-Orders & Stock Status
-                        Expanded(
-                          flex: 6,
-                          child: Column(
-                            children: [
-                              _buildRecentPreordersCard(context, controller),
-                              const SizedBox(height: 24),
-                              _buildStatusStokCard(context, controller),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        // Right Column (~40%): Recent Submissions & Quick Shortcuts
-                        Expanded(
-                          flex: 4,
-                          child: Column(
-                            children: [
-                              _buildRecentSubmissionsCard(context, controller),
-                              const SizedBox(height: 24),
-                              _buildQuickShortcutsCard(context, controller),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  }
+              if (isDesktop) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Left Column (~60%): Recent Pre-Orders & Stock Status
+                    Expanded(
+                      flex: 6,
+                      child: Column(
+                        children: [
+                          _buildRecentPreordersCard(context, controller),
+                          const SizedBox(height: 24),
+                          _buildStatusStokCard(context, controller),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    // Right Column (~40%): Recent Submissions & Quick Shortcuts
+                    Expanded(
+                      flex: 4,
+                      child: Column(
+                        children: [
+                          _buildRecentSubmissionsCard(context, controller),
+                          const SizedBox(height: 24),
+                          _buildQuickShortcutsCard(context, controller),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
 
-                  // Mobile / Tablet Stacked Layout
-                  return Column(
-                    children: [
-                      _buildRecentPreordersCard(context, controller),
-                      const SizedBox(height: 24),
-                      _buildStatusStokCard(context, controller),
-                      const SizedBox(height: 24),
-                      _buildRecentSubmissionsCard(context, controller),
-                      const SizedBox(height: 24),
-                      _buildQuickShortcutsCard(context, controller),
-                    ],
-                  );
-                }),
-                const SizedBox(height: 32),
-              ],
-            ),
-          ),
-        );
-      }),
+              // Mobile / Tablet Stacked Layout
+              return Column(
+                children: [
+                  _buildRecentPreordersCard(context, controller),
+                  const SizedBox(height: 24),
+                  _buildStatusStokCard(context, controller),
+                  const SizedBox(height: 24),
+                  _buildRecentSubmissionsCard(context, controller),
+                  const SizedBox(height: 24),
+                  _buildQuickShortcutsCard(context, controller),
+                ],
+              );
+            }),
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
     );
   }
 

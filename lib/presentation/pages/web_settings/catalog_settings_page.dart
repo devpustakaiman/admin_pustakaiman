@@ -15,51 +15,49 @@ class CatalogSettingsPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryColor),
-          );
-        }
+      body: Obx(() => controller.isLoading.value
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          : _buildContent(context, controller)),
+    );
+  }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(28.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Page Header Title & Primary Action
-              CmsPageHeader(
-                title: 'Kelola Halaman > Katalog Buku',
-                subtitle: 'Kelola judul header, deskripsi banner promo, tautan promo, dan kategori unggulan halaman katalog',
-                isSaving: controller.isSavingCatalogInfo.value,
-                onSave: () async {
-                  final success = await controller.saveCatalogInfo();
-                  if (success && context.mounted) {
-                    AppToast.showSuccess(context, 'Pengaturan katalog berhasil disimpan!');
-                  }
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // 1. Header & Text Editor Card
-              _buildHeaderSettingsCard(context, controller),
-
-              const SizedBox(height: 24),
-
-              // 2. Banner Promo Card
-              _buildPromoBannerCard(context, controller),
-
-              const SizedBox(height: 24),
-
-              // 3. Featured Categories Card
-              _buildFeaturedCategoriesCard(context, controller),
-
-
-            ],
+  Widget _buildContent(BuildContext context, WebSettingsController controller) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Page Header Title & Primary Action
+          CmsPageHeader(
+            title: 'Kelola Halaman > Katalog Buku',
+            subtitle: 'Kelola judul header, deskripsi banner promo, tautan promo, dan kategori unggulan halaman katalog',
+            isSaving: controller.isSavingCatalogInfo.value,
+            onSave: () async {
+              final success = await controller.saveCatalogInfo();
+              if (success && context.mounted) {
+                AppToast.showSuccess(context, 'Pengaturan katalog berhasil disimpan!');
+              }
+            },
           ),
-        );
-      }),
+
+          const SizedBox(height: 24),
+
+          // 1. Header & Text Editor Card
+          _buildHeaderSettingsCard(context, controller),
+
+          const SizedBox(height: 24),
+
+          // 2. Banner Promo Card
+          _buildPromoBannerCard(context, controller),
+
+          const SizedBox(height: 24),
+
+          // 3. Featured Categories Card
+          _buildFeaturedCategoriesCard(context, controller),
+
+
+        ],
+      ),
     );
   }
 

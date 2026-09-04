@@ -33,47 +33,51 @@ class WebSettingsPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryColor),
-          );
-        }
+      body: Obx(() => controller.isLoading.value
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          : _buildContent(context, controller, isMobile)),
+    );
+  }
 
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(isMobile ? 16.0 : 28.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Page Header Title
-              CmsPageHeader(
-                title: 'Pengaturan Web (Landing Page CMS)',
-                subtitle: 'Kustomisasi konten Hero Section publik pada frontend Pustaka Ilman',
-                isSaving: controller.isSaving.value,
-                onSave: () async {
-                  final success = await controller.saveSettings();
-                  if (context.mounted) {
-                    if (success) {
-                      AppToast.showSuccess(
-                        context,
-                        'Pengaturan Hero Landing Page berhasil disimpan!',
-                      );
-                    } else {
-                      AppToast.showError(
-                        context,
-                        controller.errorMessage.value.isNotEmpty
-                            ? controller.errorMessage.value
-                            : 'Gagal menyimpan pengaturan.',
-                      );
-                    }
-                  }
-                },
-              ),
+  Widget _buildContent(
+    BuildContext context,
+    WebSettingsController controller,
+    bool isMobile,
+  ) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(isMobile ? 16.0 : 28.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Page Header Title
+          CmsPageHeader(
+            title: 'Pengaturan Web (Landing Page CMS)',
+            subtitle: 'Kustomisasi konten Hero Section publik pada frontend Pustaka Ilman',
+            isSaving: controller.isSaving.value,
+            onSave: () async {
+              final success = await controller.saveSettings();
+              if (context.mounted) {
+                if (success) {
+                  AppToast.showSuccess(
+                    context,
+                    'Pengaturan Hero Landing Page berhasil disimpan!',
+                  );
+                } else {
+                  AppToast.showError(
+                    context,
+                    controller.errorMessage.value.isNotEmpty
+                        ? controller.errorMessage.value
+                        : 'Gagal menyimpan pengaturan.',
+                  );
+                }
+              }
+            },
+          ),
 
-              const SizedBox(height: 24),
+          const SizedBox(height: 24),
 
-              // Main Form & Live Preview Grid
-              LayoutBuilder(builder: (context, constraints) {
+          // Main Form & Live Preview Grid
+          LayoutBuilder(builder: (context, constraints) {
                 final isDesktop = constraints.maxWidth >= 1024;
 
                 return Column(
@@ -145,11 +149,9 @@ class WebSettingsPage extends StatelessWidget {
                   ],
                 );
               }),
-            ],
-          ),
-        );
-      }),
-    );
+          ],
+        ),
+      );
   }
 
   // 1. Content Editor Card (Headline & Subheadline)

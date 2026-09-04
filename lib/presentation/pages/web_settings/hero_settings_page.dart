@@ -30,47 +30,47 @@ class HeroSettingsPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryColor),
-          );
-        }
+      body: Obx(() => controller.isLoading.value
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          : _buildContent(context, controller)),
+    );
+  }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(28.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Page Header Title & Primary Action
-              CmsPageHeader(
-                title: 'Kelola Halaman > Beranda & Hero',
-                subtitle: 'Kustomisasi Teks Hero Banner, Visual Banner, Buku Pilihan Minggu Ini, dan Pratinjau Tampilan Hero Publik',
-                isSaving: controller.isSaving.value,
-                onSave: () async {
-                  final success = await controller.saveSettings();
-                  if (context.mounted) {
-                    if (success) {
-                      AppToast.showSuccess(
-                        context,
-                        'Pengaturan Hero Landing Page berhasil disimpan!',
-                      );
-                    } else {
-                      AppToast.showError(
-                        context,
-                        controller.errorMessage.value.isNotEmpty
-                            ? controller.errorMessage.value
-                            : 'Gagal menyimpan pengaturan.',
-                      );
-                    }
-                  }
-                },
-              ),
+  Widget _buildContent(BuildContext context, WebSettingsController controller) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Page Header Title & Primary Action
+          CmsPageHeader(
+            title: 'Kelola Halaman > Beranda & Hero',
+            subtitle: 'Kustomisasi Teks Hero Banner, Visual Banner, Buku Pilihan Minggu Ini, dan Pratinjau Tampilan Hero Publik',
+            isSaving: controller.isSaving.value,
+            onSave: () async {
+              final success = await controller.saveSettings();
+              if (context.mounted) {
+                if (success) {
+                  AppToast.showSuccess(
+                    context,
+                    'Pengaturan Hero Landing Page berhasil disimpan!',
+                  );
+                } else {
+                  AppToast.showError(
+                    context,
+                    controller.errorMessage.value.isNotEmpty
+                        ? controller.errorMessage.value
+                        : 'Gagal menyimpan pengaturan.',
+                  );
+                }
+              }
+            },
+          ),
 
-              const SizedBox(height: 24),
+          const SizedBox(height: 24),
 
-              // 2x2 Grid Segiempat for Hero Management
-              LayoutBuilder(builder: (context, constraints) {
+          // 2x2 Grid Segiempat for Hero Management
+          LayoutBuilder(builder: (context, constraints) {
                 final isDesktop = constraints.maxWidth >= 1024;
 
                 if (isDesktop) {
@@ -116,11 +116,9 @@ class HeroSettingsPage extends StatelessWidget {
                   ],
                 );
               }),
-            ],
-          ),
-        );
-      }),
-    );
+          ],
+        ),
+      );
   }
 
   // 1. Content Editor Card (Headline & Subheadline)

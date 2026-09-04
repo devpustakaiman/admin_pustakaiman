@@ -12,54 +12,51 @@ class AboutSettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<WebSettingsController>();
-
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryColor),
-          );
-        }
+      body: Obx(() => controller.isLoading.value
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          : _buildContent(context, controller)),
+    );
+  }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(28.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Page Header Title & Primary Action
-              CmsPageHeader(
-                title: 'Kelola Halaman > Tentang Kami',
-                subtitle: 'Kelola profil penerbit, visi, misi, serta 4 angka statistik pencapaian',
-                isSaving: controller.isSavingAboutInfo.value,
-                onSave: () async {
-                  final success = await controller.saveAboutInfo();
-                  if (context.mounted) {
-                    if (success) {
-                      AppToast.showSuccess(
-                        context,
-                        'Profil Halaman Tentang Kami berhasil disimpan!',
-                      );
-                    } else {
-                      AppToast.showError(
-                        context,
-                        controller.errorMessage.value.isNotEmpty
-                            ? controller.errorMessage.value
-                            : 'Gagal menyimpan profil tentang kami.',
-                      );
-                    }
-                  }
-                },
-              ),
-
-              const SizedBox(height: 24),
-
-              // Card: About Settings
-              _buildAboutSettingsCard(context, controller),
-            ],
+  Widget _buildContent(BuildContext context, WebSettingsController controller) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Page Header Title & Primary Action
+          CmsPageHeader(
+            title: 'Kelola Halaman > Tentang Kami',
+            subtitle: 'Kelola profil penerbit, visi, misi, serta 4 angka statistik pencapaian',
+            isSaving: controller.isSavingAboutInfo.value,
+            onSave: () async {
+              final success = await controller.saveAboutInfo();
+              if (context.mounted) {
+                if (success) {
+                  AppToast.showSuccess(
+                    context,
+                    'Profil Halaman Tentang Kami berhasil disimpan!',
+                  );
+                } else {
+                  AppToast.showError(
+                    context,
+                    controller.errorMessage.value.isNotEmpty
+                        ? controller.errorMessage.value
+                        : 'Gagal menyimpan profil tentang kami.',
+                  );
+                }
+              }
+            },
           ),
-        );
-      }),
+
+          const SizedBox(height: 24),
+
+          // Card: About Settings
+          _buildAboutSettingsCard(context, controller),
+        ],
+      ),
     );
   }
 
