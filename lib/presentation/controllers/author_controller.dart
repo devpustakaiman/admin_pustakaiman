@@ -10,6 +10,7 @@ import '../../domain/usecases/delete_author_usecase.dart';
 import '../../domain/usecases/get_authors_usecase.dart';
 import '../../domain/usecases/update_author_usecase.dart';
 import '../../domain/repositories/author_repository.dart';
+import '../../core/utils/app_toast.dart';
 
 class AuthorController extends GetxController {
   final GetAuthorsUseCase getAuthorsUseCase;
@@ -339,17 +340,36 @@ class AuthorController extends GetxController {
 
       uploadStatusMessage.value = 'Menyimpan data penulis...';
 
+      final isEdit = editingAuthorId.value.isNotEmpty;
       bool success = false;
-      if (editingAuthorId.value.isEmpty) {
+      if (!isEdit) {
         success = await addAuthor();
       } else {
         success = await updateAuthor();
       }
 
-      if (success && (Get.isDialogOpen ?? false)) Get.back();
+      if (success) {
+        if (Get.isDialogOpen ?? false) Get.back();
+        if (Get.context != null) {
+          AppToast.showSuccess(
+            Get.context!,
+            isEdit ? 'Data penulis berhasil diperbarui' : 'Penulis baru berhasil ditambahkan',
+          );
+        }
+      } else {
+        if (Get.context != null) {
+          AppToast.showError(
+            Get.context!,
+            errorMessage.value.isNotEmpty ? errorMessage.value : 'Gagal menyimpan data penulis',
+          );
+        }
+      }
       return success;
     } catch (e) {
       errorMessage.value = 'Gagal menyimpan penulis: $e';
+      if (Get.context != null) {
+        AppToast.showError(Get.context!, errorMessage.value);
+      }
       return false;
     } finally {
       isUploading.value = false;

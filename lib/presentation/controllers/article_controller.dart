@@ -12,6 +12,7 @@ import '../../domain/usecases/add_article_usecase.dart';
 import '../../domain/usecases/delete_article_usecase.dart';
 import '../../domain/usecases/get_articles_usecase.dart';
 import '../../domain/usecases/update_article_usecase.dart';
+import '../../core/utils/app_toast.dart';
 
 class ArticleController extends GetxController {
   final GetArticlesUseCase getArticlesUseCase;
@@ -485,17 +486,37 @@ class ArticleController extends GetxController {
 
       uploadStatusMessage.value = 'Menyimpan artikel...';
 
+      final isEdit = editingArticleId.value.isNotEmpty;
+      final articleTitle = titleController.text.trim();
       bool success = false;
-      if (editingArticleId.value.isEmpty) {
+      if (!isEdit) {
         success = await addArticle();
       } else {
         success = await updateArticle();
       }
 
-      if (success && (Get.isDialogOpen ?? false)) Get.back();
+      if (success) {
+        if (Get.isDialogOpen ?? false) Get.back();
+        if (Get.context != null) {
+          AppToast.showSuccess(
+            Get.context!,
+            isEdit ? 'Artikel "$articleTitle" berhasil diperbarui' : 'Artikel "$articleTitle" berhasil ditambahkan',
+          );
+        }
+      } else {
+        if (Get.context != null) {
+          AppToast.showError(
+            Get.context!,
+            errorMessage.value.isNotEmpty ? errorMessage.value : 'Gagal menyimpan artikel',
+          );
+        }
+      }
       return success;
     } catch (e) {
       errorMessage.value = 'Gagal menyimpan artikel: $e';
+      if (Get.context != null) {
+        AppToast.showError(Get.context!, errorMessage.value);
+      }
       return false;
     } finally {
       isUploading.value = false;
@@ -565,6 +586,9 @@ class ArticleController extends GetxController {
       (failure) {
         errorMessage.value = failure.message;
         isLoading.value = false;
+        if (Get.context != null) {
+          AppToast.showError(Get.context!, 'Gagal memindahkan artikel: ${failure.message}');
+        }
         return false;
       },
       (_) async {

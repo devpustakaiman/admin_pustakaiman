@@ -12,6 +12,7 @@ import '../../domain/usecases/delete_book_usecase.dart';
 import '../../domain/usecases/get_books_usecase.dart';
 import '../../domain/usecases/update_book_usecase.dart';
 import '../widgets/book_form_dialog.dart';
+import '../../core/utils/app_toast.dart';
 
 class BookController extends GetxController {
   final GetBooksUseCase getBooksUseCase;
@@ -141,7 +142,13 @@ class BookController extends GetxController {
       int comparison = 0;
       switch (sortBy.value) {
         case 'date':
-          comparison = a.id.compareTo(b.id);
+          final dateA = a.createdAt != null
+              ? DateTime.tryParse(a.createdAt.toString()) ?? DateTime(1970)
+              : DateTime(1970);
+          final dateB = b.createdAt != null
+              ? DateTime.tryParse(b.createdAt.toString()) ?? DateTime(1970)
+              : DateTime(1970);
+          comparison = dateA.compareTo(dateB);
           break;
         case 'author':
           comparison = a.author.toLowerCase().compareTo(b.author.toLowerCase());
@@ -546,15 +553,36 @@ class BookController extends GetxController {
 
       uploadStatusMessage.value = 'Menyimpan data buku...';
 
-      if (editingBookId.value.isEmpty) {
-        await addBook(finalGalleryUrls);
+      final isEdit = editingBookId.value.isNotEmpty;
+      final bookTitle = titleController.text.trim();
+      bool success = false;
+      if (!isEdit) {
+        success = await addBook(finalGalleryUrls);
       } else {
-        await updateBook(finalGalleryUrls);
+        success = await updateBook(finalGalleryUrls);
       }
 
-      if (Get.isDialogOpen ?? false) Get.back();
+      if (success) {
+        if (Get.isDialogOpen ?? false) Get.back();
+        if (Get.context != null) {
+          AppToast.showSuccess(
+            Get.context!,
+            isEdit ? 'Data buku "$bookTitle" berhasil diperbarui' : 'Buku "$bookTitle" berhasil ditambahkan',
+          );
+        }
+      } else {
+        if (Get.context != null) {
+          AppToast.showError(
+            Get.context!,
+            errorMessage.value.isNotEmpty ? errorMessage.value : 'Gagal menyimpan data buku',
+          );
+        }
+      }
     } catch (e) {
       errorMessage.value = 'Gagal mengunggah file atau menyimpan buku: $e';
+      if (Get.context != null) {
+        AppToast.showError(Get.context!, errorMessage.value);
+      }
     } finally {
       isUploading.value = false;
       isLoading.value = false;
@@ -562,7 +590,7 @@ class BookController extends GetxController {
     }
   }
 
-  Future<void> addBook(List<String> galleryUrls) async {
+  Future<bool> addBook(List<String> galleryUrls) async {
     final priceInt = int.tryParse(priceController.text.trim()) ?? 0;
     final promoPriceInt = isPromo.value ? int.tryParse(promoPriceController.text.trim()) : null;
     final promoPercentInt = isPromo.value ? int.tryParse(promoPercentageController.text.trim()) : null;
@@ -587,19 +615,21 @@ class BookController extends GetxController {
     );
 
     final result = await addBookUseCase.call(newBook);
-    result.fold(
+    return result.fold(
       (failure) {
         errorMessage.value = failure.message;
         isLoading.value = false;
+        return false;
       },
       (_) async {
         clearForm();
         await fetchBooks();
+        return true;
       },
     );
   }
 
-  Future<void> updateBook(List<String> galleryUrls) async {
+  Future<bool> updateBook(List<String> galleryUrls) async {
     final priceInt = int.tryParse(priceController.text.trim()) ?? 0;
     final promoPriceInt = isPromo.value ? int.tryParse(promoPriceController.text.trim()) : null;
     final promoPercentInt = isPromo.value ? int.tryParse(promoPercentageController.text.trim()) : null;
@@ -624,15 +654,17 @@ class BookController extends GetxController {
     );
 
     final result = await updateBookUseCase.call(updatedBook);
-    result.fold(
+    return result.fold(
       (failure) {
         errorMessage.value = failure.message;
         isLoading.value = false;
+        return false;
       },
       (_) async {
         clearForm();
         editingBookId.value = '';
         await fetchBooks();
+        return true;
       },
     );
   }
@@ -645,6 +677,9 @@ class BookController extends GetxController {
       (failure) {
         errorMessage.value = failure.message;
         isLoading.value = false;
+        if (Get.context != null) {
+          AppToast.showError(Get.context!, 'Gagal memindahkan buku: ${failure.message}');
+        }
       },
       (_) async {
         await fetchBooks();

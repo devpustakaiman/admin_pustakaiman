@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
+import '../../data/models/bank_account_model.dart';
 import '../controllers/web_settings_controller.dart';
+import '../widgets/bank_account_dialog.dart';
 
 class WebSettingsPage extends StatelessWidget {
   const WebSettingsPage({super.key});
@@ -120,15 +122,43 @@ class WebSettingsPage extends StatelessWidget {
 
               // Main Form & Live Preview Grid
               LayoutBuilder(builder: (context, constraints) {
-                final isWide = constraints.maxWidth > 850;
+                final isDesktop = constraints.maxWidth >= 1024;
 
-                return Row(
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Left Column: Editors (Headline, Subheadline, Image, Featured Book)
-                    Expanded(
-                      flex: isWide ? 6 : 10,
-                      child: Column(
+                    // Section 1: 2x2 Grid (Segiempat) for Hero Management Section
+                    if (isDesktop)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Left Column (Top: Teks Hero Banner, Bottom: Visual Banner Hero)
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              children: [
+                                _buildContentEditorCard(context, controller),
+                                const SizedBox(height: 24),
+                                _buildImageUploaderCard(context, controller),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 24),
+                          // Right Column (Top: Simulasi Tampilan Hero Publik, Bottom: Buku Pilihan Minggu Ini)
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              children: [
+                                _buildLivePreviewCard(controller),
+                                const SizedBox(height: 24),
+                                _buildFeaturedBookSelectorCard(context, controller),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      Column(
                         children: [
                           _buildContentEditorCard(context, controller),
                           const SizedBox(height: 20),
@@ -136,21 +166,30 @@ class WebSettingsPage extends StatelessWidget {
                           const SizedBox(height: 20),
                           _buildFeaturedBookSelectorCard(context, controller),
                           const SizedBox(height: 20),
-                          _buildAboutSettingsCard(context, controller),
-                          const SizedBox(height: 20),
-                          _buildContactInfoCard(context, controller),
+                          _buildLivePreviewCard(controller),
                         ],
                       ),
-                    ),
 
-                    if (isWide) ...[
-                      const SizedBox(width: 24),
-                      // Right Column: Live Landing Page Hero Preview
-                      Expanded(
-                        flex: 5,
-                        child: _buildLivePreviewCard(controller),
-                      ),
-                    ],
+                    const SizedBox(height: 24),
+
+                    // Section 2: Full-Width Rows for Subsequent Sections (100% width per section)
+                    // Card 1: 'Informasi Kontak & Layanan' (Full width)
+                    _buildContactInfoCard(context, controller),
+
+                    const SizedBox(height: 24),
+
+                    // Card 2: 'Panduan & Redaksi Kirim Naskah' (Full width)
+                    _buildManuscriptSettingsCard(context, controller),
+
+                    const SizedBox(height: 24),
+
+                    // Card 3: 'Pengaturan Halaman Tentang Kami' (Full width)
+                    _buildAboutSettingsCard(context, controller),
+
+                    const SizedBox(height: 24),
+
+                    // Card 4: 'Rekening Pembayaran Pre-Order' (Full width)
+                    _buildBankAccountsCard(context, controller),
                   ],
                 );
               }),
@@ -2014,6 +2053,546 @@ class WebSettingsPage extends StatelessWidget {
                 ),
               );
             }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 6. Manuscript Settings Card (Panduan & Redaksi Kirim Naskah)
+  Widget _buildManuscriptSettingsCard(BuildContext context, WebSettingsController controller) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  LucideIcons.fileText,
+                  color: AppTheme.primaryColor,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Panduan & Redaksi Kirim Naskah',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Kelola alur pengiriman naskah, kriteria kelayakan, deskripsi bantuan redaksi, dan kontak WhatsApp redaksi.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // --- 1. ALUR PENERBITAN (manuscript_steps) ---
+          const Text(
+            'Alur & Langkah Pengiriman Naskah',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Atur baris alur langkah penerbitan naskah yang akan ditampilkan di halaman Kirim Naskah.',
+            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 12),
+
+          Obx(() {
+            return Column(
+              children: [
+                for (int i = 0; i < controller.manuscriptSteps.length; i++) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'Langkah ${i + 1}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => controller.removeManuscriptStep(i),
+                              icon: const Icon(LucideIcons.trash2, size: 16, color: Color(0xFFEF4444)),
+                              tooltip: 'Hapus Langkah',
+                              constraints: const BoxConstraints(),
+                              padding: const EdgeInsets.all(4),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: controller.manuscriptSteps[i].titleController,
+                          decoration: InputDecoration(
+                            labelText: 'Judul Langkah',
+                            hintText: 'Misal: Kirim Berkas & Sinopsis',
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        TextFormField(
+                          controller: controller.manuscriptSteps[i].descriptionController,
+                          maxLines: 2,
+                          decoration: InputDecoration(
+                            labelText: 'Deskripsi Langkah',
+                            hintText: 'Penjelasan singkat alur langkah...',
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: () => controller.addManuscriptStep(),
+                    icon: const Icon(LucideIcons.plus, size: 16),
+                    label: const Text('Tambah Langkah Alur'),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
+
+          const SizedBox(height: 24),
+          const Divider(color: Color(0xFFE2E8F0)),
+          const SizedBox(height: 16),
+
+          // --- 2. KRITERIA NASKAH (manuscript_criteria) ---
+          const Text(
+            'Poin-poin Kriteria Naskah',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Daftar syarat dan kriteria kelayakan naskah yang harus dipenuhi.',
+            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 12),
+
+          Obx(() {
+            return Column(
+              children: [
+                for (int i = 0; i < controller.manuscriptCriteriaControllers.length; i++) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: controller.manuscriptCriteriaControllers[i],
+                            decoration: InputDecoration(
+                              hintText: 'Misal: Naskah orisinal (bukan plagiasi)',
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () => controller.removeManuscriptCriterion(i),
+                          icon: const Icon(LucideIcons.trash2, size: 18, color: Color(0xFFEF4444)),
+                          tooltip: 'Hapus Kriteria',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: () => controller.addManuscriptCriterion(),
+                    icon: const Icon(LucideIcons.plus, size: 16),
+                    label: const Text('Tambah Kriteria'),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
+
+          const SizedBox(height: 24),
+          const Divider(color: Color(0xFFE2E8F0)),
+          const SizedBox(height: 16),
+
+          // --- 3. KONTAK & DESKRIPSI REDAKSI ---
+          const Text(
+            'Informasi Bantuan Meja Redaksi',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 12),
+
+          const Text(
+            'Deskripsi Bantuan Meja Redaksi',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: controller.manuscriptContactDescController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'Tuliskan deskripsi bantuan untuk calon penulis yang ingin berkonsultasi...',
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          const Text(
+            'Nomor WhatsApp Khusus Redaksi',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: controller.manuscriptWhatsappController,
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(
+              hintText: 'Contoh: 6281234567890 atau 081234567890',
+              prefixIcon: const Icon(LucideIcons.messageSquare, size: 18, color: Color(0xFF94A3B8)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // --- 4. SIMPAN BUTTON ---
+          Align(
+            alignment: Alignment.centerRight,
+            child: Obx(() {
+              return ElevatedButton.icon(
+                onPressed: controller.isSavingManuscriptInfo.value
+                    ? null
+                    : () async {
+                        final success = await controller.saveManuscriptInfo();
+                        if (context.mounted) {
+                          if (success) {
+                            AppToast.showSuccess(
+                              context,
+                              'Pengaturan Kirim Naskah berhasil disimpan!',
+                            );
+                          } else {
+                            AppToast.showError(
+                              context,
+                              controller.errorMessage.value.isNotEmpty
+                                  ? controller.errorMessage.value
+                                  : 'Gagal menyimpan pengaturan kirim naskah.',
+                            );
+                          }
+                        }
+                      },
+                icon: controller.isSavingManuscriptInfo.value
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(LucideIcons.save, size: 16),
+                label: Text(
+                  controller.isSavingManuscriptInfo.value ? 'Menyimpan...' : 'Simpan Pengaturan Kirim Naskah',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 7. Bank Accounts Settings Card
+  Widget _buildBankAccountsCard(BuildContext context, WebSettingsController controller) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        LucideIcons.landmark,
+                        color: AppTheme.primaryColor,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Rekening Pembayaran Pre-Order',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Daftar akun rekening bank aktif penerima transfer pembayaran untuk transaksi pre-order.',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final result = await showDialog<BankAccountModel>(
+                    context: context,
+                    builder: (ctx) => const BankAccountDialog(),
+                  );
+                  if (result != null) {
+                    await controller.saveBankAccount(result);
+                  }
+                },
+                icon: const Icon(LucideIcons.plus, size: 16),
+                label: const Text('+ Tambah Rekening'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Content List Obx
+          Obx(() {
+            if (controller.bankAccounts.isEmpty) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  children: const [
+                    Icon(LucideIcons.creditCard, size: 36, color: Color(0xFF94A3B8)),
+                    SizedBox(height: 10),
+                    Text(
+                      'Belum ada rekening bank yang ditambahkan',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Klik tombol "+ Tambah Rekening" untuk menambahkan akun rekening bank pertama.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 700;
+                final crossAxisCount = isWide ? 3 : (constraints.maxWidth > 450 ? 2 : 1);
+
+                return Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: controller.bankAccounts.map((account) {
+                    final itemWidth = crossAxisCount == 1
+                        ? constraints.maxWidth
+                        : (constraints.maxWidth - (16 * (crossAxisCount - 1))) / crossAxisCount;
+
+                    return Container(
+                      width: itemWidth,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  account.bankName,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    onPressed: () async {
+                                      final result = await showDialog<BankAccountModel>(
+                                        context: context,
+                                        builder: (ctx) => BankAccountDialog(initialAccount: account),
+                                      );
+                                      if (result != null) {
+                                        await controller.saveBankAccount(result);
+                                      }
+                                    },
+                                    icon: const Icon(LucideIcons.pencil, size: 14, color: Color(0xFF64748B)),
+                                    tooltip: 'Edit Rekening',
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.all(4),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  IconButton(
+                                    onPressed: () => _confirmDeleteBank(context, controller, account),
+                                    icon: const Icon(LucideIcons.trash2, size: 14, color: Color(0xFFEF4444)),
+                                    tooltip: 'Hapus Rekening',
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.all(4),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            account.accountNumber,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'a.n. ${account.accountHolder}',
+                            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteBank(BuildContext context, WebSettingsController controller, BankAccountModel account) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Rekening Bank'),
+        content: Text('Apakah Anda yakin ingin menghapus rekening bank ${account.bankName} (${account.accountNumber})?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await controller.deleteBankAccount(account.id);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEF4444)),
+            child: const Text('Hapus'),
           ),
         ],
       ),

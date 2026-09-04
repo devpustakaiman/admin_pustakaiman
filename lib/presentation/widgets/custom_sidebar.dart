@@ -6,24 +6,209 @@ import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../controllers/main_layout_controller.dart';
 
-class CustomSidebar extends StatelessWidget {
+class CustomSidebar extends StatefulWidget {
   const CustomSidebar({super.key});
+
+  @override
+  State<CustomSidebar> createState() => _CustomSidebarState();
+}
+
+class _CustomSidebarState extends State<CustomSidebar> {
+  late final ScrollController _sidebarScrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _sidebarScrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _sidebarScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<MainLayoutController>();
 
-    final navItems = [
-      _NavItemData('Dashboard', LucideIcons.layoutDashboard, 0),
+    final dashboardItem = _NavItemData('Dashboard', LucideIcons.layoutDashboard, 0);
+
+    final kelolaDataSubItems = [
       _NavItemData('Katalog Buku', LucideIcons.bookOpen, 1),
       _NavItemData('Pesanan Pre-Order', LucideIcons.shoppingBag, 2),
       _NavItemData('Naskah Masuk', LucideIcons.inbox, 3),
       _NavItemData('Data Penulis', LucideIcons.users, 4),
       _NavItemData('Artikel & Berita', LucideIcons.fileText, 5),
       _NavItemData('Video Media', LucideIcons.video, 6),
-      _NavItemData('Pengaturan Web', LucideIcons.layoutTemplate, 7),
-      _NavItemData('Keranjang Sampah', LucideIcons.trash2, 8),
     ];
+
+    final kelolaHalamanSubItems = [
+      _NavItemData('Beranda & Hero', LucideIcons.home, 7),
+      _NavItemData('Katalog Buku', Icons.auto_stories_outlined, 8),
+      _NavItemData('Pre-Order', LucideIcons.receipt, 9),
+      _NavItemData('Tentang Kami', LucideIcons.info, 10),
+      _NavItemData('Kontak & Layanan', LucideIcons.headphones, 11),
+      _NavItemData('Kirim Naskah', LucideIcons.bookOpen, 12),
+    ];
+
+    final bottomNavItems = [
+      _NavItemData('Keranjang Sampah', LucideIcons.trash2, 13),
+    ];
+
+    Widget buildNavItem(_NavItemData item, {bool isSubItem = false}) {
+      final selectedIndex = controller.selectedIndex.value;
+      final isSelected = selectedIndex == item.index;
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: isSubItem ? const EdgeInsets.only(left: 14) : EdgeInsets.zero,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              controller.changePage(item.index);
+              if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+                Navigator.of(context).pop();
+              }
+            },
+            borderRadius: BorderRadius.circular(14),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppTheme.primaryColor.withValues(alpha: 0.18)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(14),
+                border: isSelected
+                    ? Border.all(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                        width: 1,
+                      )
+                    : Border.all(color: Colors.transparent),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    item.icon,
+                    size: isSubItem ? 18 : 20,
+                    color: isSelected
+                        ? AppTheme.primaryLight
+                        : const Color(0xFF94A3B8),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      item.title,
+                      style: TextStyle(
+                        color: isSelected
+                            ? Colors.white
+                            : const Color(0xFF94A3B8),
+                        fontSize: isSubItem ? 13 : 14,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  if (isSelected)
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.primaryLight,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    Widget buildExpandableTile({
+      required String title,
+      required IconData icon,
+      required bool isExpanded,
+      required bool isGroupSelected,
+      required VoidCallback onTap,
+      required List<_NavItemData> subItems,
+    }) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        child: Column(
+          children: [
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isGroupSelected && !isExpanded
+                        ? AppTheme.primaryColor.withValues(alpha: 0.15)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        icon,
+                        size: 20,
+                        color: isGroupSelected
+                            ? AppTheme.primaryLight
+                            : const Color(0xFF94A3B8),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            color: isGroupSelected
+                                ? Colors.white
+                                : const Color(0xFF94A3B8),
+                            fontSize: 14,
+                            fontWeight: isGroupSelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        isExpanded
+                            ? LucideIcons.chevronDown
+                            : LucideIcons.chevronRight,
+                        size: 16,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (isExpanded)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Column(
+                  children: subItems
+                      .map((subItem) => buildNavItem(subItem, isSubItem: true))
+                      .toList(),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       width: 260,
@@ -120,87 +305,62 @@ class CustomSidebar extends StatelessWidget {
             ),
           ),
 
-          // Menu items list
+          // Menu items list with visible Scrollbar
           Expanded(
             child: Obx(() {
+              final isDataExpanded = controller.isKelolaDataExpanded.value;
+              final isHalamanExpanded = controller.isKelolaHalamanExpanded.value;
               final selectedIndex = controller.selectedIndex.value;
-              return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                itemCount: navItems.length,
-                itemBuilder: (context, index) {
-                  final item = navItems[index];
-                  final isSelected = selectedIndex == item.index;
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 6),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          controller.changePage(item.index);
-                          if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
-                            Navigator.of(context).pop();
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(14),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 13,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppTheme.primaryColor.withValues(alpha: 0.18)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(14),
-                            border: isSelected
-                                ? Border.all(
-                                    color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                                    width: 1,
-                                  )
-                                : Border.all(color: Colors.transparent),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                item.icon,
-                                size: 20,
-                                color: isSelected
-                                    ? AppTheme.primaryLight
-                                    : const Color(0xFF94A3B8),
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Text(
-                                  item.title,
-                                  style: TextStyle(
-                                    color: isSelected
-                                        ? Colors.white
-                                        : const Color(0xFF94A3B8),
-                                    fontSize: 14,
-                                    fontWeight: isSelected
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                              if (isSelected)
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: AppTheme.primaryLight,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
+              final isDataGroupSelected = selectedIndex >= 1 && selectedIndex <= 6;
+              final isHalamanGroupSelected = selectedIndex >= 7 && selectedIndex <= 11;
+
+              return Theme(
+                data: Theme.of(context).copyWith(
+                  scrollbarTheme: ScrollbarThemeData(
+                    thumbColor: WidgetStateProperty.all(const Color(0xFF475569)),
+                    trackColor: WidgetStateProperty.all(const Color(0xFF1E293B)),
+                    thickness: WidgetStateProperty.all(4.0),
+                    radius: const Radius.circular(4),
+                  ),
+                ),
+                child: Scrollbar(
+                  controller: _sidebarScrollController,
+                  thumbVisibility: true,
+                  trackVisibility: true,
+                  interactive: true,
+                  child: ListView(
+                    controller: _sidebarScrollController,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    children: [
+                      // Dashboard Item
+                      buildNavItem(dashboardItem),
+
+                      // Kelola Data & Toko Expandable Tile
+                      buildExpandableTile(
+                        title: 'Kelola Data & Toko',
+                        icon: LucideIcons.boxes,
+                        isExpanded: isDataExpanded,
+                        isGroupSelected: isDataGroupSelected,
+                        onTap: () => controller.toggleKelolaData(),
+                        subItems: kelolaDataSubItems,
                       ),
-                    ),
-                  );
-                },
+
+                      // Kelola Halaman Expandable Tile
+                      buildExpandableTile(
+                        title: 'Kelola Halaman',
+                        icon: LucideIcons.layers,
+                        isExpanded: isHalamanExpanded,
+                        isGroupSelected: isHalamanGroupSelected,
+                        onTap: () => controller.toggleKelolaHalaman(),
+                        subItems: kelolaHalamanSubItems,
+                      ),
+
+                      // Bottom Items (Keranjang Sampah)
+                      ...bottomNavItems.map((item) => buildNavItem(item)),
+                    ],
+                  ),
+                ),
               );
             }),
           ),

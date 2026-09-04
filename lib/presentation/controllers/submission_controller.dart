@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../domain/entities/submission.dart';
 import '../../domain/repositories/submission_repository.dart';
 import '../../domain/usecases/get_submissions_usecase.dart';
+import '../../core/utils/app_toast.dart';
 
 class SubmissionController extends GetxController {
   final GetSubmissionsUseCase getSubmissionsUseCase;
@@ -101,6 +102,9 @@ class SubmissionController extends GetxController {
       (failure) {
         errorMessage.value = failure.message;
         isLoading.value = false;
+        if (Get.context != null) {
+          AppToast.showError(Get.context!, 'Gagal memindahkan naskah: ${failure.message}');
+        }
         return false;
       },
       (_) async {
@@ -117,10 +121,19 @@ class SubmissionController extends GetxController {
       (failure) {
         errorMessage.value = failure.message;
         isLoading.value = false;
+        if (Get.context != null) {
+          AppToast.showError(Get.context!, 'Gagal mengubah status naskah: ${failure.message}');
+        }
         return false;
       },
       (_) async {
         await fetchSubmissions();
+        if (Get.context != null) {
+          AppToast.showSuccess(
+            Get.context!,
+            'Status naskah berhasil diubah menjadi "${newStatus.toUpperCase()}"',
+          );
+        }
         return true;
       },
     );

@@ -15,6 +15,7 @@ import 'author_controller.dart';
 import 'book_controller.dart';
 import 'preorder_controller.dart';
 import 'submission_controller.dart';
+import '../../core/utils/app_toast.dart';
 
 enum TrashCategory { books, authors, articles, submissions, preorders }
 
@@ -300,9 +301,15 @@ class TrashController extends GetxController {
           if (Get.isRegistered<PreorderController>()) {
             Get.find<PreorderController>().loadData();
           }
+          if (Get.context != null) {
+            AppToast.showSuccess(Get.context!, '${idsToRestore.length} pesanan pre-order dipulihkan.');
+          }
         } catch (e) {
           isProcessing.value = false;
           errorMessage.value = e.toString();
+          if (Get.context != null) {
+            AppToast.showError(Get.context!, 'Gagal memulihkan pesanan: $e');
+          }
         }
         break;
     }
@@ -318,11 +325,17 @@ class TrashController extends GetxController {
     result.fold(
       (failure) {
         errorMessage.value = failure.message;
+        if (Get.context != null) {
+          AppToast.showError(Get.context!, 'Gagal memulihkan $label: ${failure.message}');
+        }
       },
       (_) async {
         selectedIds.removeAll(ids);
         await fetchCurrentCategory();
         onRefreshActive();
+        if (Get.context != null) {
+          AppToast.showSuccess(Get.context!, '${ids.length} $label dipulihkan dari Keranjang Sampah.');
+        }
       },
     );
   }
@@ -357,9 +370,15 @@ class TrashController extends GetxController {
           isProcessing.value = false;
           selectedIds.removeAll(idsToDelete);
           await fetchCurrentCategory();
+          if (Get.context != null) {
+            AppToast.showSuccess(Get.context!, '${idsToDelete.length} pesanan pre-order dihapus permanen.');
+          }
         } catch (e) {
           isProcessing.value = false;
           errorMessage.value = e.toString();
+          if (Get.context != null) {
+            AppToast.showError(Get.context!, 'Gagal menghapus permanen: $e');
+          }
         }
         break;
     }
@@ -374,10 +393,16 @@ class TrashController extends GetxController {
     result.fold(
       (failure) {
         errorMessage.value = failure.message;
+        if (Get.context != null) {
+          AppToast.showError(Get.context!, 'Gagal menghapus permanen $label: ${failure.message}');
+        }
       },
       (_) async {
         selectedIds.removeAll(ids);
         await fetchCurrentCategory();
+        if (Get.context != null) {
+          AppToast.showSuccess(Get.context!, '${ids.length} $label dihapus secara permanen.');
+        }
       },
     );
   }

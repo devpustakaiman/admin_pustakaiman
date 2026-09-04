@@ -12,7 +12,12 @@ import 'preorder_management_page.dart';
 import 'submission_management_page.dart';
 import 'trash_management_page.dart';
 import 'video_management_page.dart';
-import 'web_settings_page.dart';
+import 'web_settings/about_settings_page.dart';
+import 'web_settings/catalog_settings_page.dart';
+import 'web_settings/contact_settings_page.dart';
+import 'web_settings/hero_settings_page.dart';
+import 'web_settings/manuscript_settings_page.dart';
+import 'web_settings/preorder_settings_page.dart';
 
 class MainLayoutPage extends StatelessWidget {
   const MainLayoutPage({super.key});
@@ -28,7 +33,12 @@ class MainLayoutPage extends StatelessWidget {
       AuthorManagementPage(),
       ArticleManagementPage(),
       VideoManagementPage(),
-      WebSettingsPage(),
+      HeroSettingsPage(),
+      CatalogSettingsPage(),
+      PreorderSettingsPage(),
+      AboutSettingsPage(),
+      ContactSettingsPage(),
+      ManuscriptSettingsPage(),
       TrashManagementPage(),
     ];
 
@@ -40,7 +50,12 @@ class MainLayoutPage extends StatelessWidget {
       'Data Penulis',
       'Artikel & Berita',
       'Video Media',
-      'Pengaturan Web',
+      'Beranda & Hero',
+      'Katalog Buku',
+      'Pre-Order',
+      'Tentang Kami',
+      'Kontak & Layanan',
+      'Kirim Naskah',
       'Keranjang Sampah',
     ];
 
