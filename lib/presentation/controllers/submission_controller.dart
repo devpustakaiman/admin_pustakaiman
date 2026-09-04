@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../domain/entities/submission.dart';
@@ -50,7 +51,9 @@ class SubmissionController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchSubmissions();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchSubmissions();
+    });
   }
 
   Future<void> fetchSubmissions({int? page}) async {

@@ -50,7 +50,9 @@ class TrashController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchAllDeleted();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchAllDeleted();
+    });
   }
 
   void changeCategory(TrashCategory category) {

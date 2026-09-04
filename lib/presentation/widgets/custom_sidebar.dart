@@ -57,157 +57,167 @@ class _CustomSidebarState extends State<CustomSidebar> {
     ];
 
     Widget buildNavItem(_NavItemData item, {bool isSubItem = false}) {
-      final selectedIndex = controller.selectedIndex.value;
-      final isSelected = selectedIndex == item.index;
+      return Obx(() {
+        final selectedIndex = controller.selectedIndex.value;
+        final isSelected = selectedIndex == item.index;
 
-      return Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: isSubItem ? const EdgeInsets.only(left: 14) : EdgeInsets.zero,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              controller.changePage(item.index);
-              if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
-                Navigator.of(context).pop();
-              }
-            },
-            borderRadius: BorderRadius.circular(14),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppTheme.primaryColor.withValues(alpha: 0.18)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(14),
-                border: isSelected
-                    ? Border.all(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                        width: 1,
-                      )
-                    : Border.all(color: Colors.transparent),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    item.icon,
-                    size: isSubItem ? 18 : 20,
-                    color: isSelected
-                        ? AppTheme.primaryLight
-                        : const Color(0xFF94A3B8),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      item.title,
-                      style: TextStyle(
-                        color: isSelected
-                            ? Colors.white
-                            : const Color(0xFF94A3B8),
-                        fontSize: isSubItem ? 13 : 14,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
+        return Container(
+          margin: const EdgeInsets.only(bottom: 6),
+          padding: isSubItem ? const EdgeInsets.only(left: 14) : EdgeInsets.zero,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                controller.changePage(item.index);
+                if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+                  Navigator.of(context).pop();
+                }
+              },
+              borderRadius: BorderRadius.circular(14),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppTheme.primaryColor.withValues(alpha: 0.18)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(14),
+                  border: isSelected
+                      ? Border.all(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                          width: 1,
+                        )
+                      : Border.all(color: Colors.transparent),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      item.icon,
+                      size: isSubItem ? 18 : 20,
+                      color: isSelected
+                          ? AppTheme.primaryLight
+                          : const Color(0xFF94A3B8),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        item.title,
+                        style: TextStyle(
+                          color: isSelected
+                              ? Colors.white
+                              : const Color(0xFF94A3B8),
+                          fontSize: isSubItem ? 13 : 14,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
                       ),
                     ),
-                  ),
-                  if (isSelected)
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.primaryLight,
-                        shape: BoxShape.circle,
+                    if (isSelected)
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: AppTheme.primaryLight,
+                          shape: BoxShape.circle,
+                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      );
+        );
+      });
     }
 
     Widget buildExpandableTile({
       required String title,
       required IconData icon,
-      required bool isExpanded,
-      required bool isGroupSelected,
+      required RxBool isExpandedRx,
+      required int minRangeIndex,
+      required int maxRangeIndex,
       required VoidCallback onTap,
       required List<_NavItemData> subItems,
     }) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        child: Column(
-          children: [
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isGroupSelected && !isExpanded
-                        ? AppTheme.primaryColor.withValues(alpha: 0.15)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        icon,
-                        size: 20,
-                        color: isGroupSelected
-                            ? AppTheme.primaryLight
-                            : const Color(0xFF94A3B8),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: TextStyle(
-                            color: isGroupSelected
-                                ? Colors.white
-                                : const Color(0xFF94A3B8),
-                            fontSize: 14,
-                            fontWeight: isGroupSelected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
+      return Obx(() {
+        final isExpanded = isExpandedRx.value;
+        final selectedIndex = controller.selectedIndex.value;
+        final isGroupSelected = selectedIndex >= minRangeIndex && selectedIndex <= maxRangeIndex;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 6),
+          child: Column(
+            children: [
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onTap,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isGroupSelected && !isExpanded
+                          ? AppTheme.primaryColor.withValues(alpha: 0.15)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          icon,
+                          size: 20,
+                          color: isGroupSelected
+                              ? AppTheme.primaryLight
+                              : const Color(0xFF94A3B8),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              color: isGroupSelected
+                                  ? Colors.white
+                                  : const Color(0xFF94A3B8),
+                              fontSize: 14,
+                              fontWeight: isGroupSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                      Icon(
-                        isExpanded
-                            ? LucideIcons.chevronDown
-                            : LucideIcons.chevronRight,
-                        size: 16,
-                        color: const Color(0xFF94A3B8),
-                      ),
-                    ],
+                        Icon(
+                          isExpanded
+                              ? LucideIcons.chevronDown
+                              : LucideIcons.chevronRight,
+                          size: 16,
+                          color: const Color(0xFF94A3B8),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            if (isExpanded)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Column(
-                  children: subItems
-                      .map((subItem) => buildNavItem(subItem, isSubItem: true))
-                      .toList(),
+              if (isExpanded)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Column(
+                    children: subItems
+                        .map((subItem) => buildNavItem(subItem, isSubItem: true))
+                        .toList(),
+                  ),
                 ),
-              ),
-          ],
-        ),
-      );
+            ],
+          ),
+        );
+      });
     }
 
     return Container(
@@ -217,7 +227,8 @@ class _CustomSidebarState extends State<CustomSidebar> {
         boxShadow: [
           BoxShadow(
             color: Colors.black12,
-            blurRadius: 10,
+            blurRadius: 6,
+            spreadRadius: 0,
             offset: Offset(2, 0),
           ),
         ],
@@ -240,9 +251,10 @@ class _CustomSidebarState extends State<CustomSidebar> {
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+                        color: AppTheme.primaryColor.withValues(alpha: 0.3),
+                        blurRadius: 6,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
@@ -305,64 +317,57 @@ class _CustomSidebarState extends State<CustomSidebar> {
             ),
           ),
 
-          // Menu items list with visible Scrollbar
+          // Menu items list with visible Scrollbar (No global Obx rebuilds)
           Expanded(
-            child: Obx(() {
-              final isDataExpanded = controller.isKelolaDataExpanded.value;
-              final isHalamanExpanded = controller.isKelolaHalamanExpanded.value;
-              final selectedIndex = controller.selectedIndex.value;
-
-              final isDataGroupSelected = selectedIndex >= 1 && selectedIndex <= 6;
-              final isHalamanGroupSelected = selectedIndex >= 7 && selectedIndex <= 11;
-
-              return Theme(
-                data: Theme.of(context).copyWith(
-                  scrollbarTheme: ScrollbarThemeData(
-                    thumbColor: WidgetStateProperty.all(const Color(0xFF475569)),
-                    trackColor: WidgetStateProperty.all(const Color(0xFF1E293B)),
-                    thickness: WidgetStateProperty.all(4.0),
-                    radius: const Radius.circular(4),
-                  ),
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                scrollbarTheme: ScrollbarThemeData(
+                  thumbColor: WidgetStateProperty.all(const Color(0xFF475569)),
+                  trackColor: WidgetStateProperty.all(const Color(0xFF1E293B)),
+                  thickness: WidgetStateProperty.all(4.0),
+                  radius: const Radius.circular(4),
                 ),
-                child: Scrollbar(
+              ),
+              child: Scrollbar(
+                controller: _sidebarScrollController,
+                thumbVisibility: true,
+                trackVisibility: true,
+                interactive: true,
+                child: ListView(
                   controller: _sidebarScrollController,
-                  thumbVisibility: true,
-                  trackVisibility: true,
-                  interactive: true,
-                  child: ListView(
-                    controller: _sidebarScrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    children: [
-                      // Dashboard Item
-                      buildNavItem(dashboardItem),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  children: [
+                    // Dashboard Item
+                    buildNavItem(dashboardItem),
 
-                      // Kelola Data & Toko Expandable Tile
-                      buildExpandableTile(
-                        title: 'Kelola Data & Toko',
-                        icon: LucideIcons.boxes,
-                        isExpanded: isDataExpanded,
-                        isGroupSelected: isDataGroupSelected,
-                        onTap: () => controller.toggleKelolaData(),
-                        subItems: kelolaDataSubItems,
-                      ),
+                    // Kelola Data & Toko Expandable Tile
+                    buildExpandableTile(
+                      title: 'Kelola Data & Toko',
+                      icon: LucideIcons.boxes,
+                      isExpandedRx: controller.isKelolaDataExpanded,
+                      minRangeIndex: 1,
+                      maxRangeIndex: 6,
+                      onTap: () => controller.toggleKelolaData(),
+                      subItems: kelolaDataSubItems,
+                    ),
 
-                      // Kelola Halaman Expandable Tile
-                      buildExpandableTile(
-                        title: 'Kelola Halaman',
-                        icon: LucideIcons.layers,
-                        isExpanded: isHalamanExpanded,
-                        isGroupSelected: isHalamanGroupSelected,
-                        onTap: () => controller.toggleKelolaHalaman(),
-                        subItems: kelolaHalamanSubItems,
-                      ),
+                    // Kelola Halaman Expandable Tile
+                    buildExpandableTile(
+                      title: 'Kelola Halaman',
+                      icon: LucideIcons.layers,
+                      isExpandedRx: controller.isKelolaHalamanExpanded,
+                      minRangeIndex: 7,
+                      maxRangeIndex: 12,
+                      onTap: () => controller.toggleKelolaHalaman(),
+                      subItems: kelolaHalamanSubItems,
+                    ),
 
-                      // Bottom Items (Keranjang Sampah)
-                      ...bottomNavItems.map((item) => buildNavItem(item)),
-                    ],
-                  ),
+                    // Bottom Items (Keranjang Sampah)
+                    ...bottomNavItems.map((item) => buildNavItem(item)),
+                  ],
                 ),
-              );
-            }),
+              ),
+            ),
           ),
 
           // User info and Logout section

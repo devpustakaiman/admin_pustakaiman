@@ -205,7 +205,9 @@ class BookController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchBooks();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchBooks();
+    });
   }
 
   @override

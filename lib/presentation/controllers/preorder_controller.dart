@@ -28,7 +28,9 @@ class PreorderController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loadData();
+    });
   }
 
   @override

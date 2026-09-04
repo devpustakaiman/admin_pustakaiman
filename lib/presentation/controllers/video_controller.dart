@@ -70,7 +70,9 @@ class VideoController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchVideos();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchVideos();
+    });
   }
 
   @override

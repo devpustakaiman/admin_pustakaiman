@@ -75,7 +75,9 @@ class AuthorController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchAuthors();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchAuthors();
+    });
   }
 
   @override

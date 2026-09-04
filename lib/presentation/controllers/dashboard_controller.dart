@@ -52,7 +52,9 @@ class DashboardController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchDashboardData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchDashboardData();
+    });
   }
 
   Future<void> fetchDashboardData() async {

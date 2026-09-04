@@ -89,7 +89,9 @@ class ArticleController extends GetxController {
   void onInit() {
     super.onInit();
     quillController = QuillController.basic();
-    fetchArticles();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchArticles();
+    });
   }
 
   @override

@@ -189,7 +189,9 @@ class WebSettingsController extends GetxController {
     subheadlineController.addListener(() {
       subheadlineText.value = subheadlineController.text;
     });
-    loadSettings();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loadSettings();
+    });
   }
 
   @override
