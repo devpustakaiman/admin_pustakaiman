@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../controllers/web_settings_controller.dart';
+import '../../widgets/cms_page_header.dart';
 
 class AboutSettingsPage extends StatelessWidget {
   const AboutSettingsPage({super.key});
@@ -26,37 +27,29 @@ class AboutSettingsPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Page Header Title
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Kelola Halaman > Tentang Kami',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.textPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Kelola profil penerbit, visi, misi, serta 4 angka statistik pencapaian',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              // Page Header Title & Primary Action
+              CmsPageHeader(
+                title: 'Kelola Halaman > Tentang Kami',
+                subtitle: 'Kelola profil penerbit, visi, misi, serta 4 angka statistik pencapaian',
+                isSaving: controller.isSavingAboutInfo.value,
+                onSave: () async {
+                  final success = await controller.saveAboutInfo();
+                  if (context.mounted) {
+                    if (success) {
+                      AppToast.showSuccess(
+                        context,
+                        'Profil Halaman Tentang Kami berhasil disimpan!',
+                      );
+                    } else {
+                      AppToast.showError(
+                        context,
+                        controller.errorMessage.value.isNotEmpty
+                            ? controller.errorMessage.value
+                            : 'Gagal menyimpan profil tentang kami.',
+                      );
+                    }
+                  }
+                },
               ),
 
               const SizedBox(height: 24),
@@ -340,56 +333,7 @@ class AboutSettingsPage extends StatelessWidget {
             },
           ),
 
-          const SizedBox(height: 24),
 
-          // Save Button
-          Align(
-            alignment: Alignment.centerRight,
-            child: Obx(() {
-              return ElevatedButton.icon(
-                onPressed: controller.isSavingAboutInfo.value
-                    ? null
-                    : () async {
-                        final success = await controller.saveAboutInfo();
-                        if (context.mounted) {
-                          if (success) {
-                            AppToast.showSuccess(
-                              context,
-                              'Profil Halaman Tentang Kami berhasil disimpan!',
-                            );
-                          } else {
-                            AppToast.showError(
-                              context,
-                              controller.errorMessage.value.isNotEmpty
-                                  ? controller.errorMessage.value
-                                  : 'Gagal menyimpan profil tentang kami.',
-                            );
-                          }
-                        }
-                      },
-                icon: controller.isSavingAboutInfo.value
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(LucideIcons.save, size: 16),
-                label: Text(
-                  controller.isSavingAboutInfo.value ? 'Menyimpan...' : 'Simpan Profil Tentang Kami',
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              );
-            }),
-          ),
         ],
       ),
     );

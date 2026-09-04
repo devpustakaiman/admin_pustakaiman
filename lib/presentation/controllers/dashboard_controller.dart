@@ -5,6 +5,7 @@ import '../../data/datasources/supabase_remote_data_source.dart';
 import '../../data/models/submission_model.dart';
 import '../../domain/entities/submission.dart';
 import '../../domain/repositories/submission_repository.dart';
+import 'book_controller.dart';
 import 'main_layout_controller.dart';
 
 class DashboardMonthlyPoint {
@@ -29,12 +30,19 @@ class DashboardController extends GetxController {
 
   // Stat Metrics (Exact Server-Side Counts)
   final RxInt totalBooks = 0.obs;
+  final RxInt totalPreorders = 0.obs;
+  final RxInt pendingPreorders = 0.obs;
+  final RxInt totalSubmissions = 0.obs;
   final RxInt pendingSubmissions = 0.obs;
   final RxInt totalAuthors = 0.obs;
-  final RxInt activePromos = 0.obs;
+  final RxInt totalArticles = 0.obs;
+  final RxInt totalVideos = 0.obs;
+  final RxInt totalRevenue = 0.obs;
 
-  // Quick Action Priority Table: 5 Most Recent Unreviewed Submissions
+  // Recent Items Lists
+  final RxList<Map<String, dynamic>> recentPreorders = <Map<String, dynamic>>[].obs;
   final RxList<Submission> recentSubmissions = <Submission>[].obs;
+  final RxList<Map<String, dynamic>> topBooks = <Map<String, dynamic>>[].obs;
 
   // Trend Chart State ('books' or 'submissions')
   final RxString trendMode = 'books'.obs; // 'books' or 'submissions'
@@ -55,13 +63,28 @@ class DashboardController extends GetxController {
       final metrics = await remoteDataSource.getDashboardMetrics();
 
       totalBooks.value = metrics['totalBooks'] as int? ?? 0;
+      totalPreorders.value = metrics['totalPreorders'] as int? ?? 0;
+      pendingPreorders.value = metrics['pendingPreorders'] as int? ?? 0;
+      totalSubmissions.value = metrics['totalSubmissions'] as int? ?? 0;
       pendingSubmissions.value = metrics['pendingSubmissions'] as int? ?? 0;
       totalAuthors.value = metrics['totalAuthors'] as int? ?? 0;
-      activePromos.value = metrics['activePromos'] as int? ?? 0;
+      totalArticles.value = metrics['totalArticles'] as int? ?? 0;
+      totalVideos.value = metrics['totalVideos'] as int? ?? 0;
+      totalRevenue.value = metrics['totalRevenue'] as int? ?? 0;
+
+      final recentPreordersRaw = metrics['recentPreorders'] as List? ?? [];
+      recentPreorders.value = recentPreordersRaw
+          .map((json) => Map<String, dynamic>.from(json as Map))
+          .toList();
 
       final recentRaw = metrics['recentSubmissions'] as List? ?? [];
       recentSubmissions.value = recentRaw
           .map((json) => SubmissionModel.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+
+      final topBooksRaw = metrics['topBooks'] as List? ?? [];
+      topBooks.value = topBooksRaw
+          .map((json) => Map<String, dynamic>.from(json as Map))
           .toList();
 
       final List<DateTime> bookDates = metrics['bookDates'] as List<DateTime>? ?? [];
@@ -87,7 +110,6 @@ class DashboardController extends GetxController {
     List<DashboardMonthlyPoint> points = [];
 
     for (int i = 5; i >= 0; i--) {
-      // Go back i months
       int targetYear = now.year;
       int targetMonth = now.month - i;
       while (targetMonth <= 0) {
@@ -121,15 +143,16 @@ class DashboardController extends GetxController {
     );
   }
 
-  void navigateToSubmissions() {
+  void navigateToPage(int index) {
     if (Get.isRegistered<MainLayoutController>()) {
-      Get.find<MainLayoutController>().changePage(2); // Naskah Masuk page index
+      Get.find<MainLayoutController>().changePage(index);
     }
   }
 
-  void navigateToBooks() {
-    if (Get.isRegistered<MainLayoutController>()) {
-      Get.find<MainLayoutController>().changePage(1); // Katalog Buku page index
+  void openNewBookForm() {
+    navigateToPage(1); // Katalog Buku page index
+    if (Get.isRegistered<BookController>()) {
+      Get.find<BookController>().openFormDialog();
     }
   }
 }

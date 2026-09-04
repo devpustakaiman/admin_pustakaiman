@@ -10,14 +10,26 @@ import '../widgets/submission_review_dialog.dart';
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
+  String _formatPrice(num price) {
+    if (price <= 0) return '0';
+    final priceInt = price.toInt();
+    final buffer = StringBuffer();
+    final str = priceInt.toString();
+    for (int i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) {
+        buffer.write('.');
+      }
+      buffer.write(str[i]);
+    }
+    return buffer.toString();
+  }
+
   String _formatDate(DateTime date) {
     final local = date.toLocal();
     final day = local.day.toString().padLeft(2, '0');
     final month = local.month.toString().padLeft(2, '0');
     final year = local.year.toString();
-    final hour = local.hour.toString().padLeft(2, '0');
-    final minute = local.minute.toString().padLeft(2, '0');
-    return '$day/$month/$year $hour:$minute';
+    return '$day/$month/$year';
   }
 
   @override
@@ -28,9 +40,7 @@ class DashboardPage extends StatelessWidget {
       backgroundColor: AppTheme.backgroundColor,
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryColor),
-          );
+          return _buildSkeletonLoading();
         }
 
         return RefreshIndicator(
@@ -42,20 +52,67 @@ class DashboardPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Bar
+                // 1. Header Bar
                 _buildHeader(context, controller),
                 const SizedBox(height: 24),
 
-                // 4 Stat Cards Grid
-                _buildStatCardsGrid(controller),
+                // 2. Metric Summary Grid (4 Stat Cards)
+                _buildMetricSummaryGrid(controller),
                 const SizedBox(height: 24),
 
-                // Trend Chart Section
+                // 3. Trend Chart Section
                 _buildTrendChartSection(controller),
                 const SizedBox(height: 24),
 
-                // Priority Action Table: 5 Most Recent Unreviewed Submissions
-                _buildPriorityTableSection(context, controller),
+                // 4. Split Activity Feed (2-Column Desktop Layout)
+                LayoutBuilder(builder: (context, constraints) {
+                  final isDesktop = constraints.maxWidth >= 1024;
+
+                  if (isDesktop) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Left Column (~60%): Recent Pre-Orders & Stock Status
+                        Expanded(
+                          flex: 6,
+                          child: Column(
+                            children: [
+                              _buildRecentPreordersCard(context, controller),
+                              const SizedBox(height: 24),
+                              _buildStatusStokCard(context, controller),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        // Right Column (~40%): Recent Submissions & Quick Shortcuts
+                        Expanded(
+                          flex: 4,
+                          child: Column(
+                            children: [
+                              _buildRecentSubmissionsCard(context, controller),
+                              const SizedBox(height: 24),
+                              _buildQuickShortcutsCard(context, controller),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  // Mobile / Tablet Stacked Layout
+                  return Column(
+                    children: [
+                      _buildRecentPreordersCard(context, controller),
+                      const SizedBox(height: 24),
+                      _buildStatusStokCard(context, controller),
+                      const SizedBox(height: 24),
+                      _buildRecentSubmissionsCard(context, controller),
+                      const SizedBox(height: 24),
+                      _buildQuickShortcutsCard(context, controller),
+                    ],
+                  );
+                }),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -64,7 +121,7 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  // Header Bar with welcome text & refresh button
+  // ---------------- HEADER ----------------
   Widget _buildHeader(BuildContext context, DashboardController controller) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -84,7 +141,7 @@ class DashboardPage extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Ringkasan metrik kinerja, naskah masuk prioritas, dan statistik Pustaka Ilman',
+                'Ringkasan operasional real-time dari "Kelola Data & Toko" dan akselerasi aksi cepat',
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey[600],
@@ -101,20 +158,23 @@ class DashboardPage extends StatelessWidget {
           icon: const Icon(LucideIcons.refreshCw, size: 16),
           label: const Text('Perbarui Data'),
           style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            backgroundColor: AppTheme.primaryColor,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 0,
           ),
         ),
       ],
     );
   }
 
-  // 4 Top Stat Cards Grid
-  Widget _buildStatCardsGrid(DashboardController controller) {
+  // ---------------- METRIC SUMMARY GRID (4 STAT CARDS) ----------------
+  Widget _buildMetricSummaryGrid(DashboardController controller) {
     return LayoutBuilder(builder: (context, constraints) {
-      final isWide = constraints.maxWidth > 950;
-      final crossAxisCount = isWide ? 4 : (constraints.maxWidth > 580 ? 2 : 1);
-      final aspectRatio = isWide ? 1.55 : (constraints.maxWidth > 580 ? 1.6 : 2.4);
+      final isWide = constraints.maxWidth >= 1024;
+      final crossAxisCount = isWide ? 4 : (constraints.maxWidth > 640 ? 2 : 1);
+      final aspectRatio = isWide ? 1.5 : (constraints.maxWidth > 640 ? 1.6 : 2.4);
 
       return GridView.count(
         crossAxisCount: crossAxisCount,
@@ -124,54 +184,56 @@ class DashboardPage extends StatelessWidget {
         mainAxisSpacing: 16,
         childAspectRatio: aspectRatio,
         children: [
-          // 1. Total Buku Terdaftar
+          // Card 1: Pre-Order
           _buildStatCard(
-            title: 'Total Buku Terdaftar',
-            value: controller.totalBooks.value.toString(),
-            subtitle: 'Katalog terbitan aktif',
-            icon: LucideIcons.bookOpen,
-            iconColor: const Color(0xFF0F766E),
-            badgeText: null,
-            badgeColor: null,
-            onTap: controller.navigateToBooks,
+            title: 'Pesanan Pre-Order',
+            value: '${controller.totalPreorders.value}',
+            subtitle: 'Estimasi Omzet: Rp ${_formatPrice(controller.totalRevenue.value)}',
+            icon: LucideIcons.shoppingBag,
+            iconColor: const Color(0xFF059669),
+            badgeText: controller.pendingPreorders.value > 0
+                ? '${controller.pendingPreorders.value} Butuh Verifikasi'
+                : 'Semua Terverifikasi',
+            badgeColor: controller.pendingPreorders.value > 0 ? Colors.amber[800]! : const Color(0xFF059669),
+            onTap: () => controller.navigateToPage(2),
           ),
 
-          // 2. Naskah Masuk (Highlight unreviewed count)
+          // Card 2: Katalog Buku
+          _buildStatCard(
+            title: 'Katalog Buku',
+            value: '${controller.totalBooks.value}',
+            subtitle: 'Koleksi judul buku terbit aktif',
+            icon: LucideIcons.bookOpen,
+            iconColor: AppTheme.primaryColor,
+            badgeText: 'Katalog Aktif',
+            badgeColor: AppTheme.primaryColor,
+            onTap: () => controller.navigateToPage(1),
+          ),
+
+          // Card 3: Naskah Masuk
           _buildStatCard(
             title: 'Naskah Masuk',
-            value: controller.pendingSubmissions.value.toString(),
-            subtitle: 'Pengajuan calon penulis',
+            value: '${controller.totalSubmissions.value}',
+            subtitle: 'Pengajuan karya dari calon penulis',
             icon: LucideIcons.inbox,
-            iconColor: Colors.orange,
+            iconColor: Colors.purple[600]!,
             badgeText: controller.pendingSubmissions.value > 0
-                ? '${controller.pendingSubmissions.value} Perlu Review'
+                ? '${controller.pendingSubmissions.value} Pending Kurasi'
                 : 'Semua Terbaca',
-            badgeColor: controller.pendingSubmissions.value > 0
-                ? Colors.orangeAccent
-                : const Color(0xFF10B981),
-            onTap: controller.navigateToSubmissions,
+            badgeColor: controller.pendingSubmissions.value > 0 ? Colors.orange[800]! : Colors.purple[600]!,
+            onTap: () => controller.navigateToPage(3),
           ),
 
-          // 3. Penulis Terdaftar
+          // Card 4: Penulis & Konten Media
           _buildStatCard(
-            title: 'Penulis Terdaftar',
-            value: controller.totalAuthors.value.toString(),
-            subtitle: 'Kreator & penulis buku',
+            title: 'Penulis & Konten Media',
+            value: '${controller.totalAuthors.value}',
+            subtitle: '${controller.totalArticles.value} Artikel • ${controller.totalVideos.value} Video',
             icon: LucideIcons.users,
-            iconColor: const Color(0xFF3B82F6),
-            badgeText: null,
-            badgeColor: null,
-          ),
-
-          // 4. Promo Aktif
-          _buildStatCard(
-            title: 'Promo Aktif',
-            value: controller.activePromos.value.toString(),
-            subtitle: 'Buku berdiskon khusus',
-            icon: LucideIcons.tag,
-            iconColor: const Color(0xFF10B981),
-            badgeText: 'Diskon Berjalan',
-            badgeColor: const Color(0xFF10B981),
+            iconColor: Colors.blue[600]!,
+            badgeText: 'Mitra & Media',
+            badgeColor: Colors.blue[600]!,
+            onTap: () => controller.navigateToPage(4),
           ),
         ],
       );
@@ -188,98 +250,113 @@ class DashboardPage extends StatelessWidget {
     Color? badgeColor,
     VoidCallback? onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.borderColor),
-          boxShadow: AppTheme.softShadow,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 20),
-                ),
-                if (badgeText != null && badgeColor != null)
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: badgeColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
+                        color: iconColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Text(
-                        badgeText,
-                        style: TextStyle(
-                          color: badgeColor,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
+                      child: Icon(icon, color: iconColor, size: 20),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (badgeText != null && badgeColor != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: badgeColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              badgeText,
+                              style: TextStyle(
+                                color: badgeColor,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        const SizedBox(width: 6),
+                        Icon(
+                          LucideIcons.chevronRight,
+                          size: 16,
+                          color: Colors.grey[400],
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: AppTheme.textPrimary,
+                        height: 1.1,
                       ),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.textPrimary,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppTheme.textSecondary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                    const SizedBox(height: 3),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  // Trend Chart Section (fl_chart)
+  // ---------------- TREND CHART SECTION ----------------
   Widget _buildTrendChartSection(DashboardController controller) {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -320,7 +397,6 @@ class DashboardPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              // Trend Mode Toggle
               Obx(() {
                 final isBooks = controller.trendMode.value == 'books';
                 return Container(
@@ -352,9 +428,8 @@ class DashboardPage extends StatelessWidget {
           ),
           const SizedBox(height: 28),
 
-          // fl_chart container
           SizedBox(
-            height: 240,
+            height: 220,
             child: Obx(() {
               final isBooks = controller.trendMode.value == 'books';
               final points = isBooks
@@ -370,7 +445,6 @@ class DashboardPage extends StatelessWidget {
                 );
               }
 
-              // Compute max Y
               int maxY = 5;
               for (final p in points) {
                 if (p.count > maxY) maxY = p.count;
@@ -477,30 +551,6 @@ class DashboardPage extends StatelessWidget {
                       ),
                     ),
                   ],
-                  lineTouchData: LineTouchData(
-                    touchTooltipData: LineTouchTooltipData(
-                      getTooltipColor: (_) => AppTheme.sidebarColor,
-                      tooltipRoundedRadius: 10,
-                      tooltipPadding:
-                          const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      getTooltipItems: (touchedSpots) {
-                        return touchedSpots.map((barSpot) {
-                          final idx = barSpot.x.toInt();
-                          final label = (idx >= 0 && idx < points.length)
-                              ? points[idx].monthLabel
-                              : '';
-                          return LineTooltipItem(
-                            '$label: ${barSpot.y.toInt()} ${isBooks ? "Buku" : "Naskah"}',
-                            const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          );
-                        }).toList();
-                      },
-                    ),
-                  ),
                 ),
               );
             }),
@@ -557,8 +607,8 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  // Priority Table Section: 5 Most Recent Unreviewed Submissions
-  Widget _buildPriorityTableSection(BuildContext context, DashboardController controller) {
+  // ---------------- LEFT COLUMN: RECENT PRE-ORDERS CARD ----------------
+  Widget _buildRecentPreordersCard(BuildContext context, DashboardController controller) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -573,30 +623,105 @@ class DashboardPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Row(
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF059669).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      LucideIcons.shoppingBag,
+                      color: Color(0xFF059669),
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Pesanan Pre-Order Terbaru',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        '5 transaksi pre-order teratas yang baru masuk',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              TextButton.icon(
+                onPressed: () => controller.navigateToPage(2),
+                icon: const Icon(LucideIcons.arrowRight, size: 14),
+                label: const Text('Lihat Semua'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          Obx(() {
+            final orders = controller.recentPreorders;
+
+            if (orders.isEmpty) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: AppTheme.inputFillColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.orangeAccent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        LucideIcons.clock,
-                        color: Colors.orangeAccent,
-                        size: 18,
-                      ),
+                    const Icon(LucideIcons.shoppingBag, color: Colors.grey, size: 32),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Belum ada transaksi pre-order terbaru',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: orders.length,
+              separatorBuilder: (_, __) => const Divider(height: 20),
+              itemBuilder: (context, index) {
+                final order = orders[index];
+                final customerName = order['customer_name'] ?? order['name'] ?? order['pemesan'] ?? 'Pelanggan';
+                final bookTitle = order['book_title'] ?? order['title'] ?? order['buku'] ?? 'Buku Pre-Order';
+                final price = order['total_price'] ?? order['price'] ?? 0;
+                final status = order['status']?.toString() ?? 'Menunggu';
+
+                final isVerified = status.toLowerCase().contains('terverifikasi') || status.toLowerCase().contains('selesai');
+                final isPending = status.toLowerCase().contains('menunggu') || status.toLowerCase().contains('pending');
+
+                return Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      child: const Icon(LucideIcons.user, size: 16, color: AppTheme.primaryColor),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Naskah Masuk Perlu Direview Segera',
-                            style: TextStyle(
-                              fontSize: 16,
+                          Text(
+                            customerName.toString(),
+                            style: const TextStyle(
+                              fontSize: 13.5,
                               fontWeight: FontWeight.bold,
                               color: AppTheme.textPrimary,
                             ),
@@ -605,241 +730,413 @@ class DashboardPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '5 naskah pengajuan terbaru yang belum ditinjau oleh redaksi',
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                            bookTitle.toString(),
+                            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Rp ${_formatPrice(price is num ? price : int.tryParse(price.toString()) ?? 0)}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isVerified
+                                ? const Color(0xFF059669).withValues(alpha: 0.1)
+                                : (isPending ? Colors.amber.withValues(alpha: 0.12) : Colors.grey.withValues(alpha: 0.1)),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            status.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: isVerified
+                                  ? const Color(0xFF059669)
+                                  : (isPending ? Colors.amber[900] : Colors.grey[700]),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
-                ),
+                );
+              },
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ---------------- RIGHT COLUMN: RECENT SUBMISSIONS CARD ----------------
+  Widget _buildRecentSubmissionsCard(BuildContext context, DashboardController controller) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      LucideIcons.inbox,
+                      color: Colors.purple,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Naskah Masuk Terbaru',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        '5 pengajuan naskah terbaru',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              TextButton.icon(
-                onPressed: controller.navigateToSubmissions,
+              IconButton(
+                onPressed: () => controller.navigateToPage(3),
                 icon: const Icon(LucideIcons.arrowRight, size: 16),
-                label: const Text('Buka Semua Naskah'),
+                tooltip: 'Lihat Semua Naskah',
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Table Content
           Obx(() {
             final submissions = controller.recentSubmissions;
 
             if (submissions.isEmpty) {
               return Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(32),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: AppTheme.inputFillColor,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
+                child: const Column(
                   children: [
-                    const Icon(LucideIcons.checkCircle2, color: Color(0xFF10B981), size: 36),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Semua Naskah Telah Direview!',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
+                    Icon(LucideIcons.checkCircle2, color: Color(0xFF059669), size: 30),
+                    SizedBox(height: 6),
                     Text(
-                      'Tidak ada pengajuan naskah berstatus pending saat ini.',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      'Semua naskah telah direview!',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
                     ),
                   ],
                 ),
               );
             }
 
-            return ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppTheme.borderColor),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: LayoutBuilder(
-                  builder: (context, tableConstraints) {
-                    const minWidth = 720.0;
-                    final width = tableConstraints.maxWidth < minWidth
-                        ? minWidth
-                        : tableConstraints.maxWidth;
+            return ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: submissions.length,
+              separatorBuilder: (_, __) => const Divider(height: 16),
+              itemBuilder: (context, index) {
+                final sub = submissions[index];
 
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: SizedBox(
-                        width: width,
-                        child: Table(
-                          columnWidths: const {
-                            0: FlexColumnWidth(2.2), // Pengirim
-                            1: FlexColumnWidth(2.4), // Email
-                            2: FlexColumnWidth(1.8), // Tanggal
-                            3: FlexColumnWidth(1.2), // Status
-                            4: FixedColumnWidth(145), // Aksi: Lihat Detail
-                          },
-                          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                          children: [
-                    // Table Header
-                    TableRow(
-                      decoration: const BoxDecoration(color: AppTheme.inputFillColor),
+                return InkWell(
+                  onTap: () => _openReviewDialog(context, sub, controller),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
                       children: [
-                        _buildTableHeaderCell('PENGIRIM'),
-                        _buildTableHeaderCell('EMAIL'),
-                        _buildTableHeaderCell('TANGGAL MASUK'),
-                        _buildTableHeaderCell('STATUS'),
-                        _buildTableHeaderCell('AKSI', align: TextAlign.end),
-                      ],
-                    ),
-
-                    // Table Rows
-                    ...submissions.map((sub) {
-                      return TableRow(
-                        decoration: const BoxDecoration(
-                          border: Border(
-                            top: BorderSide(color: AppTheme.borderColor, width: 0.8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                sub.senderName,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                sub.email,
+                                style: TextStyle(fontSize: 11.5, color: Colors.grey[600]),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
                         ),
-                        children: [
-                          // Pengirim
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 14,
-                                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
-                                  child: const Icon(
-                                    LucideIcons.user,
-                                    size: 14,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    sub.senderName,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.textPrimary,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Email
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            child: Text(
-                              sub.email,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppTheme.textSecondary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-
-                          // Tanggal
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            child: Text(
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
                               _formatDate(sub.createdAt),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.textMuted,
-                              ),
+                              style: const TextStyle(fontSize: 10.5, color: AppTheme.textMuted),
                             ),
-                          ),
-
-                          // Status
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.orangeAccent.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: Colors.orangeAccent.withValues(alpha: 0.3),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'PENDING',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.orangeAccent,
-                                  ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'PENDING',
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange,
                                 ),
                               ),
                             ),
-                          ),
-
-                          // Aksi: Lihat Detail
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            child: Align(
-                              alignment: Alignment.centerRight,
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  _openReviewDialog(context, sub, controller);
-                                },
-                                icon: const Icon(LucideIcons.eye, size: 13),
-                                label: const Text('Lihat Detail'),
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }),
-                  ],
-                ),
-              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             );
-          },
-        ),
-      ),
-    );
-  }),
+          }),
         ],
       ),
     );
   }
 
-  Widget _buildTableHeaderCell(String text, {TextAlign align = TextAlign.start}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Text(
-        text,
-        textAlign: align,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: AppTheme.textSecondary,
-          letterSpacing: 0.8,
+  // ---------------- RIGHT COLUMN: QUICK SHORTCUTS CARD ----------------
+  Widget _buildQuickShortcutsCard(BuildContext context, DashboardController controller) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  LucideIcons.sparkles,
+                  color: AppTheme.primaryColor,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Shortcut Cepat Operasional',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Akses langsung modul aksi utama admin',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          Column(
+            children: [
+              _buildShortcutTile(
+                title: 'Tambah Buku Baru',
+                subtitle: 'Buka dialog entri form produk buku',
+                icon: LucideIcons.plusCircle,
+                iconColor: AppTheme.primaryColor,
+                onTap: () => controller.openNewBookForm(),
+              ),
+              const SizedBox(height: 12),
+              _buildShortcutTile(
+                title: 'Tinjau Naskah Masuk',
+                subtitle: 'Kelola kurasi berkas naskah penulis',
+                icon: LucideIcons.fileText,
+                iconColor: Colors.purple,
+                onTap: () => controller.navigateToPage(3),
+              ),
+              const SizedBox(height: 12),
+              _buildShortcutTile(
+                title: 'Update Pengaturan Hero',
+                subtitle: 'Kustomisasi tampilan banner utama publik',
+                icon: LucideIcons.layout,
+                iconColor: Colors.blue,
+                onTap: () => controller.navigateToPage(7),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShortcutTile({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.inputFillColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.borderColor.withValues(alpha: 0.6)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, size: 16, color: iconColor),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(LucideIcons.chevronRight, size: 16, color: Colors.grey[400]),
+              ],
+            ),
+          ),
         ),
+      ),
+    );
+  }
+
+  // ---------------- SLEEK SKELETON LOADING ----------------
+  Widget _buildSkeletonLoading() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 32,
+            width: 220,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 16,
+            width: 380,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: List.generate(
+              4,
+              (_) => Expanded(
+                child: Container(
+                  height: 120,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppTheme.borderColor),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            height: 260,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.borderColor),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -859,4 +1156,222 @@ class DashboardPage extends StatelessWidget {
       barrierDismissible: false,
     );
   }
+
+  // ---------------- STATUS STOK & BUKU TERPOPULER CARD ----------------
+  Widget _buildStatusStokCard(BuildContext context, DashboardController controller) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.auto_stories_outlined,
+                      color: AppTheme.primaryColor,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Status Stok & Buku Terpopuler',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Pantau stok buku menipis dan buku yang sedang aktif',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          Obx(() {
+            final books = controller.topBooks;
+
+            if (books.isEmpty) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(28),
+                decoration: BoxDecoration(
+                  color: AppTheme.inputFillColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Column(
+                  children: [
+                    Icon(Icons.auto_stories_outlined, color: Colors.grey, size: 32),
+                    SizedBox(height: 8),
+                    Text(
+                      'Belum ada data buku di katalog',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: books.length > 4 ? 4 : books.length,
+              separatorBuilder: (_, __) => const Divider(height: 16),
+              itemBuilder: (context, index) {
+                final book = books[index];
+                final title = book['title']?.toString() ?? 'Judul Buku';
+                final category = book['category']?.toString() ?? 'Umum';
+                final coverUrl = book['cover_url']?.toString() ?? book['coverUrl']?.toString() ?? '';
+                final rawPrice = book['price'];
+                num price = 0;
+                if (rawPrice is num) price = rawPrice;
+                if (rawPrice is String) price = num.tryParse(rawPrice) ?? 0;
+
+                final rawStock = book['stock'] ?? book['stok'];
+                int stock = 15;
+                if (rawStock is num) stock = rawStock.toInt();
+                if (rawStock is String) stock = int.tryParse(rawStock) ?? 15;
+
+                final isLowStock = stock < 10;
+
+                return Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: coverUrl.isNotEmpty
+                          ? Image.network(
+                              coverUrl,
+                              width: 38,
+                              height: 50,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 38,
+                                height: 50,
+                                color: Colors.grey[200],
+                                child: const Icon(LucideIcons.bookOpen, size: 18, color: Colors.grey),
+                              ),
+                            )
+                          : Container(
+                              width: 38,
+                              height: 50,
+                              color: Colors.grey[200],
+                              child: const Icon(LucideIcons.bookOpen, size: 18, color: Colors.grey),
+                            ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  category,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Rp ${_formatPrice(price)}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isLowStock ? const Color(0xFFFFF7ED) : const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isLowStock ? const Color(0xFFFFEDD5) : const Color(0xFFA7F3D0),
+                        ),
+                      ),
+                      child: Text(
+                        isLowStock ? 'Stok Menipis (< 10)' : 'Stok Tersedia',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: isLowStock ? const Color(0xFFC2410C) : const Color(0xFF047857),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          }),
+
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
+
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => controller.navigateToPage(1),
+              icon: const Icon(LucideIcons.arrowRight, size: 14),
+              label: const Text(
+                'Lihat Semua di Katalog Buku →',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }

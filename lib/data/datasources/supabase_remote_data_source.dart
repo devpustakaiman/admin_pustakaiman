@@ -50,6 +50,7 @@ abstract class SupabaseRemoteDataSource {
 
   // Dashboard Aggregates
   Future<Map<String, dynamic>> getDashboardMetrics();
+  Future<List<Map<String, dynamic>>> getTopBooks({int limit = 4});
 
   // Web Settings (Landing Page CMS) & Pre-Order Settings
   Future<List<Map<String, dynamic>>> getBooksForDropdown();
@@ -828,16 +829,97 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
     await supabaseClient.from('submissions').delete().inFilter('id', ids);
   }
 
+  Future<int> getPreordersCount() async {
+    try {
+      final count = await supabaseClient
+          .from('preorders')
+          .count(CountOption.exact)
+          .isFilter('deleted_at', null);
+      return count;
+    } catch (_) {
+      try {
+        final res = await supabaseClient
+            .from('preorders')
+            .select('id')
+            .isFilter('deleted_at', null);
+        return res.length;
+      } catch (_) {
+        return 0;
+      }
+    }
+  }
+
+  Future<int> getPendingPreordersCount() async {
+    try {
+      final res = await supabaseClient
+          .from('preorders')
+          .select('status')
+          .isFilter('deleted_at', null);
+      int count = 0;
+      for (var row in res) {
+        final st = row['status']?.toString().toLowerCase() ?? '';
+        if (st.contains('menunggu') || st.contains('pending') || st.contains('verifikasi')) {
+          count++;
+        }
+      }
+      return count;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  Future<int> getTotalPreordersRevenue() async {
+    try {
+      final res = await supabaseClient
+          .from('preorders')
+          .select('total_price, total_amount, price')
+          .isFilter('deleted_at', null);
+      int total = 0;
+      for (var row in res) {
+        final val = row['total_price'] ?? row['total_amount'] ?? row['price'];
+        if (val is num) {
+          total += val.toInt();
+        } else if (val is String) {
+          total += int.tryParse(val) ?? 0;
+        }
+      }
+      return total;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getRecentPreorders({int limit = 5}) async {
+    try {
+      final res = await supabaseClient
+          .from('preorders')
+          .select()
+          .isFilter('deleted_at', null)
+          .order('created_at', ascending: false)
+          .limit(limit);
+      return List<Map<String, dynamic>>.from(res);
+    } catch (_) {
+      return [];
+    }
+  }
+
   // ---------------- DASHBOARD AGGREGATES ----------------
   @override
   Future<Map<String, dynamic>> getDashboardMetrics() async {
     // Run counts concurrently with server-side head/exact queries
     final results = await Future.wait([
       getBooksCount(),
+      getPreordersCount(),
+      getPendingPreordersCount(),
+      getSubmissionsCount(),
       getPendingSubmissionsCount(),
       getAuthorsCount(),
-      getActivePromosCount(),
+      getArticlesCount(),
+      getMediaVideosCount(),
+      getTotalPreordersRevenue(),
+      getRecentPreorders(limit: 5),
       getRecentUnreviewedSubmissions(limit: 5),
+      getTopBooks(limit: 4),
     ]);
 
     // Fetch dates for monthly growth trend calculation
@@ -874,14 +956,37 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
 
     return {
       'totalBooks': results[0] as int,
-      'pendingSubmissions': results[1] as int,
-      'totalAuthors': results[2] as int,
-      'activePromos': results[3] as int,
-      'recentSubmissions': results[4] as List<Map<String, dynamic>>,
+      'totalPreorders': results[1] as int,
+      'pendingPreorders': results[2] as int,
+      'totalSubmissions': results[3] as int,
+      'pendingSubmissions': results[4] as int,
+      'totalAuthors': results[5] as int,
+      'totalArticles': results[6] as int,
+      'totalVideos': results[7] as int,
+      'totalRevenue': results[8] as int,
+      'recentPreorders': results[9] as List<Map<String, dynamic>>,
+      'recentSubmissions': results[10] as List<Map<String, dynamic>>,
+      'topBooks': results[11] as List<Map<String, dynamic>>,
       'bookDates': bookDates,
       'submissionDates': submissionDates,
     };
   }
+
+  @override
+  Future<List<Map<String, dynamic>>> getTopBooks({int limit = 4}) async {
+    try {
+      final response = await supabaseClient
+          .from('books')
+          .select()
+          .isFilter('deleted_at', null)
+          .order('created_at', ascending: false)
+          .limit(limit);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (_) {
+      return [];
+    }
+  }
+
 
   // ---------------- SITE SETTINGS (WEB CMS) ----------------
   @override

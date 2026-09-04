@@ -683,6 +683,9 @@ class BookController extends GetxController {
       },
       (_) async {
         await fetchBooks();
+        if (Get.context != null) {
+          AppToast.showSuccess(Get.context!, 'Buku berhasil dipindahkan ke keranjang sampah');
+        }
       },
     );
   }

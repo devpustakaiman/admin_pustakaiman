@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../controllers/web_settings_controller.dart';
+import '../../widgets/cms_page_header.dart';
 
 class ContactSettingsPage extends StatelessWidget {
   const ContactSettingsPage({super.key});
@@ -26,37 +27,29 @@ class ContactSettingsPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Page Header Title
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Kelola Halaman > Kontak & Layanan',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.textPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Kelola alamat kantor, nomor kontak telepon, WhatsApp customer care, dan email resmi',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              // Page Header Title & Primary Action
+              CmsPageHeader(
+                title: 'Kelola Halaman > Kontak & Layanan',
+                subtitle: 'Kelola alamat kantor, nomor kontak telepon, WhatsApp customer care, dan email resmi',
+                isSaving: controller.isSavingContactInfo.value,
+                onSave: () async {
+                  final success = await controller.saveContactInfo();
+                  if (context.mounted) {
+                    if (success) {
+                      AppToast.showSuccess(
+                        context,
+                        'Informasi Kontak & Layanan berhasil disimpan!',
+                      );
+                    } else {
+                      AppToast.showError(
+                        context,
+                        controller.errorMessage.value.isNotEmpty
+                            ? controller.errorMessage.value
+                            : 'Gagal menyimpan informasi kontak.',
+                      );
+                    }
+                  }
+                },
               ),
 
               const SizedBox(height: 24),
@@ -201,56 +194,7 @@ class ContactSettingsPage extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 24),
 
-          // Save Button
-          Align(
-            alignment: Alignment.centerRight,
-            child: Obx(() {
-              return ElevatedButton.icon(
-                onPressed: controller.isSavingContactInfo.value
-                    ? null
-                    : () async {
-                        final success = await controller.saveContactInfo();
-                        if (context.mounted) {
-                          if (success) {
-                            AppToast.showSuccess(
-                              context,
-                              'Informasi Kontak & Layanan berhasil disimpan!',
-                            );
-                          } else {
-                            AppToast.showError(
-                              context,
-                              controller.errorMessage.value.isNotEmpty
-                                  ? controller.errorMessage.value
-                                  : 'Gagal menyimpan informasi kontak.',
-                            );
-                          }
-                        }
-                      },
-                icon: controller.isSavingContactInfo.value
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(LucideIcons.save, size: 16),
-                label: Text(
-                  controller.isSavingContactInfo.value ? 'Menyimpan...' : 'Simpan Informasi Kontak',
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              );
-            }),
-          ),
         ],
       ),
     );

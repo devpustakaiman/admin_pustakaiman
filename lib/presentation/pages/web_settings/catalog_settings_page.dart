@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../controllers/web_settings_controller.dart';
+import '../../widgets/cms_page_header.dart';
 
 class CatalogSettingsPage extends StatelessWidget {
   const CatalogSettingsPage({super.key});
@@ -26,37 +27,17 @@ class CatalogSettingsPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Page Header Title & Subtitle
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Kelola Halaman > Katalog Buku',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.textPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Kelola judul header, deskripsi banner promo, tautan promo, dan kategori unggulan halaman katalog',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              // Page Header Title & Primary Action
+              CmsPageHeader(
+                title: 'Kelola Halaman > Katalog Buku',
+                subtitle: 'Kelola judul header, deskripsi banner promo, tautan promo, dan kategori unggulan halaman katalog',
+                isSaving: controller.isSavingCatalogInfo.value,
+                onSave: () async {
+                  final success = await controller.saveCatalogInfo();
+                  if (success && context.mounted) {
+                    AppToast.showSuccess(context, 'Pengaturan katalog berhasil disimpan!');
+                  }
+                },
               ),
 
               const SizedBox(height: 24),
@@ -74,48 +55,7 @@ class CatalogSettingsPage extends StatelessWidget {
               // 3. Featured Categories Card
               _buildFeaturedCategoriesCard(context, controller),
 
-              const SizedBox(height: 32),
 
-              // 4. Save Button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: controller.isSavingCatalogInfo.value
-                        ? null
-                        : () async {
-                            final success = await controller.saveCatalogInfo();
-                            if (success && context.mounted) {
-                              AppToast.showSuccess(context, 'Pengaturan katalog berhasil disimpan');
-                            }
-                          },
-                    icon: controller.isSavingCatalogInfo.value
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(LucideIcons.save, size: 18),
-                    label: Text(
-                      controller.isSavingCatalogInfo.value ? 'Menyimpan...' : 'Simpan Pengaturan Katalog',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 40),
             ],
           ),
         );

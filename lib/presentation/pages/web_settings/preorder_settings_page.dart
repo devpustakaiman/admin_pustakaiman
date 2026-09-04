@@ -6,6 +6,7 @@ import '../../../core/utils/app_toast.dart';
 import '../../controllers/web_settings_controller.dart';
 import '../../../data/models/bank_account_model.dart';
 import '../../widgets/bank_account_dialog.dart';
+import '../../widgets/cms_page_header.dart';
 
 class PreorderSettingsPage extends StatelessWidget {
   const PreorderSettingsPage({super.key});
@@ -28,37 +29,29 @@ class PreorderSettingsPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Page Header Title
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Kelola Halaman > Pre-Order',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.textPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Kelola alamat email notifikasi transaksi pre-order dan daftar akun rekening bank penerima pembayaran',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              // Page Header Title & Primary Action
+              CmsPageHeader(
+                title: 'Kelola Halaman > Pre-Order',
+                subtitle: 'Kelola alamat email notifikasi transaksi pre-order dan daftar akun rekening bank penerima pembayaran',
+                isSaving: controller.isSavingPreorderEmail.value,
+                onSave: () async {
+                  final success = await controller.savePreorderEmail();
+                  if (context.mounted) {
+                    if (success) {
+                      AppToast.showSuccess(
+                        context,
+                        'Email notifikasi pre-order berhasil disimpan!',
+                      );
+                    } else {
+                      AppToast.showError(
+                        context,
+                        controller.errorMessage.value.isNotEmpty
+                            ? controller.errorMessage.value
+                            : 'Gagal menyimpan email notifikasi.',
+                      );
+                    }
+                  }
+                },
               ),
 
               const SizedBox(height: 24),
@@ -144,55 +137,7 @@ class PreorderSettingsPage extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 20),
 
-          Align(
-            alignment: Alignment.centerRight,
-            child: Obx(() {
-              return ElevatedButton.icon(
-                onPressed: controller.isSavingPreorderEmail.value
-                    ? null
-                    : () async {
-                        final success = await controller.savePreorderEmail();
-                        if (context.mounted) {
-                          if (success) {
-                            AppToast.showSuccess(
-                              context,
-                              'Email notifikasi pre-order berhasil disimpan!',
-                            );
-                          } else {
-                            AppToast.showError(
-                              context,
-                              controller.errorMessage.value.isNotEmpty
-                                  ? controller.errorMessage.value
-                                  : 'Gagal menyimpan email notifikasi.',
-                            );
-                          }
-                        }
-                      },
-                icon: controller.isSavingPreorderEmail.value
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(LucideIcons.save, size: 16),
-                label: Text(
-                  controller.isSavingPreorderEmail.value ? 'Menyimpan...' : 'Simpan Email Notifikasi',
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              );
-            }),
-          ),
         ],
       ),
     );

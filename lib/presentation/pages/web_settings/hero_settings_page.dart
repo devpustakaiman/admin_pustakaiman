@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../controllers/web_settings_controller.dart';
+import '../../widgets/cms_page_header.dart';
 
 class HeroSettingsPage extends StatelessWidget {
   const HeroSettingsPage({super.key});
@@ -41,79 +42,29 @@ class HeroSettingsPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Page Header Title
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Kelola Halaman > Beranda & Hero',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.textPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Kustomisasi Teks Hero Banner, Visual Banner, Buku Pilihan Minggu Ini, dan Pratinjau Tampilan Hero Publik',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton.icon(
-                    onPressed: controller.isSaving.value
-                        ? null
-                        : () async {
-                            final success = await controller.saveSettings();
-                            if (context.mounted) {
-                              if (success) {
-                                AppToast.showSuccess(
-                                  context,
-                                  'Pengaturan Hero Landing Page berhasil disimpan!',
-                                );
-                              } else {
-                                AppToast.showError(
-                                  context,
-                                  controller.errorMessage.value.isNotEmpty
-                                      ? controller.errorMessage.value
-                                      : 'Gagal menyimpan pengaturan.',
-                                );
-                              }
-                            }
-                          },
-                    icon: controller.isSaving.value
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(LucideIcons.save, size: 16),
-                    label: Text(
-                      controller.isSaving.value ? 'Menyimpan...' : 'Simpan Perubahan',
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
+              // Page Header Title & Primary Action
+              CmsPageHeader(
+                title: 'Kelola Halaman > Beranda & Hero',
+                subtitle: 'Kustomisasi Teks Hero Banner, Visual Banner, Buku Pilihan Minggu Ini, dan Pratinjau Tampilan Hero Publik',
+                isSaving: controller.isSaving.value,
+                onSave: () async {
+                  final success = await controller.saveSettings();
+                  if (context.mounted) {
+                    if (success) {
+                      AppToast.showSuccess(
+                        context,
+                        'Pengaturan Hero Landing Page berhasil disimpan!',
+                      );
+                    } else {
+                      AppToast.showError(
+                        context,
+                        controller.errorMessage.value.isNotEmpty
+                            ? controller.errorMessage.value
+                            : 'Gagal menyimpan pengaturan.',
+                      );
+                    }
+                  }
+                },
               ),
 
               const SizedBox(height: 24),

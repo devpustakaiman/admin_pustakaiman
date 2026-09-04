@@ -159,20 +159,27 @@ class WebSettingsController extends GetxController {
   static const String defaultCatalogSubtitle =
       'Jelajahi koleksi buku Islam kontemporer, spiritualitas, wawasan kebangsaan, dan novel bermakna karya penulis terkemuka.';
 
-  static const List<String> availableCatalogCategories = [
+  static const List<String> catalogCategoryOptions = [
     'Agama & Filsafat',
     'Al-Quran',
     'Bisnis & Ekonomi',
     'Buku Anak',
     'Diet & Health',
-    'Fiksi & Novel',
-    'Filsafat & Sejarah',
-    'Parenting & Anak',
-    'Pengembangan Diri',
+    'Fiksi',
+    'Filsafat, Sejarah, Sastra Dan Budaya',
+    'Lain-Lain',
+    'Learning',
+    'Mainan Edukatif',
+    'Non Fiksi',
+    'Parenting & Child Development',
+    'Pengembangan Diri & Karier',
     'Psikologi',
-    'Referensi & Ensiklopedia',
-    'Social Science & Biografi',
+    'Reference & Dictionary',
+    'Schoolbook',
+    'Social Science',
   ];
+
+  static const List<String> availableCatalogCategories = catalogCategoryOptions;
 
   @override
   void onInit() {
@@ -386,9 +393,9 @@ class WebSettingsController extends GetxController {
         } else {
           catalogFeaturedCategories.assignAll([
             'Agama & Filsafat',
-            'Fiksi & Novel',
-            'Pengembangan Diri',
-            'Parenting & Anak',
+            'Fiksi',
+            'Pengembangan Diri & Karier',
+            'Parenting & Child Development',
           ]);
         }
       } else {
@@ -456,9 +463,9 @@ class WebSettingsController extends GetxController {
         catalogPromoBannerLinkController.text = '';
         catalogFeaturedCategories.assignAll([
           'Agama & Filsafat',
-          'Fiksi & Novel',
-          'Pengembangan Diri',
-          'Parenting & Anak',
+          'Fiksi',
+          'Pengembangan Diri & Karier',
+          'Parenting & Child Development',
         ]);
       }
     } catch (e) {
