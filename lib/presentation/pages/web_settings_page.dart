@@ -135,6 +135,10 @@ class WebSettingsPage extends StatelessWidget {
                           _buildImageUploaderCard(context, controller),
                           const SizedBox(height: 20),
                           _buildFeaturedBookSelectorCard(context, controller),
+                          const SizedBox(height: 20),
+                          _buildAboutSettingsCard(context, controller),
+                          const SizedBox(height: 20),
+                          _buildContactInfoCard(context, controller),
                         ],
                       ),
                     ),
@@ -1504,4 +1508,517 @@ class WebSettingsPage extends StatelessWidget {
       ),
     );
   }
+
+  // 4. Contact Info & Services Card
+  Widget _buildContactInfoCard(BuildContext context, WebSettingsController controller) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  LucideIcons.phoneCall,
+                  color: AppTheme.primaryColor,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Informasi Kontak & Layanan',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Kelola alamat kantor, nomor kontak telepon, WhatsApp customer care, dan email resmi.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // 1. Alamat Redaksi & Kantor
+          const Text(
+            'Alamat Redaksi & Kantor',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: controller.contactAddressController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'Contoh: Jl. Ahmad Yani No. 123, Jakarta Pusat, DKI Jakarta 10110',
+              prefixIcon: const Padding(
+                padding: EdgeInsets.only(bottom: 40),
+                child: Icon(LucideIcons.mapPin, size: 18, color: Color(0xFF94A3B8)),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 2. Nomor Kontak Telepon
+          const Text(
+            'Nomor Kontak Telepon',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: controller.contactPhoneController,
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(
+              hintText: 'Contoh: (021) 555-1234 atau 0812-3456-7890',
+              prefixIcon: const Icon(LucideIcons.phone, size: 18, color: Color(0xFF94A3B8)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 3. Nomor WhatsApp Customer Care
+          const Text(
+            'Nomor WhatsApp Customer Care (link wa.me)',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: controller.contactWhatsappController,
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(
+              hintText: 'Contoh: 081234567890 atau 6281234567890',
+              prefixIcon: const Icon(LucideIcons.messageSquare, size: 18, color: Color(0xFF94A3B8)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 4. Email Resmi
+          const Text(
+            'Email Resmi (bisa input multiline/dipisah koma)',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: controller.contactEmailsController,
+            maxLines: 2,
+            decoration: InputDecoration(
+              hintText: 'Contoh: redaksi@pustakaiman.com, cs@pustakaiman.com',
+              prefixIcon: const Padding(
+                padding: EdgeInsets.only(bottom: 20),
+                child: Icon(LucideIcons.mail, size: 18, color: Color(0xFF94A3B8)),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Save Button
+          Align(
+            alignment: Alignment.centerRight,
+            child: Obx(() {
+              return ElevatedButton.icon(
+                onPressed: controller.isSavingContactInfo.value
+                    ? null
+                    : () async {
+                        final success = await controller.saveContactInfo();
+                        if (context.mounted) {
+                          if (success) {
+                            AppToast.showSuccess(
+                              context,
+                              'Informasi Kontak & Layanan berhasil disimpan!',
+                            );
+                          } else {
+                            AppToast.showError(
+                              context,
+                              controller.errorMessage.value.isNotEmpty
+                                  ? controller.errorMessage.value
+                                  : 'Gagal menyimpan informasi kontak.',
+                            );
+                          }
+                        }
+                      },
+                icon: controller.isSavingContactInfo.value
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(LucideIcons.save, size: 16),
+                label: Text(
+                  controller.isSavingContactInfo.value ? 'Menyimpan...' : 'Simpan Informasi Kontak',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 5. About Us Page Settings Card
+  Widget _buildAboutSettingsCard(BuildContext context, WebSettingsController controller) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  LucideIcons.building2,
+                  color: AppTheme.primaryColor,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pengaturan Halaman Tentang Kami',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Kelola profil penerbit, visi, misi, serta 4 angka statistik pencapaian.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // 1. Judul Utama Profil
+          const Text(
+            'Judul Utama Profil',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: controller.aboutHeadlineController,
+            decoration: InputDecoration(
+              hintText: 'Contoh: Penerbitan Bermakna, Menginspirasi Peradaban',
+              prefixIcon: const Icon(LucideIcons.heading, size: 18, color: Color(0xFF94A3B8)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 2. Deskripsi Singkat Profil
+          const Text(
+            'Deskripsi Singkat Profil',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: controller.aboutDescriptionController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'Tuliskan ringkasan profil penerbit...',
+              prefixIcon: const Padding(
+                padding: EdgeInsets.only(bottom: 40),
+                child: Icon(LucideIcons.fileText, size: 18, color: Color(0xFF94A3B8)),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 3. Visi & Misi Grid / Rows
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWideVision = constraints.maxWidth > 600;
+
+              Widget visionField = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Visi Penerbit',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                  ),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: controller.aboutVisionController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: 'Visi penerbit...',
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.only(bottom: 40),
+                        child: Icon(LucideIcons.target, size: 18, color: Color(0xFF94A3B8)),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ],
+              );
+
+              Widget missionField = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Misi Penerbit',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                  ),
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: controller.aboutMissionController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: 'Misi penerbit...',
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.only(bottom: 40),
+                        child: Icon(LucideIcons.listOrdered, size: 18, color: Color(0xFF94A3B8)),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ],
+              );
+
+              if (isWideVision) {
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: visionField),
+                    const SizedBox(width: 16),
+                    Expanded(child: missionField),
+                  ],
+                );
+              }
+
+              return Column(
+                children: [
+                  visionField,
+                  const SizedBox(height: 16),
+                  missionField,
+                ],
+              );
+            },
+          ),
+
+          const SizedBox(height: 20),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          const SizedBox(height: 16),
+
+          // 4. Editor List 4 Angka Statistik
+          Row(
+            children: const [
+              Icon(LucideIcons.barChart2, size: 16, color: AppTheme.primaryColor),
+              SizedBox(width: 8),
+              Text(
+                'Angka Statistik Profil (4 Item)',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWideStat = constraints.maxWidth > 550;
+
+              Widget buildStatRow(int idx) {
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.15),
+                        child: Text(
+                          '${idx + 1}',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 4,
+                        child: TextFormField(
+                          controller: controller.statValueControllers[idx],
+                          decoration: InputDecoration(
+                            hintText: 'Nilai (ex: 500+)',
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 6,
+                        child: TextFormField(
+                          controller: controller.statLabelControllers[idx],
+                          decoration: InputDecoration(
+                            hintText: 'Label (ex: Judul Buku)',
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (isWideStat) {
+                return Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: buildStatRow(0)),
+                        const SizedBox(width: 12),
+                        Expanded(child: buildStatRow(1)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(child: buildStatRow(2)),
+                        const SizedBox(width: 12),
+                        Expanded(child: buildStatRow(3)),
+                      ],
+                    ),
+                  ],
+                );
+              }
+
+              return Column(
+                children: List.generate(4, (i) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: buildStatRow(i),
+                  );
+                }),
+              );
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          // Save Button
+          Align(
+            alignment: Alignment.centerRight,
+            child: Obx(() {
+              return ElevatedButton.icon(
+                onPressed: controller.isSavingAboutInfo.value
+                    ? null
+                    : () async {
+                        final success = await controller.saveAboutInfo();
+                        if (context.mounted) {
+                          if (success) {
+                            AppToast.showSuccess(
+                              context,
+                              'Profil Halaman Tentang Kami berhasil disimpan!',
+                            );
+                          } else {
+                            AppToast.showError(
+                              context,
+                              controller.errorMessage.value.isNotEmpty
+                                  ? controller.errorMessage.value
+                                  : 'Gagal menyimpan profil tentang kami.',
+                            );
+                          }
+                        }
+                      },
+                icon: controller.isSavingAboutInfo.value
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(LucideIcons.save, size: 16),
+                label: Text(
+                  controller.isSavingAboutInfo.value ? 'Menyimpan...' : 'Simpan Profil Tentang Kami',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+

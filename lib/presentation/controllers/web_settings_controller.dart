@@ -62,6 +62,20 @@ class WebSettingsController extends GetxController {
   final headlineController = TextEditingController();
   final subheadlineController = TextEditingController();
 
+  final contactAddressController = TextEditingController();
+  final contactPhoneController = TextEditingController();
+  final contactWhatsappController = TextEditingController();
+  final contactEmailsController = TextEditingController();
+
+  // About Us Profile & Stats Controllers
+  final aboutHeadlineController = TextEditingController();
+  final aboutDescriptionController = TextEditingController();
+  final aboutVisionController = TextEditingController();
+  final aboutMissionController = TextEditingController();
+
+  final List<TextEditingController> statValueControllers = List.generate(4, (_) => TextEditingController());
+  final List<TextEditingController> statLabelControllers = List.generate(4, (_) => TextEditingController());
+
   final RxString bannerUrl = ''.obs;
   final Rx<PlatformFile?> selectedBannerFile = Rx<PlatformFile?>(null);
 
@@ -77,6 +91,8 @@ class WebSettingsController extends GetxController {
 
   final RxBool isLoading = true.obs;
   final RxBool isSaving = false.obs;
+  final RxBool isSavingContactInfo = false.obs;
+  final RxBool isSavingAboutInfo = false.obs;
   final RxString uploadStatusMessage = ''.obs;
   final RxString errorMessage = ''.obs;
 
@@ -94,6 +110,21 @@ class WebSettingsController extends GetxController {
   void onClose() {
     headlineController.dispose();
     subheadlineController.dispose();
+    contactAddressController.dispose();
+    contactPhoneController.dispose();
+    contactWhatsappController.dispose();
+    contactEmailsController.dispose();
+
+    aboutHeadlineController.dispose();
+    aboutDescriptionController.dispose();
+    aboutVisionController.dispose();
+    aboutMissionController.dispose();
+    for (var c in statValueControllers) {
+      c.dispose();
+    }
+    for (var c in statLabelControllers) {
+      c.dispose();
+    }
     super.onClose();
   }
 
@@ -125,16 +156,68 @@ class WebSettingsController extends GetxController {
 
       booksList.value = rawBooks.map((m) => FeaturedBookItem.fromJson(m)).toList();
 
+      final defaultStats = [
+        {'value': '2001', 'label': 'Tahun Berdiri'},
+        {'value': '500+', 'label': 'Judul Buku Terbit'},
+        {'value': '200+', 'label': 'Penulis Mitra'},
+        {'value': '1 Juta+', 'label': 'Pembaca Setia'},
+      ];
+
       if (settings != null) {
         headlineController.text = settings['hero_headline']?.toString() ?? defaultHeadline;
         subheadlineController.text = settings['hero_subheadline']?.toString() ?? defaultSubheadline;
         bannerUrl.value = settings['hero_banner_url']?.toString() ?? '';
         selectedFeaturedBookId.value = settings['featured_book_id']?.toString();
+
+        contactAddressController.text = settings['contact_address']?.toString() ?? '';
+        contactPhoneController.text = settings['contact_phone']?.toString() ?? '';
+        contactWhatsappController.text = settings['contact_whatsapp']?.toString() ?? '';
+        contactEmailsController.text = settings['contact_emails']?.toString() ?? '';
+
+        aboutHeadlineController.text = settings['about_headline']?.toString() ?? 'Penerbitan Bermakna, Menginspirasi Peradaban';
+        aboutDescriptionController.text = settings['about_description']?.toString() ??
+            'Didirikan sejak tahun 2001, Pustaka Iman hadir sebagai rumah penerbitan profesional yang mendedikasikan diri untuk mencerdaskan kehidupan bangsa melalui literasi berkualitas tinggi, baik karya penulis tanah air maupun karya terjemahan dari Bahasa Arab dan Inggris.';
+        aboutVisionController.text = settings['about_vision']?.toString() ??
+            'Menjadi pilar utama dalam menghadirkan karya-karya bermutu yang mencerahkan jiwa, memperluas wawasan keislaman dan kebangsaan, serta menginspirasi kemajuan peradaban.';
+        aboutMissionController.text = settings['about_mission']?.toString() ??
+            '1. Menerbitkan buku-buku islam kontemporer, spiritualitas, dan wawasan kebangsaan berkualitas tinggi.\n2. Mendorong penulis lokal dan menerjemahkan karya-karya masterpieces berbobot.\n3. Menyediakan bacaan yang mempererat ukhuwah dan nilai-nilai kebaikan universal.';
+
+        List<dynamic>? rawStats;
+        if (settings['about_stats'] != null && settings['about_stats'] is List) {
+          rawStats = settings['about_stats'] as List<dynamic>;
+        }
+
+        for (int i = 0; i < 4; i++) {
+          Map<String, dynamic>? item;
+          if (rawStats != null && i < rawStats.length && rawStats[i] is Map) {
+            item = Map<String, dynamic>.from(rawStats[i] as Map);
+          }
+          final fallback = defaultStats[i];
+          statValueControllers[i].text = item?['value']?.toString() ?? fallback['value']!;
+          statLabelControllers[i].text = item?['label']?.toString() ?? fallback['label']!;
+        }
       } else {
         headlineController.text = defaultHeadline;
         subheadlineController.text = defaultSubheadline;
         bannerUrl.value = '';
         selectedFeaturedBookId.value = null;
+
+        contactAddressController.text = '';
+        contactPhoneController.text = '';
+        contactWhatsappController.text = '';
+        contactEmailsController.text = '';
+
+        aboutHeadlineController.text = 'Penerbitan Bermakna, Menginspirasi Peradaban';
+        aboutDescriptionController.text =
+            'Didirikan sejak tahun 2001, Pustaka Iman hadir sebagai rumah penerbitan profesional yang mendedikasikan diri untuk mencerdaskan kehidupan bangsa melalui literasi berkualitas tinggi.';
+        aboutVisionController.text = 'Menjadi pilar utama dalam menghadirkan karya-karya bermutu yang mencerahkan jiwa.';
+        aboutMissionController.text = '1. Menerbitkan buku berkualitas tinggi.\n2. Mendorong penulis lokal.';
+
+        for (int i = 0; i < 4; i++) {
+          final fallback = defaultStats[i];
+          statValueControllers[i].text = fallback['value']!;
+          statLabelControllers[i].text = fallback['label']!;
+        }
       }
     } catch (e) {
       headlineController.text = defaultHeadline;
@@ -224,4 +307,61 @@ class WebSettingsController extends GetxController {
       return false;
     }
   }
+
+  Future<bool> saveContactInfo() async {
+    isSavingContactInfo.value = true;
+    errorMessage.value = '';
+
+    try {
+      final payload = {
+        'id': 'default',
+        'contact_address': contactAddressController.text.trim(),
+        'contact_phone': contactPhoneController.text.trim(),
+        'contact_whatsapp': contactWhatsappController.text.trim(),
+        'contact_emails': contactEmailsController.text.trim(),
+      };
+
+      await remoteDataSource.updateSiteSettings(payload);
+      isSavingContactInfo.value = false;
+      return true;
+    } catch (e) {
+      isSavingContactInfo.value = false;
+      errorMessage.value = e.toString();
+      return false;
+    }
+  }
+
+  Future<bool> saveAboutInfo() async {
+    isSavingAboutInfo.value = true;
+    errorMessage.value = '';
+
+    try {
+      final List<Map<String, String>> statsList = [];
+      for (int i = 0; i < 4; i++) {
+        statsList.add({
+          'value': statValueControllers[i].text.trim(),
+          'label': statLabelControllers[i].text.trim(),
+        });
+      }
+
+      final payload = {
+        'id': 'default',
+        'about_headline': aboutHeadlineController.text.trim(),
+        'about_description': aboutDescriptionController.text.trim(),
+        'about_vision': aboutVisionController.text.trim(),
+        'about_mission': aboutMissionController.text.trim(),
+        'about_stats': statsList,
+      };
+
+      await remoteDataSource.updateSiteSettings(payload);
+      isSavingAboutInfo.value = false;
+      return true;
+    } catch (e) {
+      isSavingAboutInfo.value = false;
+      errorMessage.value = e.toString();
+      return false;
+    }
+  }
 }
+
+

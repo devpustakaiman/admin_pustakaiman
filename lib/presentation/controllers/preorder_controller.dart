@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../data/datasources/supabase_remote_data_source.dart';
 import '../../data/models/preorder_model.dart';
+import '../../data/models/bank_account_model.dart';
 import '../../core/utils/app_toast.dart';
 
 class PreorderController extends GetxController {
@@ -16,9 +17,11 @@ class PreorderController extends GetxController {
 
   final RxList<PreorderModel> preorders = <PreorderModel>[].obs;
   final RxList<PreorderModel> filteredPreorders = <PreorderModel>[].obs;
+  final RxList<BankAccountModel> bankAccounts = <BankAccountModel>[].obs;
 
   final RxBool isLoading = true.obs;
   final RxBool isSavingEmail = false.obs;
+  final RxBool isSavingBankAccount = false.obs;
   final RxString selectedStatusFilter = 'semua'.obs;
   final RxString searchQuery = ''.obs;
 
@@ -41,13 +44,16 @@ class PreorderController extends GetxController {
       final results = await Future.wait([
         remoteDataSource.getPreorderNotificationEmail(),
         remoteDataSource.getPreorders(),
+        remoteDataSource.getBankAccounts(),
       ]);
 
       final savedEmail = results[0] as String;
       final rawPreorders = results[1] as List<Map<String, dynamic>>;
+      final rawBankAccounts = results[2] as List<Map<String, dynamic>>;
 
       emailController.text = savedEmail;
       preorders.value = rawPreorders.map((json) => PreorderModel.fromJson(json)).toList();
+      bankAccounts.value = rawBankAccounts.map((json) => BankAccountModel.fromJson(json)).toList();
       applyFilters();
     } catch (e) {
       if (Get.context != null) {
@@ -179,5 +185,68 @@ class PreorderController extends GetxController {
       }
     }
   }
+
+  Future<void> saveBankAccount(BankAccountModel account) async {
+    isSavingBankAccount.value = true;
+    try {
+      final updatedList = List<BankAccountModel>.from(bankAccounts);
+      final index = updatedList.indexWhere((a) => a.id == account.id);
+      final bool isEdit = index != -1;
+
+      if (isEdit) {
+        updatedList[index] = account;
+      } else {
+        updatedList.add(account);
+      }
+
+      final payload = updatedList.map((a) => a.toJson()).toList();
+      await remoteDataSource.updateBankAccounts(payload);
+
+      bankAccounts.value = updatedList;
+
+      if (Get.context != null) {
+        AppToast.showSuccess(
+          Get.context!,
+          isEdit
+              ? 'Rekening bank ${account.bankName} berhasil diperbarui'
+              : 'Rekening bank ${account.bankName} berhasil ditambahkan',
+        );
+      }
+    } catch (e) {
+      if (Get.context != null) {
+        AppToast.showError(Get.context!, 'Gagal menyimpan rekening bank: $e');
+      }
+    } finally {
+      isSavingBankAccount.value = false;
+    }
+  }
+
+  Future<void> deleteBankAccount(String accountId) async {
+    isSavingBankAccount.value = true;
+    try {
+      final accountToDelete = bankAccounts.firstWhereOrNull((a) => a.id == accountId);
+      final updatedList = bankAccounts.where((a) => a.id != accountId).toList();
+      final payload = updatedList.map((a) => a.toJson()).toList();
+
+      await remoteDataSource.updateBankAccounts(payload);
+      bankAccounts.value = updatedList;
+
+      if (Get.context != null) {
+        AppToast.showSuccess(
+          Get.context!,
+          accountToDelete != null
+              ? 'Rekening bank ${accountToDelete.bankName} berhasil dihapus'
+              : 'Rekening bank berhasil dihapus',
+        );
+      }
+    } catch (e) {
+      if (Get.context != null) {
+        AppToast.showError(Get.context!, 'Gagal menghapus rekening bank: $e');
+      }
+    } finally {
+      isSavingBankAccount.value = false;
+    }
+  }
 }
+
 

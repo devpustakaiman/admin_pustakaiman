@@ -57,6 +57,8 @@ abstract class SupabaseRemoteDataSource {
   Future<void> updateSiteSettings(Map<String, dynamic> settings);
   Future<String> getPreorderNotificationEmail();
   Future<void> updatePreorderNotificationEmail(String email);
+  Future<List<Map<String, dynamic>>> getBankAccounts();
+  Future<void> updateBankAccounts(List<Map<String, dynamic>> bankAccounts);
   Future<List<Map<String, dynamic>>> getPreorders();
   Future<List<Map<String, dynamic>>> getDeletedPreorders();
   Future<void> updatePreorderStatus(String id, String status);
@@ -989,6 +991,54 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
       await supabaseClient.from('site_settings').upsert({
         'id': 'default',
         'preorder_notification_email': trimmedEmail,
+        'updated_at': now,
+      });
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getBankAccounts() async {
+    try {
+      final res = await supabaseClient
+          .from('site_settings')
+          .select('bank_accounts')
+          .eq('id', 'default')
+          .maybeSingle();
+
+      if (res != null && res['bank_accounts'] != null && res['bank_accounts'] is List) {
+        return List<Map<String, dynamic>>.from(res['bank_accounts']);
+      }
+    } catch (_) {
+      try {
+        final res = await supabaseClient
+            .from('site_settings')
+            .select()
+            .limit(1)
+            .maybeSingle();
+
+        if (res != null && res['bank_accounts'] != null && res['bank_accounts'] is List) {
+          return List<Map<String, dynamic>>.from(res['bank_accounts']);
+        }
+      } catch (_) {}
+    }
+    return [];
+  }
+
+  @override
+  Future<void> updateBankAccounts(List<Map<String, dynamic>> bankAccounts) async {
+    final now = DateTime.now().toIso8601String();
+    try {
+      await supabaseClient
+          .from('site_settings')
+          .update({
+            'bank_accounts': bankAccounts,
+            'updated_at': now,
+          })
+          .eq('id', 'default');
+    } catch (_) {
+      await supabaseClient.from('site_settings').upsert({
+        'id': 'default',
+        'bank_accounts': bankAccounts,
         'updated_at': now,
       });
     }
