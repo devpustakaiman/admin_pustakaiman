@@ -54,10 +54,9 @@ class VideoFormDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Container(
-        width: 720,
-        constraints: const BoxConstraints(maxHeight: 850),
+        constraints: const BoxConstraints(maxWidth: 720, maxHeight: 850),
         decoration: BoxDecoration(
           color: AppTheme.backgroundColor,
           borderRadius: BorderRadius.circular(20),

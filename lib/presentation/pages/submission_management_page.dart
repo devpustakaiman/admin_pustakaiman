@@ -109,11 +109,12 @@ class SubmissionManagementPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<SubmissionController>();
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: Padding(
-        padding: const EdgeInsets.all(28.0),
+        padding: EdgeInsets.all(isMobile ? 16.0 : 28.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -498,6 +499,8 @@ class SubmissionManagementPage extends StatelessWidget {
               final hasPrev = page > 0;
               final hasNext = (page + 1) * pageSize < total;
 
+              final isMobile = MediaQuery.of(context).size.width < 600;
+
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 margin: const EdgeInsets.only(top: 10),
@@ -507,54 +510,97 @@ class SubmissionManagementPage extends StatelessWidget {
                   border: Border.all(color: AppTheme.borderColor),
                   boxShadow: AppTheme.softShadow,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      total > 0
-                          ? 'Menampilkan $start - $end dari $total naskah (Halaman ${page + 1})'
-                          : 'Belum ada data naskah',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: hasPrev ? controller.prevPage : null,
-                          icon: const Icon(LucideIcons.chevronLeft, size: 14),
-                          label: const Text('Sebelumnya'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            textStyle: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            'Halaman ${page + 1}',
+                child: isMobile
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            total > 0
+                                ? 'Menampilkan $start - $end dari $total naskah'
+                                : 'Belum ada data naskah',
                             style: const TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
+                              color: AppTheme.textSecondary,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: hasNext ? controller.nextPage : null,
-                          icon: const Icon(LucideIcons.chevronRight, size: 14),
-                          label: const Text('Selanjutnya'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            textStyle: const TextStyle(fontSize: 12),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                onPressed: hasPrev ? controller.prevPage : null,
+                                icon: const Icon(LucideIcons.chevronLeft, size: 16),
+                                tooltip: 'Sebelumnya',
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: Text(
+                                  'Halaman ${page + 1}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: hasNext ? controller.nextPage : null,
+                                icon: const Icon(LucideIcons.chevronRight, size: 16),
+                                tooltip: 'Selanjutnya',
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            total > 0
+                                ? 'Menampilkan $start - $end dari $total naskah (Halaman ${page + 1})'
+                                : 'Belum ada data naskah',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: hasPrev ? controller.prevPage : null,
+                                icon: const Icon(LucideIcons.chevronLeft, size: 14),
+                                label: const Text('Sebelumnya'),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  textStyle: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                child: Text(
+                                  'Halaman ${page + 1}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              OutlinedButton.icon(
+                                onPressed: hasNext ? controller.nextPage : null,
+                                icon: const Icon(LucideIcons.chevronRight, size: 14),
+                                label: const Text('Selanjutnya'),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  textStyle: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
               );
             }),
           ],

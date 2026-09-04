@@ -500,7 +500,10 @@ class HeroSettingsPage extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     OutlinedButton.icon(
                       onPressed: () => _showBookPickerModal(context, controller),
@@ -511,8 +514,7 @@ class HeroSettingsPage extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
-                    if (controller.selectedFeaturedBookId.value != null) ...[
-                      const SizedBox(width: 8),
+                    if (controller.selectedFeaturedBookId.value != null)
                       TextButton.icon(
                         onPressed: () => controller.setFeaturedBook(null),
                         icon: const Icon(LucideIcons.x, size: 14, color: Colors.redAccent),
@@ -521,7 +523,6 @@ class HeroSettingsPage extends StatelessWidget {
                           style: TextStyle(color: Colors.redAccent, fontSize: 12),
                         ),
                       ),
-                    ],
                   ],
                 ),
 
@@ -969,8 +970,10 @@ class HeroSettingsPage extends StatelessWidget {
                             }),
                             const SizedBox(height: 14),
 
-                            // Buttons Row
-                            Row(
+                            // Buttons Row (Wrap for responsive flow)
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
                               children: [
                                 // Red filled button: JELAJAHI KOLEKSI →
                                 Container(
@@ -987,6 +990,7 @@ class HeroSettingsPage extends StatelessWidget {
                                     ],
                                   ),
                                   child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
                                         'JELAJAHI KOLEKSI',
@@ -1001,7 +1005,6 @@ class HeroSettingsPage extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                                const SizedBox(width: 8),
 
                                 // Outline button: BUKU TERBARU
                                 Container(

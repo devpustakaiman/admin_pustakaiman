@@ -100,7 +100,7 @@ class _CategoryFilterSelectorState extends State<CategoryFilterSelector> {
                   child: Material(
                     color: Colors.transparent,
                     child: SizedBox(
-                      width: 550,
+                      width: (MediaQuery.of(context).size.width - 32).clamp(280.0, 550.0),
                       height: 360,
                       child: Container(
                         decoration: BoxDecoration(

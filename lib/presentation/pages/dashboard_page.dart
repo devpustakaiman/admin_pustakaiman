@@ -123,6 +123,51 @@ class DashboardPage extends StatelessWidget {
 
   // ---------------- HEADER ----------------
   Widget _buildHeader(BuildContext context, DashboardController controller) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    final refreshButton = ElevatedButton.icon(
+      onPressed: controller.fetchDashboardData,
+      icon: const Icon(LucideIcons.refreshCw, size: 16),
+      label: const Text('Perbarui Data'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 0,
+      ),
+    );
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Dashboard Utama',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimary,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Ringkasan operasional real-time dari "Kelola Data & Toko"',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: refreshButton,
+          ),
+        ],
+      );
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -153,18 +198,7 @@ class DashboardPage extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 16),
-        ElevatedButton.icon(
-          onPressed: controller.fetchDashboardData,
-          icon: const Icon(LucideIcons.refreshCw, size: 16),
-          label: const Text('Perbarui Data'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primaryColor,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            elevation: 0,
-          ),
-        ),
+        refreshButton,
       ],
     );
   }
@@ -172,75 +206,89 @@ class DashboardPage extends StatelessWidget {
   // ---------------- METRIC SUMMARY GRID (4 STAT CARDS) ----------------
   Widget _buildMetricSummaryGrid(DashboardController controller) {
     return LayoutBuilder(builder: (context, constraints) {
+      final isMobile = constraints.maxWidth < 640;
       final isWide = constraints.maxWidth >= 1024;
-      final crossAxisCount = isWide ? 4 : (constraints.maxWidth > 640 ? 2 : 1);
-      final aspectRatio = isWide ? 1.5 : (constraints.maxWidth > 640 ? 1.6 : 2.4);
+      final crossAxisCount = isWide ? 4 : 2;
 
       return Obx(() {
+        final cards = [
+          // Card 1: Pre-Order
+          _buildStatCard(
+            title: 'Pesanan Pre-Order',
+            value: '${controller.totalPreorders.value}',
+            subtitle: 'Estimasi Omzet: Rp ${_formatPrice(controller.totalRevenue.value)}',
+            icon: LucideIcons.shoppingBag,
+            iconColor: const Color(0xFF059669),
+            badgeText: controller.pendingPreorders.value > 0
+                ? '${controller.pendingPreorders.value} Butuh Verifikasi'
+                : 'Semua Terverifikasi',
+            badgeColor: controller.pendingPreorders.value > 0 ? Colors.amber[800]! : const Color(0xFF059669),
+            onTap: () => controller.navigateToPage(2),
+          ),
+
+          // Card 2: Katalog Buku
+          _buildStatCard(
+            title: 'Katalog Buku',
+            value: '${controller.totalBooks.value}',
+            subtitle: 'Koleksi judul buku terbit aktif',
+            icon: LucideIcons.bookOpen,
+            iconColor: AppTheme.primaryColor,
+            badgeText: 'Katalog Aktif',
+            badgeColor: AppTheme.primaryColor,
+            onTap: () => controller.navigateToPage(1),
+          ),
+
+          // Card 3: Naskah Masuk
+          _buildStatCard(
+            title: 'Naskah Masuk',
+            value: '${controller.totalSubmissions.value}',
+            subtitle: 'Pengajuan karya dari calon penulis',
+            icon: LucideIcons.inbox,
+            iconColor: Colors.purple[600]!,
+            badgeText: controller.pendingSubmissions.value > 0
+                ? '${controller.pendingSubmissions.value} Pending Kurasi'
+                : 'Semua Terbaca',
+            badgeColor: controller.pendingSubmissions.value > 0 ? Colors.orange[800]! : Colors.purple[600]!,
+            onTap: () => controller.navigateToPage(3),
+          ),
+
+          // Card 4: Penulis & Konten Media
+          _buildStatCard(
+            title: 'Penulis & Konten Media',
+            value: '${controller.totalAuthors.value}',
+            subtitle: '${controller.totalArticles.value} Artikel • ${controller.totalVideos.value} Video',
+            icon: LucideIcons.users,
+            iconColor: Colors.blue[600]!,
+            badgeText: 'Mitra & Media',
+            badgeColor: Colors.blue[600]!,
+            onTap: () => controller.navigateToPage(4),
+          ),
+        ];
+
+        if (isMobile) {
+          return Column(
+            children: cards
+                .map((card) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: card,
+                    ))
+                .toList(),
+          );
+        }
+
         return GridView.count(
           crossAxisCount: crossAxisCount,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          childAspectRatio: aspectRatio,
-          children: [
-            // Card 1: Pre-Order
-            _buildStatCard(
-              title: 'Pesanan Pre-Order',
-              value: '${controller.totalPreorders.value}',
-              subtitle: 'Estimasi Omzet: Rp ${_formatPrice(controller.totalRevenue.value)}',
-              icon: LucideIcons.shoppingBag,
-              iconColor: const Color(0xFF059669),
-              badgeText: controller.pendingPreorders.value > 0
-                  ? '${controller.pendingPreorders.value} Butuh Verifikasi'
-                  : 'Semua Terverifikasi',
-              badgeColor: controller.pendingPreorders.value > 0 ? Colors.amber[800]! : const Color(0xFF059669),
-              onTap: () => controller.navigateToPage(2),
-            ),
-
-            // Card 2: Katalog Buku
-            _buildStatCard(
-              title: 'Katalog Buku',
-              value: '${controller.totalBooks.value}',
-              subtitle: 'Koleksi judul buku terbit aktif',
-              icon: LucideIcons.bookOpen,
-              iconColor: AppTheme.primaryColor,
-              badgeText: 'Katalog Aktif',
-              badgeColor: AppTheme.primaryColor,
-              onTap: () => controller.navigateToPage(1),
-            ),
-
-            // Card 3: Naskah Masuk
-            _buildStatCard(
-              title: 'Naskah Masuk',
-              value: '${controller.totalSubmissions.value}',
-              subtitle: 'Pengajuan karya dari calon penulis',
-              icon: LucideIcons.inbox,
-              iconColor: Colors.purple[600]!,
-              badgeText: controller.pendingSubmissions.value > 0
-                  ? '${controller.pendingSubmissions.value} Pending Kurasi'
-                  : 'Semua Terbaca',
-              badgeColor: controller.pendingSubmissions.value > 0 ? Colors.orange[800]! : Colors.purple[600]!,
-              onTap: () => controller.navigateToPage(3),
-            ),
-
-            // Card 4: Penulis & Konten Media
-            _buildStatCard(
-              title: 'Penulis & Konten Media',
-              value: '${controller.totalAuthors.value}',
-              subtitle: '${controller.totalArticles.value} Artikel • ${controller.totalVideos.value} Video',
-              icon: LucideIcons.users,
-              iconColor: Colors.blue[600]!,
-              badgeText: 'Mitra & Media',
-              badgeColor: Colors.blue[600]!,
-              onTap: () => controller.navigateToPage(4),
-            ),
-          ],
+          childAspectRatio: isWide ? 1.5 : 1.6,
+          children: cards,
         );
       });
     });
   }
+
 
   Widget _buildStatCard({
     required String title,
@@ -625,41 +673,46 @@ class DashboardPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF059669).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      LucideIcons.shoppingBag,
-                      color: Color(0xFF059669),
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Pesanan Pre-Order Terbaru',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
-                        ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF059669).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        '5 transaksi pre-order teratas yang baru masuk',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      child: const Icon(
+                        LucideIcons.shoppingBag,
+                        color: Color(0xFF059669),
+                        size: 18,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pesanan Pre-Order Terbaru',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            '5 transaksi pre-order teratas yang baru masuk',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               TextButton.icon(
                 onPressed: () => controller.navigateToPage(2),
                 icon: const Icon(LucideIcons.arrowRight, size: 14),
@@ -800,41 +853,46 @@ class DashboardPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.purple.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      LucideIcons.inbox,
-                      color: Colors.purple,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Naskah Masuk Terbaru',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
-                        ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        '5 pengajuan naskah terbaru',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      child: const Icon(
+                        LucideIcons.inbox,
+                        color: Colors.purple,
+                        size: 18,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Naskah Masuk Terbaru',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            '5 pengajuan naskah terbaru',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               IconButton(
                 onPressed: () => controller.navigateToPage(3),
                 icon: const Icon(LucideIcons.arrowRight, size: 16),
@@ -973,23 +1031,25 @@ class DashboardPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Shortcut Cepat Operasional',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Shortcut Cepat Operasional',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Akses langsung modul aksi utama admin',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
+                    SizedBox(height: 2),
+                    Text(
+                      'Akses langsung modul aksi utama admin',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -1173,42 +1233,39 @@ class DashboardPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.auto_stories_outlined,
-                      color: AppTheme.primaryColor,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Status Stok & Buku Terpopuler',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
-                        ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.auto_stories_outlined,
+                  color: AppTheme.primaryColor,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Status Stok & Buku Terpopuler',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Pantau stok buku menipis dan buku yang sedang aktif',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Pantau stok buku menipis dan buku yang sedang aktif',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

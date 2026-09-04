@@ -57,63 +57,110 @@ class VideoManagementPage extends GetView<VideoController> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(28),
+        padding: EdgeInsets.all(isMobile ? 16 : 28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Page Header
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Kelola Video Media / Warta',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
-                          letterSpacing: -0.5,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Kelola galeri video "Cerita dalam Sorotan", liputan khusus, dan narasumber Warta',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () => controller.openFormDialog(),
-                  icon: const Icon(LucideIcons.plus, size: 18),
-                  label: const Text(
-                    'Tambah Video',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+            if (isMobile) ...[
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Kelola Video Media / Warta',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                      letterSpacing: -0.5,
                     ),
-                    elevation: 2,
                   ),
-                ),
-              ],
-            ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Kelola galeri video "Cerita dalam Sorotan", liputan khusus, dan narasumber Warta',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => controller.openFormDialog(),
+                      icon: const Icon(LucideIcons.plus, size: 18),
+                      label: const Text(
+                        'Tambah Video',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ] else
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Kelola Video Media / Warta',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                            letterSpacing: -0.5,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Kelola galeri video "Cerita dalam Sorotan", liputan khusus, dan narasumber Warta',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () => controller.openFormDialog(),
+                    icon: const Icon(LucideIcons.plus, size: 18),
+                    label: const Text(
+                      'Tambah Video',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                  ),
+                ],
+              ),
 
             const SizedBox(height: 24),
 
@@ -292,209 +339,327 @@ class VideoManagementPage extends GetView<VideoController> {
                     final video = videoList[index];
                     final thumbUrl = video.effectiveThumbnailUrl;
 
+                    final isMobileCard = MediaQuery.of(context).size.width < 600;
+
                     return Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Thumbnail Preview Box
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              width: 140,
-                              height: 85,
-                              color: Colors.black12,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  if (thumbUrl.isNotEmpty)
-                                    CachedNetworkImage(
-                                      imageUrl: thumbUrl,
-                                      width: 140,
-                                      height: 85,
-                                      fit: BoxFit.cover,
-                                      memCacheWidth: 350,
-                                      memCacheHeight: 210,
-                                      placeholder: (_, __) => Container(color: Colors.grey.shade200),
-                                      errorWidget: (_, __, ___) => Container(
-                                        color: Colors.grey.shade200,
-                                        child: const Icon(LucideIcons.videoOff, color: AppTheme.textMuted),
-                                      ),
-                                    )
-                                  else
-                                    Container(
-                                      color: Colors.grey.shade200,
-                                      child: const Icon(LucideIcons.video, color: AppTheme.textMuted),
-                                    ),
-                                  Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(LucideIcons.play, color: Colors.white, size: 14),
-                                  ),
-                                  if (video.duration.isNotEmpty)
-                                    Positioned(
-                                      bottom: 6,
-                                      right: 6,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: Colors.black.withValues(alpha: 0.75),
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          video.duration,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(width: 16),
-
-                          // Video Details
-                          Expanded(
-                            child: Column(
+                      child: isMobileCard
+                          ? Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildCategoryBadge(video.category),
-                                    if (video.isFeatured) ...[
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [Colors.amber, Colors.orangeAccent],
-                                          ),
-                                          borderRadius: BorderRadius.circular(20),
-                                        ),
-                                        child: const Row(
-                                          mainAxisSize: MainAxisSize.min,
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        width: 100,
+                                        height: 70,
+                                        color: Colors.black12,
+                                        child: Stack(
+                                          alignment: Alignment.center,
                                           children: [
-                                            Icon(LucideIcons.star, size: 12, color: Colors.white),
-                                            SizedBox(width: 4),
-                                            Text(
-                                              'UTAMA (FEATURED)',
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
+                                            if (thumbUrl.isNotEmpty)
+                                              CachedNetworkImage(
+                                                imageUrl: thumbUrl,
+                                                width: 100,
+                                                height: 70,
+                                                fit: BoxFit.cover,
+                                                memCacheWidth: 250,
+                                                memCacheHeight: 175,
+                                                placeholder: (_, __) => Container(color: Colors.grey.shade200),
+                                                errorWidget: (_, __, ___) => Container(
+                                                  color: Colors.grey.shade200,
+                                                  child: const Icon(LucideIcons.videoOff, color: AppTheme.textMuted),
+                                                ),
+                                              )
+                                            else
+                                              Container(
+                                                color: Colors.grey.shade200,
+                                                child: const Icon(LucideIcons.video, color: AppTheme.textMuted),
                                               ),
+                                            Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: const BoxDecoration(
+                                                color: Colors.red,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: const Icon(LucideIcons.play, color: Colors.white, size: 12),
                                             ),
                                           ],
                                         ),
                                       ),
-                                    ],
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          _buildCategoryBadge(video.category),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            video.title,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.textPrimary,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ],
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  video.title,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.textPrimary,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 12),
                                 Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    if (video.speakerName.isNotEmpty) ...[
-                                      const Icon(LucideIcons.user, size: 14, color: AppTheme.textSecondary),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        video.speakerName,
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppTheme.textSecondary,
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          'Utama:',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.textSecondary,
+                                          ),
                                         ),
+                                        const SizedBox(width: 4),
+                                        Switch(
+                                          value: video.isFeatured,
+                                          activeThumbColor: AppTheme.primaryColor,
+                                          onChanged: (_) => controller.toggleFeatured(video),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      children: [
+                                        OutlinedButton.icon(
+                                          onPressed: () => controller.openFormDialog(video: video),
+                                          icon: const Icon(LucideIcons.edit3, size: 14),
+                                          label: const Text('Edit'),
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          onPressed: () => controller.deleteVideo(video),
+                                          icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.redAccent),
+                                          tooltip: 'Pindahkan ke Sampah',
+                                          style: IconButton.styleFrom(
+                                            backgroundColor: Colors.red.shade50,
+                                            padding: const EdgeInsets.all(6),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            )
+                          : Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Thumbnail Preview Box
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    width: 140,
+                                    height: 85,
+                                    color: Colors.black12,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        if (thumbUrl.isNotEmpty)
+                                          CachedNetworkImage(
+                                            imageUrl: thumbUrl,
+                                            width: 140,
+                                            height: 85,
+                                            fit: BoxFit.cover,
+                                            memCacheWidth: 350,
+                                            memCacheHeight: 210,
+                                            placeholder: (_, __) => Container(color: Colors.grey.shade200),
+                                            errorWidget: (_, __, ___) => Container(
+                                              color: Colors.grey.shade200,
+                                              child: const Icon(LucideIcons.videoOff, color: AppTheme.textMuted),
+                                            ),
+                                          )
+                                        else
+                                          Container(
+                                            color: Colors.grey.shade200,
+                                            child: const Icon(LucideIcons.video, color: AppTheme.textMuted),
+                                          ),
+                                        Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(LucideIcons.play, color: Colors.white, size: 14),
+                                        ),
+                                        if (video.duration.isNotEmpty)
+                                          Positioned(
+                                            bottom: 6,
+                                            right: 6,
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black.withValues(alpha: 0.75),
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                video.duration,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(width: 16),
+
+                                // Video Details
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          _buildCategoryBadge(video.category),
+                                          if (video.isFeatured) ...[
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  colors: [Colors.amber, Colors.orangeAccent],
+                                                ),
+                                                borderRadius: BorderRadius.circular(20),
+                                              ),
+                                              child: const Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(LucideIcons.star, size: 12, color: Colors.white),
+                                                  SizedBox(width: 4),
+                                                  Text(
+                                                    'UTAMA (FEATURED)',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
-                                      const SizedBox(width: 14),
-                                    ],
-                                    const Icon(LucideIcons.link, size: 14, color: AppTheme.textMuted),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        video.youtubeUrl,
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        video.title,
                                         style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppTheme.primaryColor,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.textPrimary,
                                         ),
-                                        maxLines: 1,
+                                        maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                       ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          if (video.speakerName.isNotEmpty) ...[
+                                            const Icon(LucideIcons.user, size: 14, color: AppTheme.textMuted),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              video.speakerName,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: AppTheme.textSecondary,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 14),
+                                          ],
+                                          const Icon(LucideIcons.link, size: 14, color: AppTheme.textMuted),
+                                          const SizedBox(width: 4),
+                                          Expanded(
+                                            child: Text(
+                                              video.youtubeUrl,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: AppTheme.primaryColor,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(width: 16),
+
+                                // Toggle Featured & Action Buttons
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          'Video Utama:',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppTheme.textSecondary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Switch(
+                                          value: video.isFeatured,
+                                          activeThumbColor: AppTheme.primaryColor,
+                                          onChanged: (_) => controller.toggleFeatured(video),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        OutlinedButton.icon(
+                                          onPressed: () => controller.openFormDialog(video: video),
+                                          icon: const Icon(LucideIcons.edit3, size: 14),
+                                          label: const Text('Edit'),
+                                          style: OutlinedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          onPressed: () => controller.deleteVideo(video),
+                                          icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.redAccent),
+                                          tooltip: 'Pindahkan ke Sampah',
+                                          style: IconButton.styleFrom(
+                                            backgroundColor: Colors.red.shade50,
+                                            padding: const EdgeInsets.all(8),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ],
                             ),
-                          ),
-
-                          const SizedBox(width: 16),
-
-                          // Toggle Featured & Action Buttons
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Row(
-                                children: [
-                                  const Text(
-                                    'Video Utama:',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.textSecondary,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Switch(
-                                    value: video.isFeatured,
-                                    activeThumbColor: AppTheme.primaryColor,
-                                    onChanged: (_) => controller.toggleFeatured(video),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  OutlinedButton.icon(
-                                    onPressed: () => controller.openFormDialog(video: video),
-                                    icon: const Icon(LucideIcons.edit3, size: 14),
-                                    label: const Text('Edit'),
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  IconButton(
-                                    onPressed: () => controller.deleteVideo(video),
-                                    icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.redAccent),
-                                    tooltip: 'Pindahkan ke Sampah',
-                                    style: IconButton.styleFrom(
-                                      backgroundColor: Colors.red.shade50,
-                                      padding: const EdgeInsets.all(8),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
                     );
                   },
                 ),

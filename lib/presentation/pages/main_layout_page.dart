@@ -83,12 +83,15 @@ class MainLayoutPage extends StatelessWidget {
                       child: const Icon(LucideIcons.shieldCheck, color: Colors.white, size: 16),
                     ),
                     const SizedBox(width: 10),
-                    Text(
-                      pageTitles[controller.selectedIndex.value],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                    Expanded(
+                      child: Text(
+                        pageTitles[controller.selectedIndex.value],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

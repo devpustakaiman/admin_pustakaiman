@@ -164,8 +164,9 @@ class TrashManagementPage extends StatelessWidget {
       context: context,
       builder: (dialogContext) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Container(
-          width: 520,
+          constraints: const BoxConstraints(maxWidth: 520, maxHeight: 600),
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -402,7 +403,10 @@ class TrashManagementPage extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
+                            Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 8,
+                              runSpacing: 4,
                               children: [
                                 const Text(
                                   'Keranjang Sampah',
@@ -412,7 +416,6 @@ class TrashManagementPage extends StatelessWidget {
                                     color: AppTheme.textPrimary,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
                                 Obx(() {
                                   final totalCount = controller.deletedBooks.length +
                                       controller.deletedAuthors.length +
@@ -823,22 +826,11 @@ class TrashManagementPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                           child: Padding(
                             padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Checkbox(
-                                  value: isSelected,
-                                  activeColor: AppTheme.primaryColor,
-                                  onChanged: (val) => controller.toggleSelectItem(
-                                    itemId,
-                                    val,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                _buildItemLeading(item),
-                                const SizedBox(width: 16),
-                                Expanded(child: _buildItemTitleSubtitle(item)),
-                                const SizedBox(width: 16),
-                                Row(
+                            child: Builder(
+                              builder: (context) {
+                                final isMobileCard = MediaQuery.of(context).size.width < 600;
+
+                                final actionButtons = Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     // Detail Eye Button
@@ -887,8 +879,56 @@ class TrashManagementPage extends StatelessWidget {
                                       ),
                                     ),
                                   ],
-                                ),
-                              ],
+                                );
+
+                                if (isMobileCard) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Checkbox(
+                                            value: isSelected,
+                                            activeColor: AppTheme.primaryColor,
+                                            onChanged: (val) => controller.toggleSelectItem(
+                                              itemId,
+                                              val,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          _buildItemLeading(item),
+                                          const SizedBox(width: 12),
+                                          Expanded(child: _buildItemTitleSubtitle(item)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: actionButtons,
+                                      ),
+                                    ],
+                                  );
+                                }
+
+                                return Row(
+                                  children: [
+                                    Checkbox(
+                                      value: isSelected,
+                                      activeColor: AppTheme.primaryColor,
+                                      onChanged: (val) => controller.toggleSelectItem(
+                                        itemId,
+                                        val,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    _buildItemLeading(item),
+                                    const SizedBox(width: 16),
+                                    Expanded(child: _buildItemTitleSubtitle(item)),
+                                    const SizedBox(width: 16),
+                                    actionButtons,
+                                  ],
+                                );
+                              },
                             ),
                           ),
                         ),

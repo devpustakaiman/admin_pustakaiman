@@ -108,11 +108,11 @@ class _SubmissionReviewDialogState extends State<SubmissionReviewDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: Colors.white,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       elevation: 16,
       child: Container(
-        width: 650,
-        constraints: const BoxConstraints(maxHeight: 700),
-        padding: const EdgeInsets.all(28),
+        constraints: const BoxConstraints(maxWidth: 650, maxHeight: 700),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

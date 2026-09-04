@@ -7,6 +7,7 @@ import '../../core/utils/app_toast.dart';
 import '../../data/models/bank_account_model.dart';
 import '../controllers/web_settings_controller.dart';
 import '../widgets/bank_account_dialog.dart';
+import '../widgets/cms_page_header.dart';
 
 class WebSettingsPage extends StatelessWidget {
   const WebSettingsPage({super.key});
@@ -28,6 +29,7 @@ class WebSettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<WebSettingsController>();
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -39,83 +41,33 @@ class WebSettingsPage extends StatelessWidget {
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(28.0),
+          padding: EdgeInsets.all(isMobile ? 16.0 : 28.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Page Header Title
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Pengaturan Web (Landing Page CMS)',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                            color: AppTheme.textPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Kustomisasi konten Hero Section publik pada frontend Pustaka Ilman',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton.icon(
-                    onPressed: controller.isSaving.value
-                        ? null
-                        : () async {
-                            final success = await controller.saveSettings();
-                            if (context.mounted) {
-                              if (success) {
-                                AppToast.showSuccess(
-                                  context,
-                                  'Pengaturan Hero Landing Page berhasil disimpan!',
-                                );
-                              } else {
-                                AppToast.showError(
-                                  context,
-                                  controller.errorMessage.value.isNotEmpty
-                                      ? controller.errorMessage.value
-                                      : 'Gagal menyimpan pengaturan.',
-                                );
-                              }
-                            }
-                          },
-                    icon: controller.isSaving.value
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(LucideIcons.save, size: 16),
-                    label: Text(
-                      controller.isSaving.value ? 'Menyimpan...' : 'Simpan Perubahan',
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
+              CmsPageHeader(
+                title: 'Pengaturan Web (Landing Page CMS)',
+                subtitle: 'Kustomisasi konten Hero Section publik pada frontend Pustaka Ilman',
+                isSaving: controller.isSaving.value,
+                onSave: () async {
+                  final success = await controller.saveSettings();
+                  if (context.mounted) {
+                    if (success) {
+                      AppToast.showSuccess(
+                        context,
+                        'Pengaturan Hero Landing Page berhasil disimpan!',
+                      );
+                    } else {
+                      AppToast.showError(
+                        context,
+                        controller.errorMessage.value.isNotEmpty
+                            ? controller.errorMessage.value
+                            : 'Gagal menyimpan pengaturan.',
+                      );
+                    }
+                  }
+                },
               ),
 
               const SizedBox(height: 24),
@@ -848,9 +800,9 @@ class WebSettingsPage extends StatelessWidget {
       builder: (dialogCtx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         backgroundColor: Colors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Container(
-          width: 580,
-          height: 600,
+          constraints: const BoxConstraints(maxWidth: 580, maxHeight: 600),
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
