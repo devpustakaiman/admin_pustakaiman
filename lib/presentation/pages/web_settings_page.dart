@@ -1013,7 +1013,7 @@ class WebSettingsPage extends StatelessWidget {
     );
   }
 
-  // 4. Live Preview Card
+  // 4. Live Preview Card (Mock Browser Hero Section)
   Widget _buildLivePreviewCard(WebSettingsController controller) {
     return Container(
       padding: const EdgeInsets.all(24),
@@ -1056,193 +1056,448 @@ class WebSettingsPage extends StatelessWidget {
           // Mini browser frame
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF0F172A),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF1E293B)),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Browser bar simulation
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  child: Row(
-                    children: [
-                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle)),
-                      const SizedBox(width: 6),
-                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.amber, shape: BoxShape.circle)),
-                      const SizedBox(width: 6),
-                      Container(width: 8, height: 8, decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle)),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            'pustakaiman.id',
-                            style: TextStyle(color: Colors.white54, fontSize: 10),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Hero Content Simulator
+                // Window Header Bar with 3 Mac Dots & URL Input Pill
                 Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: const BoxDecoration(
-                    color: Color(0xFF0F172A),
+                    color: Color(0xFF1E293B),
                     borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(14),
-                      bottomRight: Radius.circular(14),
+                      topLeft: Radius.circular(13),
+                      topRight: Radius.circular(13),
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      // Badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: AppTheme.primaryLight.withValues(alpha: 0.4)),
-                        ),
-                        child: const Text(
-                          'Penerbit Buku Berkualitas',
-                          style: TextStyle(
-                            color: AppTheme.primaryLight,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Headline
-                      AnimatedBuilder(
-                        animation: controller.headlineController,
-                        builder: (context, _) {
-                          final text = controller.headlineController.text.isNotEmpty
-                              ? controller.headlineController.text
-                              : WebSettingsController.defaultHeadline;
-                          return Text(
-                            text,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              height: 1.3,
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Subheadline
-                      AnimatedBuilder(
-                        animation: controller.subheadlineController,
-                        builder: (context, _) {
-                          final text = controller.subheadlineController.text.isNotEmpty
-                              ? controller.subheadlineController.text
-                              : WebSettingsController.defaultSubheadline;
-                          return Text(
-                            text,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey[400],
-                              height: 1.5,
-                            ),
-                            maxLines: 4,
-                            overflow: TextOverflow.ellipsis,
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // CTA Buttons
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              'Jelajahi Katalog',
-                              style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.white24),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              'Kirim Naskah',
-                              style: TextStyle(color: Colors.white70, fontSize: 11),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // Hero Floating Badge Simulation
-                      Obx(() {
-                        final featured = controller.selectedFeaturedBook;
-                        if (featured == null) return const SizedBox();
-
-                        return Container(
-                          margin: const EdgeInsets.only(top: 18),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      Container(width: 9, height: 9, decoration: const BoxDecoration(color: Color(0xFFFF5F56), shape: BoxShape.circle)),
+                      const SizedBox(width: 6),
+                      Container(width: 9, height: 9, decoration: const BoxDecoration(color: Color(0xFFFFBD2E), shape: BoxShape.circle)),
+                      const SizedBox(width: 6),
+                      Container(width: 9, height: 9, decoration: const BoxDecoration(color: Color(0xFF27C93F), shape: BoxShape.circle)),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppTheme.primaryLight.withValues(alpha: 0.3)),
+                            color: const Color(0xFF334155),
+                            borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                          child: const Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryLight,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Text(
-                                  'Pilihan Minggu Ini',
-                                  style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 120),
-                                child: Text(
-                                  featured.title,
-                                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
+                              Icon(LucideIcons.lock, size: 10, color: Color(0xFF94A3B8)),
+                              SizedBox(width: 6),
                               Text(
-                                _formatPrice(featured.discountPrice ?? featured.price),
-                                style: const TextStyle(color: AppTheme.primaryLight, fontSize: 11, fontWeight: FontWeight.bold),
+                                'pustakaiman.com',
+                                style: TextStyle(
+                                  color: Color(0xFFE2E8F0),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
-                        );
-                      }),
+                        ),
+                      ),
                     ],
                   ),
                 ),
+
+                // Pure White Content Canvas
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(13),
+                      bottomRight: Radius.circular(13),
+                    ),
+                  ),
+                  child: LayoutBuilder(
+                    builder: (context, canvasConstraints) {
+                      final isCompact = canvasConstraints.maxWidth < 420;
+
+                      final leftColumn = Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Red Pill Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDC2626).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(LucideIcons.star, size: 11, color: Color(0xFFDC2626)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'PILIHAN UNTUKMU',
+                                  style: TextStyle(
+                                    color: Color(0xFFDC2626),
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Live Headline Text
+                          AnimatedBuilder(
+                            animation: controller.headlineController,
+                            builder: (context, _) {
+                              final text = controller.headlineController.text.isNotEmpty
+                                  ? controller.headlineController.text
+                                  : WebSettingsController.defaultHeadline;
+                              return Text(
+                                text,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  fontFamily: 'Serif',
+                                  color: Color(0xFF1E293B),
+                                  height: 1.25,
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Live Subheadline Text
+                          AnimatedBuilder(
+                            animation: controller.subheadlineController,
+                            builder: (context, _) {
+                              final text = controller.subheadlineController.text.isNotEmpty
+                                  ? controller.subheadlineController.text
+                                  : WebSettingsController.defaultSubheadline;
+                              return Text(
+                                text,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF64748B),
+                                  height: 1.4,
+                                ),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Action Buttons
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDC2626),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'JELAJAHI KOLEKSI',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Icon(LucideIcons.arrowRight, color: Colors.white, size: 11),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFFDC2626)),
+                                ),
+                                child: const Text(
+                                  'BUKU TERBARU',
+                                  style: TextStyle(
+                                    color: Color(0xFFDC2626),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+
+                      final rightColumn = Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Organic Decorative Background Container & Hero Image
+                          Container(
+                            width: double.infinity,
+                            height: isCompact ? 160 : 180,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF2F2),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFFFEE2E2)),
+                            ),
+                            child: Obx(() {
+                              final file = controller.selectedBannerFile.value;
+                              final url = controller.bannerUrl.value;
+
+                              if (file != null && file.bytes != null) {
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Image.memory(
+                                    file.bytes!,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                  ),
+                                );
+                              }
+
+                              if (url.isNotEmpty) {
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: CachedNetworkImage(
+                                    imageUrl: url,
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    placeholder: (_, __) => const Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Color(0xFFDC2626),
+                                      ),
+                                    ),
+                                    errorWidget: (_, __, ___) => _buildMockBookStackIllustration(),
+                                  ),
+                                );
+                              }
+
+                              return _buildMockBookStackIllustration();
+                            }),
+                          ),
+
+                          // Floating Card at bottom-right
+                          Positioned(
+                            bottom: 8,
+                            right: 8,
+                            child: Obx(() {
+                              final featured = controller.selectedFeaturedBook;
+                              final title = featured?.title ?? "Al-Hikam Al-'Athaiyyah";
+                              final author = (featured != null && featured.author.isNotEmpty)
+                                  ? featured.author
+                                  : 'Ibnu Athaillah';
+                              final priceStr = featured != null
+                                  ? _formatPrice(featured.discountPrice ?? featured.price)
+                                  : 'Rp170.000';
+
+                              return Container(
+                                padding: const EdgeInsets.all(10),
+                                constraints: const BoxConstraints(maxWidth: 165),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.12),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Row(
+                                      children: [
+                                        Icon(LucideIcons.star, size: 10, color: Color(0xFFDC2626)),
+                                        SizedBox(width: 4),
+                                        Expanded(
+                                          child: Text(
+                                            'PILIHAN MINGGU INI',
+                                            style: TextStyle(
+                                              color: Color(0xFFDC2626),
+                                              fontSize: 8,
+                                              fontWeight: FontWeight.w800,
+                                              letterSpacing: 0.3,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      title,
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1E293B),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      author,
+                                      style: const TextStyle(
+                                        fontSize: 8,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const Row(
+                                          children: [
+                                            Icon(LucideIcons.star, size: 10, color: Colors.amber),
+                                            SizedBox(width: 2),
+                                            Text(
+                                              '4.9',
+                                              style: TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF1E293B),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Text(
+                                          priceStr,
+                                          style: const TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFFDC2626),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                          ),
+                        ],
+                      );
+
+                      if (isCompact) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            leftColumn,
+                            const SizedBox(height: 16),
+                            rightColumn,
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 5, child: leftColumn),
+                          const SizedBox(width: 14),
+                          Expanded(flex: 5, child: rightColumn),
+                        ],
+                      );
+                    },
+                  ),
+                ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMockBookStackIllustration() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 32,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDC2626),
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4, offset: const Offset(-2, 2)),
+                  ],
+                ),
+                child: const Center(
+                  child: Icon(LucideIcons.bookOpen, size: 14, color: Colors.white),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                width: 36,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 6, offset: const Offset(0, 3)),
+                  ],
+                ),
+                child: const Center(
+                  child: Icon(LucideIcons.book, size: 16, color: Colors.amber),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                width: 32,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F766E),
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4, offset: const Offset(2, 2)),
+                  ],
+                ),
+                child: const Center(
+                  child: Icon(LucideIcons.bookmark, size: 14, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Visual Banner Hero',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF64748B),
             ),
           ),
         ],

@@ -8,6 +8,7 @@ import '../../data/datasources/supabase_remote_data_source.dart';
 class FeaturedBookItem {
   final String id;
   final String title;
+  final String author;
   final int price;
   final int? discountPrice;
   final String coverUrl;
@@ -15,6 +16,7 @@ class FeaturedBookItem {
   const FeaturedBookItem({
     required this.id,
     required this.title,
+    this.author = '',
     required this.price,
     this.discountPrice,
     this.coverUrl = '',
@@ -38,10 +40,12 @@ class FeaturedBookItem {
     }
 
     final cover = json['cover_url'] ?? json['coverUrl'] ?? '';
+    final authorStr = json['author'] ?? json['penulis'] ?? '';
 
     return FeaturedBookItem(
       id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
+      author: authorStr?.toString() ?? '',
       price: parsedPrice,
       discountPrice: parsedDiscount,
       coverUrl: cover?.toString() ?? '',

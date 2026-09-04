@@ -887,7 +887,7 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
     try {
       final res = await supabaseClient
           .from('books')
-          .select('id, title, price, promo_price, cover_url, coverUrl')
+          .select('id, title, author, price, promo_price, cover_url, coverUrl')
           .isFilter('deleted_at', null)
           .order('title', ascending: true);
       return List<Map<String, dynamic>>.from(res);
@@ -895,7 +895,7 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
       try {
         final res = await supabaseClient
             .from('books')
-            .select('id, title, price, discount_price, cover_url')
+            .select('id, title, author, price, discount_price, cover_url')
             .isFilter('deleted_at', null)
             .order('title', ascending: true);
         return List<Map<String, dynamic>>.from(res);
@@ -903,7 +903,7 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
         try {
           final res = await supabaseClient
               .from('books')
-              .select('id, title, price')
+              .select('id, title, author, price')
               .isFilter('deleted_at', null)
               .order('title', ascending: true);
           return List<Map<String, dynamic>>.from(res);
