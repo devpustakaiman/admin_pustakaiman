@@ -21,8 +21,10 @@ class AboutSettingsPage extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context, WebSettingsController controller) {
+    final isMobile = MediaQuery.of(context).size.width < 768;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(28.0),
+      padding: EdgeInsets.all(isMobile ? 16.0 : 28.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

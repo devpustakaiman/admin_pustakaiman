@@ -366,488 +366,493 @@ class TrashManagementPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<TrashController>();
+    final isMobile = MediaQuery.of(context).size.width < 768;
 
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
-      body: SafeArea(
+    Widget buildHeader() {
+      return Container(
+        padding: EdgeInsets.all(isMobile ? 16 : 28),
+        decoration: const BoxDecoration(
+          color: AppTheme.surfaceColor,
+          border: Border(
+            bottom: BorderSide(color: AppTheme.borderColor, width: 1),
+          ),
+        ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Page Header
-            Container(
-              padding: const EdgeInsets.fromLTRB(28, 24, 28, 20),
-              decoration: const BoxDecoration(
-                color: AppTheme.surfaceColor,
-                border: Border(
-                  bottom: BorderSide(color: AppTheme.borderColor, width: 1),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    LucideIcons.trash2,
+                    color: Colors.redAccent,
+                    size: 24,
+                  ),
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.redAccent.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          LucideIcons.trash2,
-                          color: Colors.redAccent,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Wrap(
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              spacing: 8,
-                              runSpacing: 4,
-                              children: [
-                                const Text(
-                                  'Keranjang Sampah',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.textPrimary,
-                                  ),
-                                ),
-                                Obx(() {
-                                  final totalCount = controller.deletedBooks.length +
-                                      controller.deletedAuthors.length +
-                                      controller.deletedArticles.length +
-                                      controller.deletedSubmissions.length +
-                                      controller.deletedPreorders.length;
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.redAccent.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      '$totalCount total',
-                                      style: const TextStyle(
-                                        color: Colors.redAccent,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  );
-                                }),
-                              ],
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          const Text(
+                            'Keranjang Sampah',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textPrimary,
                             ),
-                            const SizedBox(height: 4),
-                            const Text(
-                              'Kelola dan pulihkan data terhapus (Buku, Penulis, Artikel, Naskah Masuk, Pre-Order)',
-                              style: TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 13,
+                          ),
+                          Obx(() {
+                            final totalCount = controller.deletedBooks.length +
+                                controller.deletedAuthors.length +
+                                controller.deletedArticles.length +
+                                controller.deletedSubmissions.length +
+                                controller.deletedPreorders.length;
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
                               ),
-                            ),
-                          ],
-                        ),
+                              decoration: BoxDecoration(
+                                color: Colors.redAccent.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '$totalCount total',
+                                style: const TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
                       ),
-
-                      IconButton(
-                        onPressed: () => controller.fetchAllDeleted(),
-                        icon: const Icon(LucideIcons.refreshCw, size: 20),
-                        tooltip: 'Muat Ulang Data',
-                        color: AppTheme.textSecondary,
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Kelola dan pulihkan data terhapus (Buku, Penulis, Artikel, Naskah Masuk, Pre-Order)',
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
+                ),
 
-                  const SizedBox(height: 20),
-
-                  // Category Filter Chips
-                  Obx(() {
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildCategoryChip(
-                            controller,
-                            category: TrashCategory.books,
-                            label: 'Buku',
-                            icon: LucideIcons.bookOpen,
-                            count: controller.deletedBooks.length,
-                          ),
-                          const SizedBox(width: 10),
-                          _buildCategoryChip(
-                            controller,
-                            category: TrashCategory.authors,
-                            label: 'Penulis',
-                            icon: LucideIcons.users,
-                            count: controller.deletedAuthors.length,
-                          ),
-                          const SizedBox(width: 10),
-                          _buildCategoryChip(
-                            controller,
-                            category: TrashCategory.articles,
-                            label: 'Artikel',
-                            icon: LucideIcons.fileText,
-                            count: controller.deletedArticles.length,
-                          ),
-                          const SizedBox(width: 10),
-                          _buildCategoryChip(
-                            controller,
-                            category: TrashCategory.submissions,
-                            label: 'Naskah Masuk',
-                            icon: LucideIcons.inbox,
-                            count: controller.deletedSubmissions.length,
-                          ),
-                          const SizedBox(width: 10),
-                          _buildCategoryChip(
-                            controller,
-                            category: TrashCategory.preorders,
-                            label: 'Pesanan Pre-Order',
-                            icon: LucideIcons.shoppingBag,
-                            count: controller.deletedPreorders.length,
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-
-                  const SizedBox(height: 16),
-
-                  // Search Bar
-                  Container(
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppTheme.inputFillColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextField(
-                      onChanged: (val) => controller.searchQuery.value = val,
-                      decoration: const InputDecoration(
-                        hintText: 'Cari data terhapus...',
-                        prefixIcon: Icon(
-                          LucideIcons.search,
-                          size: 18,
-                          color: AppTheme.textMuted,
-                        ),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                IconButton(
+                  onPressed: () => controller.fetchAllDeleted(),
+                  icon: const Icon(LucideIcons.refreshCw, size: 20),
+                  tooltip: 'Muat Ulang Data',
+                  color: AppTheme.textSecondary,
+                ),
+              ],
             ),
 
-            // Bulk Action Toolbar
+            const SizedBox(height: 20),
+
+            // Category Filter Chips
             Obx(() {
-              final list = controller.currentFilteredList;
-              final selectedCount = controller.selectedIds.length;
-              final isAnySelected = selectedCount > 0;
-              final isAllSelected = controller.isAllSelected;
-
-              if (list.isEmpty) return const SizedBox.shrink();
-
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
-                decoration: const BoxDecoration(
-                  color: AppTheme.surfaceColor,
-                  border: Border(
-                    bottom: BorderSide(color: AppTheme.borderColor, width: 1),
-                  ),
-                ),
-                child: Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 12,
-                  runSpacing: 10,
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        InkWell(
-                          onTap: () => controller.toggleSelectAll(!isAllSelected),
-                          borderRadius: BorderRadius.circular(8),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Checkbox(
-                                  value: isAllSelected
-                                      ? true
-                                      : (controller.isPartiallySelected ? null : false),
-                                  tristate: true,
-                                  activeColor: AppTheme.primaryColor,
-                                  onChanged: (val) => controller.toggleSelectAll(val == true),
-                                ),
-                                const SizedBox(width: 6),
-                                const Text(
-                                  'Pilih Semua',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                    color: AppTheme.textPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        if (isAnySelected) ...[
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              'Terpilih $selectedCount dari ${list.length}',
-                              style: const TextStyle(
-                                color: AppTheme.primaryColor,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+                    _buildCategoryChip(
+                      controller,
+                      category: TrashCategory.books,
+                      label: 'Buku',
+                      icon: LucideIcons.bookOpen,
+                      count: controller.deletedBooks.length,
                     ),
-
-                    AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: isAnySelected ? 1.0 : 0.5,
-                      child: Wrap(
-                        spacing: 10,
-                        runSpacing: 8,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: isAnySelected && !controller.isProcessing.value
-                                ? () async {
-                                    await controller.restoreSelectedItems();
-                                    if (context.mounted) {
-                                      AppToast.showSuccess(
-                                        context,
-                                        '$selectedCount item berhasil dipulihkan.',
-                                      );
-                                    }
-                                  }
-                                : null,
-                            icon: controller.isProcessing.value
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Icon(LucideIcons.rotateCcw, size: 16),
-                            label: Text(
-                              selectedCount > 1
-                                  ? 'Pulihkan ($selectedCount)'
-                                  : 'Pulihkan Data',
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF10B981),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 18,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-
-                          ElevatedButton.icon(
-                            onPressed: isAnySelected && !controller.isProcessing.value
-                                ? () => _showPermanentDeleteConfirmation(context, controller)
-                                : null,
-                            icon: const Icon(LucideIcons.trash2, size: 16),
-                            label: Text(
-                              selectedCount > 1
-                                  ? 'Hapus ($selectedCount)'
-                                  : 'Hapus Permanen',
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.redAccent,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 18,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                    const SizedBox(width: 10),
+                    _buildCategoryChip(
+                      controller,
+                      category: TrashCategory.authors,
+                      label: 'Penulis',
+                      icon: LucideIcons.users,
+                      count: controller.deletedAuthors.length,
+                    ),
+                    const SizedBox(width: 10),
+                    _buildCategoryChip(
+                      controller,
+                      category: TrashCategory.articles,
+                      label: 'Artikel',
+                      icon: LucideIcons.fileText,
+                      count: controller.deletedArticles.length,
+                    ),
+                    const SizedBox(width: 10),
+                    _buildCategoryChip(
+                      controller,
+                      category: TrashCategory.submissions,
+                      label: 'Naskah Masuk',
+                      icon: LucideIcons.inbox,
+                      count: controller.deletedSubmissions.length,
+                    ),
+                    const SizedBox(width: 10),
+                    _buildCategoryChip(
+                      controller,
+                      category: TrashCategory.preorders,
+                      label: 'Pesanan Pre-Order',
+                      icon: LucideIcons.shoppingBag,
+                      count: controller.deletedPreorders.length,
                     ),
                   ],
                 ),
               );
             }),
 
-            // List Content
-            Expanded(
-              child: Obx(() {
-                if (controller.isLoading.value) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(color: AppTheme.primaryColor),
-                        SizedBox(height: 16),
-                        Text(
-                          'Memuat data keranjang sampah...',
-                          style: TextStyle(color: AppTheme.textSecondary),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+            const SizedBox(height: 16),
 
-                if (controller.errorMessage.value.isNotEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(LucideIcons.alertCircle, size: 48, color: Colors.redAccent),
-                        const SizedBox(height: 16),
-                        Text(
-                          controller.errorMessage.value,
-                          style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () => controller.fetchCurrentCategory(),
-                          child: const Text('Coba Lagi'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+            // Search Bar
+            Container(
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppTheme.inputFillColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TextField(
+                onChanged: (val) => controller.searchQuery.value = val,
+                decoration: const InputDecoration(
+                  hintText: 'Cari data terhapus...',
+                  prefixIcon: Icon(
+                    LucideIcons.search,
+                    size: 18,
+                    color: AppTheme.textMuted,
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
-                final list = controller.currentFilteredList;
+    Widget buildBulkToolbar() {
+      return Obx(() {
+        final list = controller.currentFilteredList;
+        final selectedCount = controller.selectedIds.length;
+        final isAnySelected = selectedCount > 0;
+        final isAllSelected = controller.isAllSelected;
 
-                if (list.isEmpty) {
-                  return Center(
+        if (list.isEmpty) return const SizedBox.shrink();
+
+        return Container(
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 28, vertical: 12),
+          decoration: const BoxDecoration(
+            color: AppTheme.surfaceColor,
+            border: Border(
+              bottom: BorderSide(color: AppTheme.borderColor, width: 1),
+            ),
+          ),
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 10,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  InkWell(
+                    onTap: () => controller.toggleSelectAll(!isAllSelected),
+                    borderRadius: BorderRadius.circular(8),
                     child: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(24),
-                            decoration: const BoxDecoration(
-                              color: AppTheme.inputFillColor,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              LucideIcons.trash2,
-                              size: 56,
-                              color: AppTheme.textMuted,
-                            ),
+                          Checkbox(
+                            value: isAllSelected
+                                ? true
+                                : (controller.isPartiallySelected ? null : false),
+                            tristate: true,
+                            activeColor: AppTheme.primaryColor,
+                            onChanged: (val) => controller.toggleSelectAll(val == true),
                           ),
-                          const SizedBox(height: 20),
-                          Text(
-                            controller.searchQuery.value.isNotEmpty
-                                ? 'Tidak Ada Data Yang Cocok'
-                                : 'Keranjang Sampah Kosong',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            controller.searchQuery.value.isNotEmpty
-                                ? 'Coba gunakan kata kunci pencarian lain.'
-                                : 'Tidak ada data terhapus di kategori ini.',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: AppTheme.textSecondary,
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Pilih Semua',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
                               fontSize: 14,
+                              color: AppTheme.textPrimary,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  );
-                }
+                  ),
 
-                return ListView.separated(
-                  padding: const EdgeInsets.all(28),
-                  itemCount: list.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final item = list[index];
-                    final itemId = _getItemId(item);
-
-                    return Obx(() {
-                      final isSelected = controller.selectedIds.contains(itemId);
-
-                      return Card(
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(
-                            color: isSelected
-                                ? AppTheme.primaryColor
-                                : AppTheme.borderColor,
-                            width: isSelected ? 1.5 : 1.0,
-                          ),
+                  if (isAnySelected) ...[
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Terpilih $selectedCount dari ${list.length}',
+                        style: const TextStyle(
+                          color: AppTheme.primaryColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
-                        color: isSelected
-                            ? AppTheme.primaryColor.withValues(alpha: 0.03)
-                            : AppTheme.surfaceColor,
-                        child: InkWell(
-                          onTap: () => controller.toggleSelectItem(
-                            itemId,
-                            !isSelected,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Builder(
-                              builder: (context) {
-                                final isMobileCard = MediaQuery.of(context).size.width < 600;
+                      ),
+                    ),
+                  ],
+                ],
+              ),
 
-                                final actionButtons = Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Detail Eye Button
-                                    IconButton(
-                                      icon: const Icon(
-                                        LucideIcons.eye,
-                                        size: 18,
-                                        color: AppTheme.primaryColor,
-                                      ),
-                                      tooltip: 'Lihat Detail Data',
-                                      onPressed: () => _showItemDetailDialog(context, item),
-                                    ),
-                                    // Individual Restore Button
-                                    IconButton(
-                                      icon: const Icon(
-                                        LucideIcons.rotateCcw,
-                                        size: 18,
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: isAnySelected ? 1.0 : 0.5,
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: isAnySelected && !controller.isProcessing.value
+                          ? () async {
+                              await controller.restoreSelectedItems();
+                              if (context.mounted) {
+                                AppToast.showSuccess(
+                                  context,
+                                  '$selectedCount item berhasil dipulihkan.',
+                                );
+                              }
+                            }
+                          : null,
+                      icon: controller.isProcessing.value
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(LucideIcons.rotateCcw, size: 16),
+                      label: Text(
+                        selectedCount > 1
+                            ? 'Pulihkan ($selectedCount)'
+                            : 'Pulihkan Data',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+
+                    ElevatedButton.icon(
+                      onPressed: isAnySelected && !controller.isProcessing.value
+                          ? () => _showPermanentDeleteConfirmation(context, controller)
+                          : null,
+                      icon: const Icon(LucideIcons.trash2, size: 16),
+                      label: Text(
+                        selectedCount > 1
+                            ? 'Hapus ($selectedCount)'
+                            : 'Hapus Permanen',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      });
+    }
+
+    Widget buildContentList({required bool isMobileScroll}) {
+      return Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: AppTheme.primaryColor),
+                  SizedBox(height: 16),
+                  Text(
+                    'Memuat data keranjang sampah...',
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (controller.errorMessage.value.isNotEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(LucideIcons.alertCircle, size: 48, color: Colors.redAccent),
+                  const SizedBox(height: 16),
+                  Text(
+                    controller.errorMessage.value,
+                    style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => controller.fetchCurrentCategory(),
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final list = controller.currentFilteredList;
+
+        if (list.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: const BoxDecoration(
+                      color: AppTheme.inputFillColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      LucideIcons.trash2,
+                      size: 56,
+                      color: AppTheme.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    controller.searchQuery.value.isNotEmpty
+                        ? 'Tidak Ada Data Yang Cocok'
+                        : 'Keranjang Sampah Kosong',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    controller.searchQuery.value.isNotEmpty
+                        ? 'Coba gunakan kata kunci pencarian lain.'
+                        : 'Tidak ada data terhapus di kategori ini.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return ListView.separated(
+          padding: EdgeInsets.all(isMobile ? 16 : 28),
+          shrinkWrap: isMobileScroll,
+          physics: isMobileScroll ? const NeverScrollableScrollPhysics() : null,
+          itemCount: list.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final item = list[index];
+            final itemId = _getItemId(item);
+
+            return Obx(() {
+              final isSelected = controller.selectedIds.contains(itemId);
+
+              return Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: isSelected
+                        ? AppTheme.primaryColor
+                        : AppTheme.borderColor,
+                    width: isSelected ? 1.5 : 1.0,
+                  ),
+                ),
+                color: isSelected
+                    ? AppTheme.primaryColor.withValues(alpha: 0.03)
+                    : AppTheme.surfaceColor,
+                child: InkWell(
+                  onTap: () => controller.toggleSelectItem(
+                    itemId,
+                    !isSelected,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Builder(
+                      builder: (context) {
+                        final isMobileCard = MediaQuery.of(context).size.width < 600;
+
+                        final actionButtons = Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Detail Eye Button
+                            IconButton(
+                              icon: const Icon(
+                                LucideIcons.eye,
+                                size: 18,
+                                color: AppTheme.primaryColor,
+                              ),
+                              tooltip: 'Lihat Detail Data',
+                              onPressed: () => _showItemDetailDialog(context, item),
+                            ),
+                            // Individual Restore Button
+                            IconButton(
+                              icon: const Icon(
+                                LucideIcons.rotateCcw,
+                                size: 18,
                                         color: Color(0xFF10B981),
                                       ),
                                       tooltip: 'Pulihkan Data Ini',
@@ -936,13 +941,34 @@ class TrashManagementPage extends StatelessWidget {
                     });
                   },
                 );
-              }),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+              });
+            }
+
+            return Scaffold(
+              backgroundColor: AppTheme.backgroundColor,
+              body: SafeArea(
+                child: isMobile
+                    ? SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            buildHeader(),
+                            buildBulkToolbar(),
+                            buildContentList(isMobileScroll: true),
+                          ],
+                        ),
+                      )
+                    : Column(
+                        children: [
+                          buildHeader(),
+                          buildBulkToolbar(),
+                          Expanded(
+                            child: buildContentList(isMobileScroll: false),
+                          ),
+                        ],
+                      ),
+              ),
+            );
+          }
 
   Widget _buildCategoryChip(
     TrashController controller, {

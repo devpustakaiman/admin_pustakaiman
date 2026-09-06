@@ -37,6 +37,7 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
   @override
   Widget build(BuildContext context) {
     final controller = _controller;
+    final isMobile = MediaQuery.of(context).size.width < 768;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -47,7 +48,7 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
           child: SingleChildScrollView(
             scrollDirection: Axis.vertical,
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(28.0),
+            padding: EdgeInsets.all(isMobile ? 16.0 : 28.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -59,8 +60,8 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
                 _buildTableControls(controller),
                 const SizedBox(height: 16),
 
-                // Pre-Order Orders Table
-                _buildPreordersTable(context, controller),
+                // Pre-Order Orders Table or Mobile Cards
+                _buildPreordersTable(context, controller, isMobile: isMobile),
               ],
             ),
           ),
@@ -236,8 +237,8 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
     );
   }
 
-  // ---------------- 3. PRE-ORDERS ORDERS TABLE ----------------
-  Widget _buildPreordersTable(BuildContext context, PreorderController controller) {
+  // ---------------- 3. PRE-ORDERS ORDERS TABLE / CARDS ----------------
+  Widget _buildPreordersTable(BuildContext context, PreorderController controller, {required bool isMobile}) {
     return Obx(() {
       if (controller.isLoading.value) {
         return Container(
@@ -293,6 +294,142 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
               ),
             ],
           ),
+        );
+      }
+
+      if (isMobile) {
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: list.length,
+          itemBuilder: (context, index) {
+            final item = list[index];
+            final dateStr =
+                '${item.createdAt.day.toString().padLeft(2, '0')}/${item.createdAt.month.toString().padLeft(2, '0')}/${item.createdAt.year} ${item.createdAt.hour.toString().padLeft(2, '0')}:${item.createdAt.minute.toString().padLeft(2, '0')}';
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.customerName,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildStatusBadge(item.status),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Buku: ${item.bookTitle} (Qty: ${item.quantity})',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F766E),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(LucideIcons.mail, size: 13, color: Color(0xFF64748B)),
+                          const SizedBox(width: 4),
+                          Text(item.email, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                        ],
+                      ),
+                      if (item.phone.isNotEmpty)
+                        InkWell(
+                          onTap: () => controller.openWhatsApp(item.phone),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(LucideIcons.phone, size: 13, color: Color(0xFF16A34A)),
+                              const SizedBox(width: 4),
+                              Text(
+                                item.phone,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF16A34A),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Tanggal: $dateStr',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      if (item.paymentProofUrl.isNotEmpty)
+                        OutlinedButton.icon(
+                          onPressed: () => _showProofPreviewModal(context, item),
+                          icon: const Icon(LucideIcons.eye, size: 14),
+                          label: const Text('Bukti Transfer'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            textStyle: const TextStyle(fontSize: 12),
+                          ),
+                        )
+                      else
+                        const Text('Tanpa Bukti', style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8))),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildStatusDropdown(context, item, controller),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: const Icon(LucideIcons.trash2, size: 16, color: Colors.redAccent),
+                            tooltip: 'Hapus Pesanan',
+                            onPressed: () => _confirmDeletePreorder(context, item, controller),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
         );
       }
 
@@ -681,6 +818,56 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    Color bg;
+    Color fg;
+    Color border;
+
+    switch (status.toLowerCase()) {
+      case 'pending':
+        bg = const Color(0xFFFEF3C7);
+        fg = const Color(0xFFD97706);
+        border = const Color(0xFFFCD34D);
+        break;
+      case 'verified':
+        bg = const Color(0xFFE0F2FE);
+        fg = const Color(0xFF0284C7);
+        border = const Color(0xFF7DD3FC);
+        break;
+      case 'shipped':
+        bg = const Color(0xFFD1FAE5);
+        fg = const Color(0xFF059669);
+        border = const Color(0xFF6EE7B7);
+        break;
+      case 'cancelled':
+        bg = const Color(0xFFFFE4E6);
+        fg = const Color(0xFFE11D48);
+        border = const Color(0xFFFDA4AF);
+        break;
+      default:
+        bg = const Color(0xFFFEF3C7);
+        fg = const Color(0xFFD97706);
+        border = const Color(0xFFFCD34D);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: border),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: TextStyle(
+          color: fg,
+          fontWeight: FontWeight.bold,
+          fontSize: 11,
         ),
       ),
     );

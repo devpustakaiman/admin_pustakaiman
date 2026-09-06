@@ -71,6 +71,7 @@ class VideoFormDialog extends StatelessWidget {
         child: Obx(() {
           final isBusy = controller.isLoading.value || controller.isUploading.value;
           final isEditing = controller.editingVideoId.value.isNotEmpty;
+          final isMobile = MediaQuery.of(context).size.width < 600;
 
           return Stack(
             children: [
@@ -135,7 +136,7 @@ class VideoFormDialog extends StatelessWidget {
                   // Form Content
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.all(isMobile ? 16 : 24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -362,73 +363,84 @@ class VideoFormDialog extends StatelessWidget {
                                   );
                                 }
 
+                                final previewBox = ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: AppTheme.borderColor),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      children: [
+                                        previewWidget,
+                                        if (yId.isNotEmpty)
+                                          Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: const BoxDecoration(
+                                              color: Colors.red,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(LucideIcons.play, color: Colors.white, size: 18),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+
+                                final controlsColumn = Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    OutlinedButton.icon(
+                                      onPressed: isBusy ? null : () => controller.pickThumbnailFile(),
+                                      icon: const Icon(LucideIcons.uploadCloud, size: 16),
+                                      label: const Text('Pilih Custom Thumbnail (Opsional)'),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      file != null
+                                          ? 'File dipilih: ${file.name}'
+                                          : (customUrl.isNotEmpty
+                                              ? 'Thumbnail Kustom Tersimpan'
+                                              : (yId.isNotEmpty
+                                                  ? 'Otomatis menggunakan Thumbnail YouTube HQ'
+                                                  : 'Belum ada gambar thumbnail')),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: (file != null || customUrl.isNotEmpty || yId.isNotEmpty)
+                                            ? AppTheme.primaryColor
+                                            : AppTheme.textSecondary,
+                                      ),
+                                    ),
+                                    if (yId.isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'ID Video: $yId',
+                                        style: const TextStyle(fontSize: 11, color: AppTheme.textMuted, fontFamily: 'monospace'),
+                                      ),
+                                    ],
+                                  ],
+                                );
+
+                                final isMobile = MediaQuery.of(Get.context!).size.width < 600;
+
+                                if (isMobile) {
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      previewBox,
+                                      const SizedBox(height: 14),
+                                      controlsColumn,
+                                    ],
+                                  );
+                                }
+
                                 return Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          border: Border.all(color: AppTheme.borderColor),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Stack(
-                                          alignment: Alignment.center,
-                                          children: [
-                                            previewWidget,
-                                            if (yId.isNotEmpty)
-                                              Container(
-                                                padding: const EdgeInsets.all(8),
-                                                decoration: const BoxDecoration(
-                                                  color: Colors.red,
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: const Icon(LucideIcons.play, color: Colors.white, size: 18),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
+                                    previewBox,
                                     const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          OutlinedButton.icon(
-                                            onPressed: isBusy ? null : () => controller.pickThumbnailFile(),
-                                            icon: const Icon(LucideIcons.uploadCloud, size: 16),
-                                            label: const Text('Pilih Custom Thumbnail (Opsional)'),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            file != null
-                                                ? 'File dipilih: ${file.name}'
-                                                : (customUrl.isNotEmpty
-                                                    ? 'Thumbnail Kustom Tersimpan'
-                                                    : (yId.isNotEmpty
-                                                        ? 'Otomatis menggunakan Thumbnail YouTube HQ'
-                                                        : 'Belum ada gambar thumbnail')),
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: (file != null || customUrl.isNotEmpty || yId.isNotEmpty)
-                                                  ? AppTheme.primaryColor
-                                                  : AppTheme.textSecondary,
-                                            ),
-                                          ),
-                                          if (yId.isNotEmpty) ...[
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              'YouTube Video ID: $yId',
-                                              style: const TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.redAccent,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
+                                    Expanded(child: controlsColumn),
                                   ],
                                 );
                               }),

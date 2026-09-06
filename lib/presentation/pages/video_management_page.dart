@@ -57,289 +57,320 @@ class VideoManagementPage extends GetView<VideoController> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMobile = MediaQuery.of(context).size.width < 768;
+
+    if (isMobile) {
+      return Scaffold(
+        backgroundColor: AppTheme.backgroundColor,
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(isMobile: true),
+              const SizedBox(height: 24),
+              _buildFilters(),
+              const SizedBox(height: 24),
+              _buildContentList(context, isMobileScroll: true),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(isMobile ? 16 : 28),
+      body: Padding(
+        padding: const EdgeInsets.all(28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Page Header
-            if (isMobile) ...[
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Kelola Video Media / Warta',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Kelola galeri video "Cerita dalam Sorotan", liputan khusus, dan narasumber Warta',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => controller.openFormDialog(),
-                      icon: const Icon(LucideIcons.plus, size: 18),
-                      label: const Text(
-                        'Tambah Video',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 2,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ] else
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Kelola Video Media / Warta',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary,
-                            letterSpacing: -0.5,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Kelola galeri video "Cerita dalam Sorotan", liputan khusus, dan narasumber Warta',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () => controller.openFormDialog(),
-                    icon: const Icon(LucideIcons.plus, size: 18),
-                    label: const Text(
-                      'Tambah Video',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                    ),
-                  ),
-                ],
-              ),
-
+            _buildHeader(isMobile: false),
             const SizedBox(height: 24),
+            _buildFilters(),
+            const SizedBox(height: 24),
+            Expanded(
+              child: _buildContentList(context, isMobileScroll: false),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-            // Two-Tier Action Bar (Search & Filters)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.borderColor),
-                boxShadow: AppTheme.softShadow,
+  Widget _buildHeader({required bool isMobile}) {
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Kelola Video Media / Warta',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textPrimary,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Kelola galeri video "Cerita dalam Sorotan", liputan khusus, dan narasumber Warta',
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => controller.openFormDialog(),
+              icon: const Icon(LucideIcons.plus, size: 18),
+              label: const Text(
+                'Tambah Video',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              child: Column(
-                children: [
-                  // Tier 1: Search & Main Actions
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          onChanged: (val) => controller.searchQuery.value = val,
-                          decoration: InputDecoration(
-                            hintText: 'Cari judul video, narasumber, atau kategori...',
-                            prefixIcon: const Icon(LucideIcons.search, size: 18, color: AppTheme.textSecondary),
-                            suffixIcon: Obx(() {
-                              if (controller.searchQuery.value.isEmpty) {
-                                return const SizedBox.shrink();
-                              }
-                              return IconButton(
-                                icon: const Icon(LucideIcons.x, size: 16, color: AppTheme.textSecondary),
-                                onPressed: () {
-                                  controller.searchQuery.value = '';
-                                },
-                              );
-                            }),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            filled: true,
-                            fillColor: AppTheme.inputFillColor,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      IconButton(
-                        onPressed: () => controller.fetchVideos(),
-                        icon: const Icon(LucideIcons.refreshCw, size: 18),
-                        tooltip: 'Refresh Data',
-                        style: IconButton.styleFrom(
-                          padding: const EdgeInsets.all(14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            side: const BorderSide(color: AppTheme.borderColor),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Tier 2: Category Filter Chips
-                  Obx(() {
-                    final currentCat = controller.selectedCategoryFilter.value;
-                    final categoryList = ['Semua Kategori', ...VideoController.categories];
-
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: categoryList.map((cat) {
-                          final isSelected = currentCat == cat;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              label: Text(cat),
-                              selected: isSelected,
-                              onSelected: (_) {
-                                controller.selectedCategoryFilter.value = cat;
-                              },
-                              selectedColor: AppTheme.primaryColor,
-                              labelStyle: TextStyle(
-                                color: isSelected ? Colors.white : AppTheme.textPrimary,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                fontSize: 12,
-                              ),
-                              backgroundColor: Colors.grey.shade100,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                                side: BorderSide(
-                                  color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    );
-                  }),
-                ],
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
               ),
             ),
+          ),
+        ],
+      );
+    }
 
-            const SizedBox(height: 24),
-
-            // Video List Table / Cards
-            Obx(() {
-              if (controller.isLoading.value) {
-                return const Padding(
-                  padding: EdgeInsets.all(48),
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              }
-
-              final videoList = controller.filteredVideos;
-
-              if (videoList.isEmpty) {
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(48),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppTheme.borderColor),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(LucideIcons.videoOff, size: 48, color: AppTheme.textMuted),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Tidak Ada Video Ditemukan',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        controller.searchQuery.value.isNotEmpty
-                            ? 'Tidak ada video yang cocok dengan kata kunci pencarian Anda'
-                            : 'Belum ada video media ditambahkan ke pustaka',
-                        style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        onPressed: () => controller.openFormDialog(),
-                        icon: const Icon(LucideIcons.plus, size: 16),
-                        label: const Text('Tambah Video Sekarang'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppTheme.borderColor),
-                  boxShadow: AppTheme.softShadow,
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Kelola Video Media / Warta',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                  letterSpacing: -0.5,
                 ),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: videoList.length,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Kelola galeri video "Cerita dalam Sorotan", liputan khusus, dan narasumber Warta',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        ElevatedButton.icon(
+          onPressed: () => controller.openFormDialog(),
+          icon: const Icon(LucideIcons.plus, size: 18),
+          label: const Text(
+            'Tambah Video',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppTheme.primaryColor,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilters() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        children: [
+          // Tier 1: Search & Main Actions
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  onChanged: (val) => controller.searchQuery.value = val,
+                  decoration: InputDecoration(
+                    hintText: 'Cari judul video, narasumber, atau kategori...',
+                    prefixIcon: const Icon(LucideIcons.search, size: 18, color: AppTheme.textSecondary),
+                    suffixIcon: Obx(() {
+                      if (controller.searchQuery.value.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return IconButton(
+                        icon: const Icon(LucideIcons.x, size: 16, color: AppTheme.textSecondary),
+                        onPressed: () {
+                          controller.searchQuery.value = '';
+                        },
+                      );
+                    }),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    filled: true,
+                    fillColor: AppTheme.inputFillColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              IconButton(
+                onPressed: () => controller.fetchVideos(),
+                icon: const Icon(LucideIcons.refreshCw, size: 18),
+                tooltip: 'Refresh Data',
+                style: IconButton.styleFrom(
+                  padding: const EdgeInsets.all(14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: AppTheme.borderColor),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // Tier 2: Category Filter Chips
+          Obx(() {
+            final currentCat = controller.selectedCategoryFilter.value;
+            final categoryList = ['Semua Kategori', ...VideoController.categories];
+
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: categoryList.map((cat) {
+                  final isSelected = currentCat == cat;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(cat),
+                      selected: isSelected,
+                      onSelected: (_) {
+                        controller.selectedCategoryFilter.value = cat;
+                      },
+                      selectedColor: AppTheme.primaryColor,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : AppTheme.textPrimary,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 12,
+                      ),
+                      backgroundColor: Colors.grey.shade100,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContentList(BuildContext context, {required bool isMobileScroll}) {
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const Padding(
+          padding: EdgeInsets.all(48),
+          child: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
+      }
+
+      final videoList = controller.filteredVideos;
+
+      if (videoList.isEmpty) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(48),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.borderColor),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(LucideIcons.videoOff, size: 48, color: AppTheme.textMuted),
+              const SizedBox(height: 16),
+              const Text(
+                'Tidak Ada Video Ditemukan',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                controller.searchQuery.value.isNotEmpty
+                    ? 'Tidak ada video yang cocok dengan kata kunci pencarian Anda'
+                    : 'Belum ada video media ditambahkan ke pustaka',
+                style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () => controller.openFormDialog(),
+                icon: const Icon(LucideIcons.plus, size: 16),
+                label: const Text('Tambah Video Sekarang'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.borderColor),
+          boxShadow: AppTheme.softShadow,
+        ),
+        child: ListView.separated(
+          shrinkWrap: isMobileScroll,
+          physics: isMobileScroll ? const NeverScrollableScrollPhysics() : null,
+          itemCount: videoList.length,
                   separatorBuilder: (_, __) => const Divider(height: 1, color: AppTheme.borderColor),
                   itemBuilder: (context, index) {
                     final video = videoList[index];
                     final thumbUrl = video.effectiveThumbnailUrl;
 
-                    final isMobileCard = MediaQuery.of(context).size.width < 600;
+                    final isMobileCard = MediaQuery.of(context).size.width < 768;
 
                     return Padding(
                       padding: const EdgeInsets.all(16),
@@ -664,10 +695,6 @@ class VideoManagementPage extends GetView<VideoController> {
                   },
                 ),
               );
-            }),
-          ],
-        ),
-      ),
-    );
+            });
   }
 }

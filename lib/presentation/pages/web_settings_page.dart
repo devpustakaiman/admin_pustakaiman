@@ -29,7 +29,7 @@ class WebSettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<WebSettingsController>();
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isMobile = MediaQuery.of(context).size.width < 768;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,

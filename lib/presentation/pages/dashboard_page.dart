@@ -48,12 +48,14 @@ class DashboardPage extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context, DashboardController controller) {
+    final isMobile = MediaQuery.of(context).size.width < 768;
+
     return RefreshIndicator(
       onRefresh: controller.fetchDashboardData,
       color: AppTheme.primaryColor,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(28.0),
+        padding: EdgeInsets.all(isMobile ? 16.0 : 28.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -758,7 +760,6 @@ class DashboardPage extends StatelessWidget {
                 final order = orders[index];
                 final customerName = order['customer_name'] ?? order['name'] ?? order['pemesan'] ?? 'Pelanggan';
                 final bookTitle = order['book_title'] ?? order['title'] ?? order['buku'] ?? 'Buku Pre-Order';
-                final price = order['total_price'] ?? order['price'] ?? 0;
                 final status = order['status']?.toString() ?? 'Menunggu';
 
                 final isVerified = status.toLowerCase().contains('terverifikasi') || status.toLowerCase().contains('selesai');
@@ -797,38 +798,24 @@ class DashboardPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'Rp ${_formatPrice(price is num ? price : int.tryParse(price.toString()) ?? 0)}',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary,
-                          ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isVerified
+                            ? const Color(0xFF059669).withValues(alpha: 0.1)
+                            : (isPending ? Colors.amber.withValues(alpha: 0.12) : Colors.grey.withValues(alpha: 0.1)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        status.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.bold,
+                          color: isVerified
+                              ? const Color(0xFF059669)
+                              : (isPending ? Colors.amber[900] : Colors.grey[700]),
                         ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: isVerified
-                                ? const Color(0xFF059669).withValues(alpha: 0.1)
-                                : (isPending ? Colors.amber.withValues(alpha: 0.12) : Colors.grey.withValues(alpha: 0.1)),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            status.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: isVerified
-                                  ? const Color(0xFF059669)
-                                  : (isPending ? Colors.amber[900] : Colors.grey[700]),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 );
@@ -1362,24 +1349,27 @@ class DashboardPage extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
-                          Row(
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  category,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppTheme.primaryColor,
+                              if (category.isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    category,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.primaryColor,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
                               Text(
                                 'Rp ${_formatPrice(price)}',
                                 style: const TextStyle(
@@ -1388,28 +1378,27 @@ class DashboardPage extends StatelessWidget {
                                   color: AppTheme.textPrimary,
                                 ),
                               ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: isLowStock ? const Color(0xFFFFF7ED) : const Color(0xFFECFDF5),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: isLowStock ? const Color(0xFFFFEDD5) : const Color(0xFFA7F3D0),
+                                  ),
+                                ),
+                                child: Text(
+                                  isLowStock ? 'Stok Menipis (< 10)' : 'Stok Tersedia',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: isLowStock ? const Color(0xFFC2410C) : const Color(0xFF047857),
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isLowStock ? const Color(0xFFFFF7ED) : const Color(0xFFECFDF5),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: isLowStock ? const Color(0xFFFFEDD5) : const Color(0xFFA7F3D0),
-                        ),
-                      ),
-                      child: Text(
-                        isLowStock ? 'Stok Menipis (< 10)' : 'Stok Tersedia',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: isLowStock ? const Color(0xFFC2410C) : const Color(0xFF047857),
-                        ),
                       ),
                     ),
                   ],
@@ -1428,7 +1417,7 @@ class DashboardPage extends StatelessWidget {
               onPressed: () => controller.navigateToPage(1),
               icon: const Icon(LucideIcons.arrowRight, size: 14),
               label: const Text(
-                'Lihat Semua di Katalog Buku →',
+                'Lihat Semua di Katalog Buku',
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
               ),
             ),

@@ -269,6 +269,7 @@ class BookFormDialog extends StatelessWidget {
         child: Obx(() {
           final isBusy = controller.isLoading.value || controller.isUploading.value;
           final isEditing = controller.editingBookId.value.isNotEmpty;
+          final isMobile = MediaQuery.of(context).size.width < 600;
 
           return Stack(
             children: [
@@ -333,7 +334,7 @@ class BookFormDialog extends StatelessWidget {
                   // Form Content (Categorized Cards)
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.all(isMobile ? 16 : 24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -961,8 +962,11 @@ class BookFormDialog extends StatelessWidget {
                               const SizedBox(height: 16),
 
                               // Multi-Image Gallery Section
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              Wrap(
+                                alignment: WrapAlignment.spaceBetween,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 12,
+                                runSpacing: 8,
                                 children: [
                                   const Text(
                                     'Galeri Foto Buku (Multi-Image)',
@@ -1127,28 +1131,27 @@ class BookFormDialog extends StatelessWidget {
                               Obx(() {
                                 final file = controller.selectedPdfFile.value;
                                 final existingUrl = controller.pdfPreviewUrlController.text.trim();
-                                return Row(
+                                return Wrap(
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  spacing: 12,
+                                  runSpacing: 8,
                                   children: [
                                     OutlinedButton.icon(
                                       onPressed: isBusy ? null : () => controller.pickPdfFile(),
                                       icon: const Icon(LucideIcons.fileText, size: 16),
                                       label: const Text('Pilih File PDF'),
                                     ),
-                                    const SizedBox(width: 14),
-                                    Expanded(
-                                      child: Text(
-                                        file != null
-                                            ? 'File PDF: ${file.name}'
-                                            : (existingUrl.isNotEmpty
-                                                ? 'PDF tersimpan'
-                                                : 'Belum ada PDF dipilih'),
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: file != null
-                                              ? AppTheme.primaryColor
-                                              : AppTheme.textSecondary,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
+                                    Text(
+                                      file != null
+                                          ? 'File PDF: ${file.name}'
+                                          : (existingUrl.isNotEmpty
+                                              ? 'PDF tersimpan'
+                                              : 'Belum ada PDF dipilih'),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: file != null
+                                            ? AppTheme.primaryColor
+                                            : AppTheme.textSecondary,
                                       ),
                                     ),
                                   ],
