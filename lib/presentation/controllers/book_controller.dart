@@ -1,6 +1,7 @@
+import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -12,6 +13,7 @@ import '../../domain/usecases/get_books_usecase.dart';
 import '../../domain/usecases/update_book_usecase.dart';
 import '../widgets/book_form_dialog.dart';
 import '../../core/utils/app_toast.dart';
+import 'category_controller.dart';
 
 class BookController extends GetxController {
   final GetBooksUseCase getBooksUseCase;
@@ -131,9 +133,11 @@ class BookController extends GetxController {
 
     // 4. Promo Filter (Tri-State)
     if (promoFilter.value != null) {
-      result = result
-          .where((book) => book.isPromo == promoFilter.value)
-          .toList();
+      if (promoFilter.value == true) {
+        result = result.where((book) => book.isPromoActive).toList();
+      } else {
+        result = result.where((book) => !book.isPromoActive).toList();
+      }
     }
 
     // 5. Sorting (Judul, Penulis, Harga, Kategori, Tanggal)
@@ -153,8 +157,8 @@ class BookController extends GetxController {
           comparison = a.author.toLowerCase().compareTo(b.author.toLowerCase());
           break;
         case 'price':
-          final priceA = a.isPromo && a.promoPrice != null ? a.promoPrice! : a.price;
-          final priceB = b.isPromo && b.promoPrice != null ? b.promoPrice! : b.price;
+          final priceA = a.isPromoActive && a.promoPrice != null ? a.promoPrice! : a.price;
+          final priceB = b.isPromoActive && b.promoPrice != null ? b.promoPrice! : b.price;
           comparison = priceA.compareTo(priceB);
           break;
         case 'category':
@@ -195,6 +199,8 @@ class BookController extends GetxController {
   final pdfPreviewUrlController = TextEditingController();
   final mizanstoreUrlController = TextEditingController();
   final categoryController = TextEditingController();
+  final subCategoryController = TextEditingController();
+  final RxString selectedMainCategory = ''.obs;
   final priceController = TextEditingController();
   final promoPriceController = TextEditingController();
   final promoPercentageController = TextEditingController();
@@ -219,10 +225,17 @@ class BookController extends GetxController {
     pdfPreviewUrlController.dispose();
     mizanstoreUrlController.dispose();
     categoryController.dispose();
+    subCategoryController.dispose();
     priceController.dispose();
     promoPriceController.dispose();
     promoPercentageController.dispose();
     super.onClose();
+  }
+
+  void onMainCategorySelected(String name) {
+    categoryController.text = name;
+    selectedMainCategory.value = name;
+    subCategoryController.clear();
   }
 
   void clearForm() {
@@ -234,6 +247,8 @@ class BookController extends GetxController {
     pdfPreviewUrlController.clear();
     mizanstoreUrlController.clear();
     categoryController.clear();
+    subCategoryController.clear();
+    selectedMainCategory.value = '';
     priceController.clear();
     promoPriceController.clear();
     promoPercentageController.clear();
@@ -334,6 +349,10 @@ class BookController extends GetxController {
   }) async {
     Uint8List? bytes = file.bytes;
 
+    if (bytes == null && !kIsWeb && file.path != null && file.path!.isNotEmpty) {
+      bytes = await File(file.path!).readAsBytes();
+    }
+
     if (bytes == null) {
       throw Exception('Data file kosong atau tidak dapat dibaca');
     }
@@ -379,6 +398,11 @@ class BookController extends GetxController {
   }
 
   void openFormDialog({Book? book}) {
+    final catCtrl = Get.isRegistered<CategoryController>() ? Get.find<CategoryController>() : null;
+    if (catCtrl != null) {
+      catCtrl.fetchCategories();
+    }
+
     if (book != null) {
       editingBookId.value = book.id;
       titleController.text = book.title;
@@ -388,7 +412,40 @@ class BookController extends GetxController {
       coverUrl.value = book.coverUrl;
       pdfPreviewUrlController.text = book.pdfPreviewUrl;
       mizanstoreUrlController.text = book.mizanstoreUrl;
-      categoryController.text = book.category;
+
+      final rawCat = book.category.trim();
+      if (rawCat.contains(' - ')) {
+        final parts = rawCat.split(' - ');
+        categoryController.text = parts[0].trim();
+        selectedMainCategory.value = parts[0].trim();
+        subCategoryController.text = parts.sublist(1).join(' - ').trim();
+      } else if (catCtrl != null && catCtrl.categories.isNotEmpty) {
+        final subMatch = catCtrl.categories.firstWhereOrNull(
+          (c) => c.name.trim().toLowerCase() == rawCat.toLowerCase() &&
+              c.parentId != null &&
+              c.parentId!.trim().isNotEmpty,
+        );
+        if (subMatch != null) {
+          final parentCat = catCtrl.mainCategories.firstWhereOrNull((m) => m.id == subMatch.parentId);
+          if (parentCat != null) {
+            categoryController.text = parentCat.name;
+            selectedMainCategory.value = parentCat.name;
+            subCategoryController.text = subMatch.name;
+          } else {
+            categoryController.text = rawCat;
+            selectedMainCategory.value = rawCat;
+            subCategoryController.clear();
+          }
+        } else {
+          categoryController.text = rawCat;
+          selectedMainCategory.value = rawCat;
+          subCategoryController.clear();
+        }
+      } else {
+        categoryController.text = rawCat;
+        selectedMainCategory.value = rawCat;
+        subCategoryController.clear();
+      }
       priceController.text = book.price > 0 ? book.price.toString() : '';
       isRecommended.value = book.isRecommended;
       isPromo.value = book.isPromo;
@@ -601,7 +658,9 @@ class BookController extends GetxController {
       coverUrl: coverUrlController.text.trim(),
       pdfPreviewUrl: pdfPreviewUrlController.text.trim(),
       mizanstoreUrl: mizanstoreUrlController.text.trim(),
-      category: categoryController.text.trim(),
+      category: subCategoryController.text.trim().isNotEmpty
+          ? '${categoryController.text.trim()} - ${subCategoryController.text.trim()}'
+          : categoryController.text.trim(),
       galleryUrls: galleryUrls,
       price: priceInt,
       isPromo: isPromo.value,
@@ -640,7 +699,9 @@ class BookController extends GetxController {
       coverUrl: coverUrlController.text.trim(),
       pdfPreviewUrl: pdfPreviewUrlController.text.trim(),
       mizanstoreUrl: mizanstoreUrlController.text.trim(),
-      category: categoryController.text.trim(),
+      category: subCategoryController.text.trim().isNotEmpty
+          ? '${categoryController.text.trim()} - ${subCategoryController.text.trim()}'
+          : categoryController.text.trim(),
       galleryUrls: galleryUrls,
       price: priceInt,
       isPromo: isPromo.value,

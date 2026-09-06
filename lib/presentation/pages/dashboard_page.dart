@@ -226,7 +226,7 @@ class DashboardPage extends StatelessWidget {
                 ? '${controller.pendingPreorders.value} Butuh Verifikasi'
                 : 'Semua Terverifikasi',
             badgeColor: controller.pendingPreorders.value > 0 ? Colors.amber[800]! : const Color(0xFF059669),
-            onTap: () => controller.navigateToPage(2),
+            onTap: () => controller.navigateToPage(3),
           ),
 
           // Card 2: Katalog Buku
@@ -252,7 +252,7 @@ class DashboardPage extends StatelessWidget {
                 ? '${controller.pendingSubmissions.value} Pending Kurasi'
                 : 'Semua Terbaca',
             badgeColor: controller.pendingSubmissions.value > 0 ? Colors.orange[800]! : Colors.purple[600]!,
-            onTap: () => controller.navigateToPage(3),
+            onTap: () => controller.navigateToPage(4),
           ),
 
           // Card 4: Penulis & Konten Media
@@ -264,7 +264,7 @@ class DashboardPage extends StatelessWidget {
             iconColor: Colors.blue[600]!,
             badgeText: 'Mitra & Media',
             badgeColor: Colors.blue[600]!,
-            onTap: () => controller.navigateToPage(4),
+            onTap: () => controller.navigateToPage(5),
           ),
         ];
 
@@ -717,7 +717,7 @@ class DashboardPage extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               TextButton.icon(
-                onPressed: () => controller.navigateToPage(2),
+                onPressed: () => controller.navigateToPage(3),
                 icon: const Icon(LucideIcons.arrowRight, size: 14),
                 label: const Text('Lihat Semua'),
               ),
@@ -897,7 +897,7 @@ class DashboardPage extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               IconButton(
-                onPressed: () => controller.navigateToPage(3),
+                onPressed: () => controller.navigateToPage(4),
                 icon: const Icon(LucideIcons.arrowRight, size: 16),
                 tooltip: 'Lihat Semua Naskah',
               ),
@@ -1073,7 +1073,7 @@ class DashboardPage extends StatelessWidget {
                 subtitle: 'Kelola kurasi berkas naskah penulis',
                 icon: LucideIcons.fileText,
                 iconColor: Colors.purple,
-                onTap: () => controller.navigateToPage(3),
+                onTap: () => controller.navigateToPage(4),
               ),
               const SizedBox(height: 12),
               _buildShortcutTile(
@@ -1081,7 +1081,7 @@ class DashboardPage extends StatelessWidget {
                 subtitle: 'Kustomisasi tampilan banner utama publik',
                 icon: LucideIcons.layout,
                 iconColor: Colors.blue,
-                onTap: () => controller.navigateToPage(7),
+                onTap: () => controller.navigateToPage(8),
               ),
             ],
           ),

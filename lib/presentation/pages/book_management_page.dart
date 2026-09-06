@@ -538,12 +538,16 @@ class BookManagementPage extends StatelessWidget {
                                         children: [
                                           const Icon(LucideIcons.user, size: 14, color: AppTheme.textSecondary),
                                           const SizedBox(width: 6),
-                                          Text(
-                                            book.author.isNotEmpty ? book.author : 'Penulis Tidak Diketahui',
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w500,
-                                              color: AppTheme.textSecondary,
+                                          Flexible(
+                                            child: Text(
+                                              book.author.isNotEmpty ? book.author : 'Penulis Tidak Diketahui',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                                color: AppTheme.textSecondary,
+                                              ),
                                             ),
                                           ),
                                         ],
@@ -560,7 +564,7 @@ class BookManagementPage extends StatelessWidget {
                                               shape: BoxShape.circle,
                                             ),
                                           ),
-                                          if (book.isPromo && book.promoPrice != null) ...[
+                                          if (book.isPromoActive && book.promoPrice != null) ...[
                                             Text(
                                               _formatPrice(book.promoPrice!),
                                               style: const TextStyle(
@@ -643,7 +647,7 @@ class BookManagementPage extends StatelessWidget {
                                         ],
 
                                         // Red Promo Badge
-                                        if (book.isPromo) ...[
+                                        if (book.isPromoActive) ...[
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                             decoration: BoxDecoration(
@@ -663,6 +667,8 @@ class BookManagementPage extends StatelessWidget {
                                                     }
                                                     if (book.promoEndDate != null) {
                                                       parts.add('Ends: ${_formatShortDate(book.promoEndDate!)}');
+                                                    } else {
+                                                      parts.add('Forever');
                                                     }
                                                     if (parts.isEmpty) {
                                                       return 'Promo';

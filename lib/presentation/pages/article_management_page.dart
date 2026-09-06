@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -10,47 +10,51 @@ import '../controllers/article_controller.dart';
 class ArticleManagementPage extends StatelessWidget {
   const ArticleManagementPage({super.key});
 
-  Widget _buildArticleImage(String imageUrl, {double width = 70, double height = 70}) {
-    final isValidUrl = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
-    if (!isValidUrl) {
-      return Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          color: AppTheme.inputFillColor,
-          borderRadius: BorderRadius.circular(12),
+  Widget _buildArticleImage(Article article, {double width = 56, double height = 56}) {
+    debugPrint('RENDERING ARTICLE IMAGE [${article.title}]: ${article.imageUrl}');
+    if (article.imageUrl.trim().isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          article.imageUrl,
+          width: width,
+          height: height,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            debugPrint('IMAGE LOAD ERROR for ${article.imageUrl}: $error');
+
+            // Support Web CORS Fallback (HTML proxy rendering for cross-origin URLs e.g. WordPress)
+            if (kIsWeb && !article.imageUrl.contains('weserv.nl')) {
+              final proxyUrl = 'https://images.weserv.nl/?url=${Uri.encodeComponent(article.imageUrl)}';
+              return Image.network(
+                proxyUrl,
+                width: width,
+                height: height,
+                fit: BoxFit.cover,
+                errorBuilder: (context, err2, st2) {
+                  debugPrint('CORS FALLBACK ERROR for ${article.imageUrl}: $err2');
+                  return _buildFallbackIcon(width: width, height: height);
+                },
+              );
+            }
+
+            return _buildFallbackIcon(width: width, height: height);
+          },
         ),
-        child: const Icon(LucideIcons.fileText, color: AppTheme.textMuted, size: 24),
       );
     }
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: CachedNetworkImage(
-        imageUrl: imageUrl,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        memCacheWidth: (width * 2.5).toInt(),
-        memCacheHeight: (height * 2.5).toInt(),
-        placeholder: (context, url) => Container(
-          width: width,
-          height: height,
-          color: AppTheme.inputFillColor,
-          child: const Center(
-            child: SizedBox(
-              width: 14,
-              height: 14,
-              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryColor),
-            ),
-          ),
-        ),
-        errorWidget: (_, __, ___) => Container(
-          width: width,
-          height: height,
-          color: AppTheme.inputFillColor,
-          child: const Icon(LucideIcons.imageOff, color: AppTheme.textMuted, size: 24),
-        ),
+    return _buildFallbackIcon(width: width, height: height);
+  }
+
+  Widget _buildFallbackIcon({double width = 56, double height = 56}) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(8),
       ),
+      child: const Icon(Icons.description_outlined, color: Color(0xFF94A3B8)),
     );
   }
 
@@ -408,7 +412,7 @@ class ArticleManagementPage extends StatelessWidget {
                         padding: const EdgeInsets.all(16.0),
                         child: Row(
                           children: [
-                            _buildArticleImage(article.imageUrl, width: 75, height: 75),
+                            _buildArticleImage(article, width: 56, height: 56),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Column(
@@ -416,6 +420,8 @@ class ArticleManagementPage extends StatelessWidget {
                                 children: [
                                   Text(
                                     article.title,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -427,11 +433,15 @@ class ArticleManagementPage extends StatelessWidget {
                                     children: [
                                       const Icon(LucideIcons.user, size: 13, color: AppTheme.textSecondary),
                                       const SizedBox(width: 4),
-                                      Text(
-                                        article.author.isNotEmpty ? article.author : 'Redaksi',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: AppTheme.textSecondary,
+                                      Flexible(
+                                        child: Text(
+                                          article.author.isNotEmpty ? article.author : 'Redaksi',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppTheme.textSecondary,
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(width: 12),

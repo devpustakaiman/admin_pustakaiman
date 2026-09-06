@@ -414,10 +414,11 @@ class CatalogSettingsPage extends StatelessWidget {
           const Divider(height: 32),
           Obx(() {
             final selectedList = controller.catalogFeaturedCategories;
+            final categoriesList = controller.availableCatalogCategories;
             return Wrap(
               spacing: 10,
               runSpacing: 10,
-              children: WebSettingsController.availableCatalogCategories.map((category) {
+              children: categoriesList.map((category) {
                 final isSelected = selectedList.contains(category);
                 return FilterChip(
                   label: Text(category),

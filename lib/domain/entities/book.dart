@@ -38,4 +38,40 @@ class Book {
     this.createdAt,
     this.deletedAt,
   });
+
+  /// True if promo is toggled ON and has not expired.
+  /// If [promoEndDate] is null, promo is considered permanent ("Forever").
+  bool get isPromoActive {
+    if (!isPromo) return false;
+    if (promoEndDate == null) return true; // Permanent ("Forever")
+    final endOfDay = DateTime(
+      promoEndDate!.year,
+      promoEndDate!.month,
+      promoEndDate!.day,
+      23,
+      59,
+      59,
+    );
+    return endOfDay.isAfter(DateTime.now());
+  }
+
+  /// True if promo is toggled ON but the end date has passed.
+  bool get isPromoExpired {
+    if (!isPromo) return false;
+    if (promoEndDate == null) return false;
+    final endOfDay = DateTime(
+      promoEndDate!.year,
+      promoEndDate!.month,
+      promoEndDate!.day,
+      23,
+      59,
+      59,
+    );
+    return endOfDay.isBefore(DateTime.now());
+  }
+
+  /// True if promo is toggled ON with no end date limit.
+  bool get isPromoPermanent {
+    return isPromo && promoEndDate == null;
+  }
 }

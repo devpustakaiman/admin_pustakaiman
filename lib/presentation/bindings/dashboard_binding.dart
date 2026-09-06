@@ -26,9 +26,12 @@ import '../../domain/usecases/restore_books_usecase.dart';
 import '../../domain/usecases/update_article_usecase.dart';
 import '../../domain/usecases/update_author_usecase.dart';
 import '../../domain/usecases/update_book_usecase.dart';
+import '../../data/repositories/category_repository_impl.dart';
+import '../../domain/repositories/category_repository.dart';
 import '../controllers/article_controller.dart';
 import '../controllers/author_controller.dart';
 import '../controllers/book_controller.dart';
+import '../controllers/category_controller.dart';
 import '../controllers/dashboard_controller.dart';
 import '../controllers/main_layout_controller.dart';
 import '../controllers/preorder_controller.dart';
@@ -62,6 +65,10 @@ class DashboardBinding extends Bindings {
       () => VideoRepositoryImpl(remoteDataSource: Get.find()),
     );
 
+    Get.lazyPut<CategoryRepository>(
+      () => CategoryRepositoryImpl(remoteDataSource: Get.find()),
+    );
+
     // Use Cases
     Get.lazyPut(() => GetBooksUseCase(Get.find()));
     Get.lazyPut(() => AddBookUseCase(Get.find()));
@@ -84,6 +91,11 @@ class DashboardBinding extends Bindings {
 
     // Controllers
     Get.lazyPut(() => MainLayoutController());
+    Get.lazyPut(
+      () => CategoryController(
+        categoryRepository: Get.find(),
+      ),
+    );
     Get.lazyPut(
       () => DashboardController(
         dataSource: Get.find<SupabaseRemoteDataSource>(),

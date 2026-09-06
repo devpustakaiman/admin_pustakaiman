@@ -1,5 +1,6 @@
-import 'dart:typed_data';
+import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -114,6 +115,9 @@ class AuthorController extends GetxController {
 
   Future<String?> uploadPhotoToStorage(PlatformFile file) async {
     Uint8List? bytes = file.bytes;
+    if (bytes == null && !kIsWeb && file.path != null && file.path!.isNotEmpty) {
+      bytes = await File(file.path!).readAsBytes();
+    }
     if (bytes == null) {
       throw Exception('Data file foto kosong');
     }

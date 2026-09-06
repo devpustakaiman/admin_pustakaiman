@@ -12,7 +12,6 @@ class PreorderController extends GetxController {
   PreorderController({SupabaseRemoteDataSource? dataSource})
       : remoteDataSource = dataSource ?? Get.find<SupabaseRemoteDataSource>();
 
-  final emailController = TextEditingController();
   final searchController = TextEditingController();
 
   final RxList<PreorderModel> preorders = <PreorderModel>[].obs;
@@ -20,7 +19,6 @@ class PreorderController extends GetxController {
   final RxList<BankAccountModel> bankAccounts = <BankAccountModel>[].obs;
 
   final RxBool isLoading = true.obs;
-  final RxBool isSavingEmail = false.obs;
   final RxBool isSavingBankAccount = false.obs;
   final RxString selectedStatusFilter = 'semua'.obs;
   final RxString searchQuery = ''.obs;
@@ -35,7 +33,6 @@ class PreorderController extends GetxController {
 
   @override
   void onClose() {
-    emailController.dispose();
     searchController.dispose();
     super.onClose();
   }
@@ -44,16 +41,13 @@ class PreorderController extends GetxController {
     isLoading.value = true;
     try {
       final results = await Future.wait([
-        remoteDataSource.getPreorderNotificationEmail(),
         remoteDataSource.getPreorders(),
         remoteDataSource.getBankAccounts(),
       ]);
 
-      final savedEmail = results[0] as String;
-      final rawPreorders = results[1] as List<Map<String, dynamic>>;
-      final rawBankAccounts = results[2] as List<Map<String, dynamic>>;
+      final rawPreorders = results[0];
+      final rawBankAccounts = results[1];
 
-      emailController.text = savedEmail;
       preorders.value = rawPreorders.map((json) => PreorderModel.fromJson(json)).toList();
       bankAccounts.value = rawBankAccounts.map((json) => BankAccountModel.fromJson(json)).toList();
       applyFilters();
@@ -97,29 +91,7 @@ class PreorderController extends GetxController {
     filteredPreorders.value = result;
   }
 
-  Future<void> saveNotificationEmail() async {
-    final newEmail = emailController.text.trim();
-    if (newEmail.isEmpty || !GetUtils.isEmail(newEmail)) {
-      if (Get.context != null) {
-        AppToast.showError(Get.context!, 'Masukkan alamat email yang valid');
-      }
-      return;
-    }
 
-    isSavingEmail.value = true;
-    try {
-      await remoteDataSource.updatePreorderNotificationEmail(newEmail);
-      if (Get.context != null) {
-        AppToast.showSuccess(Get.context!, 'Email penerima notifikasi berhasil diperbarui');
-      }
-    } catch (e) {
-      if (Get.context != null) {
-        AppToast.showError(Get.context!, 'Gagal memperbarui email: $e');
-      }
-    } finally {
-      isSavingEmail.value = false;
-    }
-  }
 
   Future<void> updateStatus(String preorderId, String newStatus) async {
     try {

@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'category_controller.dart';
 import '../../core/utils/app_toast.dart';
 import '../../data/datasources/supabase_remote_data_source.dart';
 import '../../data/models/bank_account_model.dart';
@@ -116,9 +117,10 @@ class WebSettingsController extends GetxController {
   final RxList<BankAccountModel> bankAccounts = <BankAccountModel>[].obs;
   final RxBool isSavingBankAccount = false.obs;
 
-  // Preorder Notification Email Settings
-  final preorderEmailController = TextEditingController();
-  final RxBool isSavingPreorderEmail = false.obs;
+  // Preorder WhatsApp Confirmation Settings
+  final RxBool preorderWaEnabled = true.obs;
+  final preorderWaNumberController = TextEditingController();
+  final RxBool isSavingPreorderWa = false.obs;
 
   // Catalog Page Settings
   final catalogTitleController = TextEditingController();
@@ -158,7 +160,7 @@ class WebSettingsController extends GetxController {
   static const String defaultCatalogSubtitle =
       'Jelajahi koleksi buku Islam kontemporer, spiritualitas, wawasan kebangsaan, dan novel bermakna karya penulis terkemuka.';
 
-  static const List<String> catalogCategoryOptions = [
+  static const List<String> defaultCatalogCategories = [
     'Agama & Filsafat',
     'Al-Quran',
     'Bisnis & Ekonomi',
@@ -178,7 +180,15 @@ class WebSettingsController extends GetxController {
     'Social Science',
   ];
 
-  static const List<String> availableCatalogCategories = catalogCategoryOptions;
+  List<String> get availableCatalogCategories {
+    if (Get.isRegistered<CategoryController>()) {
+      final catCtrl = Get.find<CategoryController>();
+      final _ = catCtrl.categories.length;
+      final names = catCtrl.mainCategoryNames;
+      if (names.isNotEmpty) return names;
+    }
+    return defaultCatalogCategories;
+  }
 
   @override
   void onInit() {
@@ -224,6 +234,7 @@ class WebSettingsController extends GetxController {
     catalogTitleController.dispose();
     catalogSubtitleController.dispose();
     catalogPromoBannerLinkController.dispose();
+    preorderWaNumberController.dispose();
     super.onClose();
   }
 
@@ -266,22 +277,23 @@ class WebSettingsController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Run settings load, books fetch, bank accounts load, and preorder email load concurrently
+      // Run settings load, books fetch, bank accounts load, and preorder WA settings load concurrently
       final results = await Future.wait([
         remoteDataSource.getSiteSettings(),
         remoteDataSource.getBooksForDropdown(),
         remoteDataSource.getBankAccounts(),
-        remoteDataSource.getPreorderNotificationEmail(),
+        remoteDataSource.getPreorderWaSettings(),
       ]);
 
       final settings = results[0] as Map<String, dynamic>?;
       final rawBooks = results[1] as List<Map<String, dynamic>>? ?? [];
       final rawBankAccounts = results[2] as List<Map<String, dynamic>>? ?? [];
-      final preorderEmail = results[3] as String? ?? 'admin@pustakaiman.com';
+      final preorderWa = results[3] as Map<String, dynamic>? ?? {};
 
       booksList.value = rawBooks.map((m) => FeaturedBookItem.fromJson(m)).toList();
       bankAccounts.value = rawBankAccounts.map((json) => BankAccountModel.fromJson(json)).toList();
-      preorderEmailController.text = preorderEmail;
+      preorderWaEnabled.value = preorderWa['preorder_wa_enabled'] ?? true;
+      preorderWaNumberController.text = preorderWa['preorder_wa_number']?.toString() ?? '';
 
       final defaultStats = [
         {'value': '2001', 'label': 'Tahun Berdiri'},
@@ -666,16 +678,41 @@ class WebSettingsController extends GetxController {
     }
   }
 
-  Future<bool> savePreorderEmail() async {
-    isSavingPreorderEmail.value = true;
+  String formatWaNumber(String input) {
+    String clean = input.replaceAll(RegExp(r'\D'), '');
+    if (clean.startsWith('08')) {
+      clean = '62${clean.substring(1)}';
+    } else if (clean.startsWith('8')) {
+      clean = '62$clean';
+    }
+    return clean;
+  }
+
+  Future<bool> savePreorderWaSettings() async {
+    final enabled = preorderWaEnabled.value;
+    final rawNumber = preorderWaNumberController.text.trim();
+    final formattedNumber = formatWaNumber(rawNumber);
+
+    if (enabled) {
+      if (formattedNumber.isEmpty || formattedNumber.length < 10) {
+        errorMessage.value = 'Nomor WhatsApp admin tidak valid. Masukkan nomor yang benar (misal: 08123456789 atau 628123456789).';
+        return false;
+      }
+    }
+
+    preorderWaNumberController.text = formattedNumber;
+    isSavingPreorderWa.value = true;
     errorMessage.value = '';
 
     try {
-      await remoteDataSource.updatePreorderNotificationEmail(preorderEmailController.text.trim());
-      isSavingPreorderEmail.value = false;
+      await remoteDataSource.updatePreorderWaSettings(
+        enabled: enabled,
+        number: formattedNumber,
+      );
+      isSavingPreorderWa.value = false;
       return true;
     } catch (e) {
-      isSavingPreorderEmail.value = false;
+      isSavingPreorderWa.value = false;
       errorMessage.value = e.toString();
       return false;
     }

@@ -27,7 +27,7 @@ class ArticleModel extends Article {
       content: json['content'] as String? ?? '',
       date: parseDateTime(json['date']) ?? DateTime.now(),
       author: json['author'] as String? ?? '',
-      imageUrl: json['imageUrl'] as String? ?? json['image_url'] as String? ?? '',
+      imageUrl: (json['imageUrl'] ?? json['image_url'] ?? json['cover_url'] ?? '') as String,
       createdAt: parseDateTime(json['created_at'] ?? json['createdAt']) ?? DateTime.now(),
       deletedAt: parseDateTime(json['deleted_at'] ?? json['deletedAt']),
     );

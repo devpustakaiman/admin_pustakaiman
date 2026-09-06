@@ -7,6 +7,7 @@ import '../widgets/custom_sidebar.dart';
 import 'article_management_page.dart';
 import 'author_management_page.dart';
 import 'book_management_page.dart';
+import 'category_management_page.dart';
 import 'dashboard_page.dart';
 import 'preorder_management_page.dart';
 import 'submission_management_page.dart';
@@ -28,6 +29,7 @@ class MainLayoutPage extends StatelessWidget {
     final pages = const [
       DashboardPage(),
       BookManagementPage(),
+      CategoryManagementPage(),
       PreorderManagementPage(),
       SubmissionManagementPage(),
       AuthorManagementPage(),
@@ -45,6 +47,7 @@ class MainLayoutPage extends StatelessWidget {
     final pageTitles = const [
       'Dashboard',
       'Katalog Buku',
+      'Kelola Kategori Buku',
       'Pesanan Pre-Order',
       'Naskah Masuk',
       'Data Penulis',

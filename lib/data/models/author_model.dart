@@ -22,8 +22,8 @@ class AuthorModel extends Author {
     return AuthorModel(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? '',
-      bio: json['bio'] as String? ?? '',
-      photoUrl: json['photoUrl'] as String? ?? json['photo_url'] as String? ?? '',
+      bio: (json['bio'] ?? json['biography'] ?? '') as String,
+      photoUrl: (json['photoUrl'] ?? json['photo_url'] ?? '') as String,
       createdAt: parseDateTime(json['created_at'] ?? json['createdAt']) ?? DateTime.now(),
       deletedAt: parseDateTime(json['deleted_at'] ?? json['deletedAt']),
     );

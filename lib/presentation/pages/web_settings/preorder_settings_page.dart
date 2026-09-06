@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_theme.dart';
@@ -32,22 +33,22 @@ class PreorderSettingsPage extends StatelessWidget {
           // Page Header Title & Primary Action
           CmsPageHeader(
             title: 'Kelola Halaman > Pre-Order',
-            subtitle: 'Kelola alamat email notifikasi transaksi pre-order dan daftar akun rekening bank penerima pembayaran',
-            isSaving: controller.isSavingPreorderEmail.value,
+            subtitle: 'Kelola sistem konfirmasi WhatsApp pre-order dan daftar akun rekening bank penerima pembayaran',
+            isSaving: controller.isSavingPreorderWa.value,
             onSave: () async {
-              final success = await controller.savePreorderEmail();
+              final success = await controller.savePreorderWaSettings();
               if (context.mounted) {
                 if (success) {
                   AppToast.showSuccess(
                     context,
-                    'Email notifikasi pre-order berhasil disimpan!',
+                    'Pengaturan konfirmasi WhatsApp pre-order berhasil disimpan!',
                   );
                 } else {
                   AppToast.showError(
                     context,
                     controller.errorMessage.value.isNotEmpty
                         ? controller.errorMessage.value
-                        : 'Gagal menyimpan email notifikasi.',
+                        : 'Gagal menyimpan pengaturan WhatsApp pre-order.',
                   );
                 }
               }
@@ -56,8 +57,8 @@ class PreorderSettingsPage extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          // Card 1: Pre-Order Notification Email Setting
-          _buildNotificationEmailCard(context, controller),
+          // Card 1: Pre-Order WhatsApp Confirmation Setting
+          _buildWhatsAppConfirmationCard(context, controller),
 
           const SizedBox(height: 24),
 
@@ -68,8 +69,9 @@ class PreorderSettingsPage extends StatelessWidget {
     );
   }
 
+  Widget _buildWhatsAppConfirmationCard(BuildContext context, WebSettingsController controller) {
+    final isEnabled = controller.preorderWaEnabled.value;
 
-  Widget _buildNotificationEmailCard(BuildContext context, WebSettingsController controller) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -90,7 +92,7 @@ class PreorderSettingsPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
-                  LucideIcons.mail,
+                  LucideIcons.messageSquare,
                   color: AppTheme.primaryColor,
                   size: 18,
                 ),
@@ -101,7 +103,7 @@ class PreorderSettingsPage extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Email Notifikasi Pre-Order',
+                      'Konfirmasi WhatsApp Pre-Order',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -110,7 +112,7 @@ class PreorderSettingsPage extends StatelessWidget {
                     ),
                     SizedBox(height: 2),
                     Text(
-                      'Email tujuan penerima notifikasi otomatis ketika ada pesanan pre-order baru yang masuk.',
+                      'Atur konfirmasi langsung via WhatsApp untuk pemesan buku pre-order.',
                       style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                     ),
                   ],
@@ -120,23 +122,93 @@ class PreorderSettingsPage extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          const Text(
-            'Alamat Email Admin Penerima Notifikasi',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
-          ),
-          const SizedBox(height: 6),
-          TextFormField(
-            controller: controller.preorderEmailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              hintText: 'Misal: admin@pustakaiman.com',
-              prefixIcon: const Icon(LucideIcons.mail, size: 18, color: Color(0xFF94A3B8)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          // Toggle Switch Section
+          Container(
+            decoration: BoxDecoration(
+              color: isEnabled ? AppTheme.primaryColor.withValues(alpha: 0.04) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isEnabled ? AppTheme.primaryColor.withValues(alpha: 0.2) : const Color(0xFFE2E8F0),
+              ),
+            ),
+            child: SwitchListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              activeThumbColor: AppTheme.primaryColor,
+              value: isEnabled,
+              onChanged: (val) => controller.preorderWaEnabled.value = val,
+              title: const Text(
+                'Aktifkan Konfirmasi WhatsApp',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              subtitle: const Text(
+                'Mengarahkan pemesan langsung ke WhatsApp setelah berhasil mengisi form pre-order.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              ),
             ),
           ),
 
+          const SizedBox(height: 20),
 
+          // Input Textfield Section
+          Text(
+            'Nomor WhatsApp Admin Tujuan',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isEnabled ? AppTheme.textPrimary : const Color(0xFF94A3B8),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Format nomor internasional (misal: 628xxxxxxxxxx) atau lokal (08xxxxxxxxxx)',
+            style: TextStyle(
+              fontSize: 11,
+              color: isEnabled ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: controller.preorderWaNumberController,
+            enabled: isEnabled,
+            keyboardType: TextInputType.phone,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            style: TextStyle(
+              fontSize: 14,
+              color: isEnabled ? AppTheme.textPrimary : const Color(0xFF94A3B8),
+            ),
+            decoration: InputDecoration(
+              hintText: 'Misal: 6281234567890 atau 081234567890',
+              hintStyle: const TextStyle(color: Color(0xFFCBD5E1)),
+              filled: !isEnabled,
+              fillColor: !isEnabled ? const Color(0xFFF1F5F9) : Colors.white,
+              prefixIcon: Icon(
+                LucideIcons.phone,
+                size: 18,
+                color: isEnabled ? AppTheme.primaryColor : const Color(0xFFCBD5E1),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.5),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -154,51 +226,11 @@ class PreorderSettingsPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        LucideIcons.landmark,
-                        color: AppTheme.primaryColor,
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Rekening Pembayaran Pre-Order',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textPrimary,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Daftar akun rekening bank aktif penerima transfer pembayaran untuk transaksi pre-order.',
-                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
+          // Header Row with Mobile Breakpoint support
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isMobileHeader = constraints.maxWidth < 550;
+              final addButton = ElevatedButton.icon(
                 onPressed: () async {
                   final result = await showDialog<BankAccountModel>(
                     context: context,
@@ -215,8 +247,106 @@ class PreorderSettingsPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-              ),
-            ],
+              );
+
+              if (isMobileHeader) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            LucideIcons.landmark,
+                            color: AppTheme.primaryColor,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Rekening Pembayaran Pre-Order',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Daftar akun rekening bank aktif penerima transfer pembayaran untuk transaksi pre-order.',
+                                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(width: double.infinity, child: addButton),
+                  ],
+                );
+              }
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(
+                            LucideIcons.landmark,
+                            color: AppTheme.primaryColor,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Rekening Pembayaran Pre-Order',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Daftar akun rekening bank aktif penerima transfer pembayaran untuk transaksi pre-order.',
+                                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  addButton,
+                ],
+              );
+            },
           ),
           const SizedBox(height: 20),
 

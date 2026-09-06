@@ -5,23 +5,31 @@ void showAdminToast(
   BuildContext context, {
   required String message,
   bool isSuccess = true,
+  bool isInfo = false,
 }) {
   final screenWidth = MediaQuery.of(context).size.width;
   const snackBarWidth = 320.0;
   const rightMargin = 24.0;
   final leftMargin = math.max(0.0, screenWidth - snackBarWidth - rightMargin);
 
+  final Color bgColor = isInfo
+      ? const Color(0xFF0284C7)
+      : (isSuccess ? const Color(0xFF0F172A) : const Color(0xFFEF4444));
+  final IconData icon = isInfo
+      ? Icons.info_outline
+      : (isSuccess ? Icons.check_circle_outline : Icons.error_outline);
+
   ScaffoldMessenger.of(context).hideCurrentSnackBar();
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       behavior: SnackBarBehavior.floating,
       margin: EdgeInsets.only(bottom: 24, right: rightMargin, left: leftMargin > 0 ? leftMargin : 24),
-      backgroundColor: isSuccess ? const Color(0xFF0F172A) : const Color(0xFFEF4444),
+      backgroundColor: bgColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       content: Row(
         children: [
           Icon(
-            isSuccess ? Icons.check_circle_outline : Icons.error_outline,
+            icon,
             color: Colors.white,
             size: 20,
           ),
@@ -48,6 +56,10 @@ class AppToast {
 
   static void showError(BuildContext context, String message) {
     showAdminToast(context, message: message, isSuccess: false);
+  }
+
+  static void showInfo(BuildContext context, String message) {
+    showAdminToast(context, message: message, isSuccess: false, isInfo: true);
   }
 
   static void show(

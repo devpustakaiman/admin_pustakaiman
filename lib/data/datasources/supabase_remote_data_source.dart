@@ -56,8 +56,8 @@ abstract class SupabaseRemoteDataSource {
   Future<List<Map<String, dynamic>>> getBooksForDropdown();
   Future<Map<String, dynamic>?> getSiteSettings();
   Future<void> updateSiteSettings(Map<String, dynamic> settings);
-  Future<String> getPreorderNotificationEmail();
-  Future<void> updatePreorderNotificationEmail(String email);
+  Future<Map<String, dynamic>> getPreorderWaSettings();
+  Future<void> updatePreorderWaSettings({required bool enabled, required String number});
   Future<List<Map<String, dynamic>>> getBankAccounts();
   Future<void> updateBankAccounts(List<Map<String, dynamic>> bankAccounts);
   Future<List<Map<String, dynamic>>> getPreorders();
@@ -79,6 +79,12 @@ abstract class SupabaseRemoteDataSource {
   Future<void> setFeaturedMediaVideo(String id);
   Future<void> restoreMediaVideos(List<String> ids);
   Future<void> permanentlyDeleteMediaVideos(List<String> ids);
+
+  // Category CRUD
+  Future<List<Map<String, dynamic>>> getCategories();
+  Future<void> insertCategory(String name, String slug, {String? parentId});
+  Future<void> updateCategory(String id, String name, String slug, {String? parentId});
+  Future<void> deleteCategory(String id);
 
   // Storage Upload Helper
   Future<String> uploadStorageFile({
@@ -189,23 +195,30 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
   @override
   Future<int> getActivePromosCount() async {
     try {
-      final count = await supabaseClient
+      final res = await supabaseClient
           .from('books')
-          .count(CountOption.exact)
+          .select('is_promo, promo_end_date')
           .isFilter('deleted_at', null)
           .eq('is_promo', true);
+      final now = DateTime.now();
+      int count = 0;
+      for (var row in res) {
+        final rawEnd = row['promo_end_date'];
+        if (rawEnd == null || rawEnd.toString().trim().isEmpty) {
+          count++;
+        } else {
+          final dt = DateTime.tryParse(rawEnd.toString());
+          if (dt != null) {
+            final endOfDay = DateTime(dt.year, dt.month, dt.day, 23, 59, 59);
+            if (endOfDay.isAfter(now)) count++;
+          } else {
+            count++;
+          }
+        }
+      }
       return count;
     } catch (_) {
-      try {
-        final res = await supabaseClient
-            .from('books')
-            .select('id')
-            .isFilter('deleted_at', null)
-            .eq('is_promo', true);
-        return res.length;
-      } catch (_) {
-        return 0;
-      }
+      return 0;
     }
   }
 
@@ -354,10 +367,9 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
     final from = page * pageSize;
     final to = from + pageSize - 1;
     try {
-      // Lightweight fetch: omit heavy bio column on list cards
       final response = await supabaseClient
           .from('authors')
-          .select('id, name, photo_url, photoUrl, created_at')
+          .select()
           .isFilter('deleted_at', null)
           .order('created_at', ascending: false)
           .range(from, to);
@@ -366,7 +378,7 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
       try {
         final response = await supabaseClient
             .from('authors')
-            .select('id, name, created_at')
+            .select()
             .isFilter('deleted_at', null)
             .range(from, to);
         return List<Map<String, dynamic>>.from(response);
@@ -434,17 +446,56 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
     }
   }
 
+  Future<void> _safeSaveAuthorPayload({
+    required Map<String, dynamic> initialMap,
+    required Future<void> Function(Map<String, dynamic> payload) saveAction,
+  }) async {
+    final payload = Map<String, dynamic>.from(initialMap);
+
+    // Ensure invalid legacy columns are removed
+    payload.remove('biography');
+
+    for (int attempt = 0; attempt < 10; attempt++) {
+      try {
+        await saveAction(payload);
+        return;
+      } catch (e) {
+        final errStr = e.toString();
+        final match = RegExp(r"Could not find the '([^']+)' column").firstMatch(errStr);
+        if (match != null && match.groupCount >= 1) {
+          final missingCol = match.group(1)!;
+          if (payload.containsKey(missingCol)) {
+            payload.remove(missingCol);
+            continue;
+          }
+        }
+        rethrow;
+      }
+    }
+  }
+
   @override
   Future<void> insertAuthor(Map<String, dynamic> authorMap) async {
-    await supabaseClient.from('authors').insert(authorMap);
+    final mapToSave = Map<String, dynamic>.from(authorMap);
+    mapToSave['created_at'] = DateTime.now().toIso8601String();
+    await _safeSaveAuthorPayload(
+      initialMap: mapToSave,
+      saveAction: (payload) async {
+        await supabaseClient.from('authors').insert(payload);
+      },
+    );
   }
 
   @override
   Future<void> updateAuthor(Map<String, dynamic> authorMap) async {
-    await supabaseClient
-        .from('authors')
-        .update(authorMap)
-        .eq('id', authorMap['id']);
+    final mapToSave = Map<String, dynamic>.from(authorMap);
+    final id = mapToSave['id'];
+    await _safeSaveAuthorPayload(
+      initialMap: mapToSave,
+      saveAction: (payload) async {
+        await supabaseClient.from('authors').update(payload).eq('id', id);
+      },
+    );
   }
 
   @override
@@ -496,10 +547,9 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
     final from = page * pageSize;
     final to = from + pageSize - 1;
     try {
-      // Lightweight fetch: omit heavy Quill Delta JSON content on list cards
       final response = await supabaseClient
           .from('articles')
-          .select('id, title, author, date, image_url, imageUrl, created_at')
+          .select()
           .isFilter('deleted_at', null)
           .order('created_at', ascending: false)
           .range(from, to);
@@ -508,7 +558,7 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
       try {
         final response = await supabaseClient
             .from('articles')
-            .select('id, title, author, date, created_at')
+            .select()
             .isFilter('deleted_at', null)
             .range(from, to);
         return List<Map<String, dynamic>>.from(response);
@@ -576,17 +626,59 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
     }
   }
 
+  Future<void> _safeSaveArticlePayload({
+    required Map<String, dynamic> initialMap,
+    required Future<void> Function(Map<String, dynamic> payload) saveAction,
+  }) async {
+    final payload = Map<String, dynamic>.from(initialMap);
+    final img = payload['imageUrl'] ?? payload['image_url'] ?? '';
+
+    if (img.toString().isNotEmpty) {
+      payload['imageUrl'] = img;
+      payload['image_url'] = img;
+    }
+
+    for (int attempt = 0; attempt < 10; attempt++) {
+      try {
+        await saveAction(payload);
+        return;
+      } catch (e) {
+        final errStr = e.toString();
+        final match = RegExp(r"Could not find the '([^']+)' column").firstMatch(errStr);
+        if (match != null && match.groupCount >= 1) {
+          final missingCol = match.group(1)!;
+          if (payload.containsKey(missingCol)) {
+            payload.remove(missingCol);
+            continue;
+          }
+        }
+        rethrow;
+      }
+    }
+  }
+
   @override
   Future<void> insertArticle(Map<String, dynamic> articleMap) async {
-    await supabaseClient.from('articles').insert(articleMap);
+    final mapToSave = Map<String, dynamic>.from(articleMap);
+    mapToSave['created_at'] = DateTime.now().toIso8601String();
+    await _safeSaveArticlePayload(
+      initialMap: mapToSave,
+      saveAction: (payload) async {
+        await supabaseClient.from('articles').insert(payload);
+      },
+    );
   }
 
   @override
   Future<void> updateArticle(Map<String, dynamic> articleMap) async {
-    await supabaseClient
-        .from('articles')
-        .update(articleMap)
-        .eq('id', articleMap['id']);
+    final mapToSave = Map<String, dynamic>.from(articleMap);
+    final id = mapToSave['id'];
+    await _safeSaveArticlePayload(
+      initialMap: mapToSave,
+      saveAction: (payload) async {
+        await supabaseClient.from('articles').update(payload).eq('id', id);
+      },
+    );
   }
 
   @override
@@ -831,32 +923,18 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
 
   Future<int> getPreordersCount() async {
     try {
-      final count = await supabaseClient
-          .from('preorders')
-          .count(CountOption.exact)
-          .isFilter('deleted_at', null);
-      return count;
+      final list = await getPreorders();
+      return list.length;
     } catch (_) {
-      try {
-        final res = await supabaseClient
-            .from('preorders')
-            .select('id')
-            .isFilter('deleted_at', null);
-        return res.length;
-      } catch (_) {
-        return 0;
-      }
+      return 0;
     }
   }
 
   Future<int> getPendingPreordersCount() async {
     try {
-      final res = await supabaseClient
-          .from('preorders')
-          .select('status')
-          .isFilter('deleted_at', null);
+      final list = await getPreorders();
       int count = 0;
-      for (var row in res) {
+      for (var row in list) {
         final st = row['status']?.toString().toLowerCase() ?? '';
         if (st.contains('menunggu') || st.contains('pending') || st.contains('verifikasi')) {
           count++;
@@ -870,13 +948,10 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
 
   Future<int> getTotalPreordersRevenue() async {
     try {
-      final res = await supabaseClient
-          .from('preorders')
-          .select('total_price, total_amount, price')
-          .isFilter('deleted_at', null);
+      final list = await getPreorders();
       int total = 0;
-      for (var row in res) {
-        final val = row['total_price'] ?? row['total_amount'] ?? row['price'];
+      for (var row in list) {
+        final val = row['total_price'] ?? row['total_amount'] ?? row['price'] ?? row['harga'];
         if (val is num) {
           total += val.toInt();
         } else if (val is String) {
@@ -891,13 +966,8 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
 
   Future<List<Map<String, dynamic>>> getRecentPreorders({int limit = 5}) async {
     try {
-      final res = await supabaseClient
-          .from('preorders')
-          .select('id, customer_name, name, pemesan, book_title, title, buku, total_price, price, status, created_at')
-          .isFilter('deleted_at', null)
-          .order('created_at', ascending: false)
-          .limit(limit);
-      return (res as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      final list = await getPreorders();
+      return list.take(limit).toList();
     } catch (_) {
       return [];
     }
@@ -977,13 +1047,22 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
     try {
       final response = await supabaseClient
           .from('books')
-          .select('id, title, category, price, cover_url, coverUrl, is_promo, stock, created_at')
+          .select('id, title, category, price, cover_url, is_promo, stock, created_at')
           .isFilter('deleted_at', null)
           .order('created_at', ascending: false)
           .limit(limit);
       return (response as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
     } catch (_) {
-      return [];
+      try {
+        final response = await supabaseClient
+            .from('books')
+            .select()
+            .isFilter('deleted_at', null)
+            .limit(limit);
+        return (response as List).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      } catch (_) {
+        return [];
+      }
     }
   }
 
@@ -1047,18 +1126,19 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
   }
 
   @override
-  Future<String> getPreorderNotificationEmail() async {
+  Future<Map<String, dynamic>> getPreorderWaSettings() async {
     try {
       final res = await supabaseClient
           .from('site_settings')
-          .select('preorder_notification_email')
+          .select('preorder_wa_enabled, preorder_wa_number')
           .eq('id', 'default')
           .maybeSingle();
 
-      if (res != null &&
-          res['preorder_notification_email'] != null &&
-          res['preorder_notification_email'].toString().trim().isNotEmpty) {
-        return res['preorder_notification_email'].toString().trim();
+      if (res != null) {
+        return {
+          'preorder_wa_enabled': res['preorder_wa_enabled'] ?? true,
+          'preorder_wa_number': res['preorder_wa_number']?.toString().trim() ?? '',
+        };
       }
     } catch (_) {
       try {
@@ -1069,34 +1149,39 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
             .maybeSingle();
 
         if (res != null) {
-          final emailCol = res['preorder_notification_email'] ?? res['value'];
-          if (emailCol != null && emailCol.toString().trim().isNotEmpty) {
-            return emailCol.toString().trim();
-          }
+          return {
+            'preorder_wa_enabled': res['preorder_wa_enabled'] ?? true,
+            'preorder_wa_number': res['preorder_wa_number']?.toString().trim() ?? '',
+          };
         }
       } catch (_) {}
     }
 
-    return 'admin@pustakaiman.com';
+    return {
+      'preorder_wa_enabled': true,
+      'preorder_wa_number': '',
+    };
   }
 
   @override
-  Future<void> updatePreorderNotificationEmail(String email) async {
-    final trimmedEmail = email.trim();
+  Future<void> updatePreorderWaSettings({required bool enabled, required String number}) async {
+    final cleanNumber = number.trim();
     final now = DateTime.now().toIso8601String();
 
     try {
       await supabaseClient
           .from('site_settings')
           .update({
-            'preorder_notification_email': trimmedEmail,
+            'preorder_wa_enabled': enabled,
+            'preorder_wa_number': cleanNumber,
             'updated_at': now,
           })
           .eq('id', 'default');
     } catch (_) {
       await supabaseClient.from('site_settings').upsert({
         'id': 'default',
-        'preorder_notification_email': trimmedEmail,
+        'preorder_wa_enabled': enabled,
+        'preorder_wa_number': cleanNumber,
         'updated_at': now,
       });
     }
@@ -1467,6 +1552,57 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
   Future<void> permanentlyDeleteMediaVideos(List<String> ids) async {
     if (ids.isEmpty) return;
     await supabaseClient.from('media_videos').delete().inFilter('id', ids);
+  }
+
+  // ---------------- CATEGORY METHODS ----------------
+  @override
+  Future<List<Map<String, dynamic>>> getCategories() async {
+    try {
+      final response = await supabaseClient
+          .from('categories')
+          .select()
+          .order('name', ascending: true);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  @override
+  Future<void> insertCategory(String name, String slug, {String? parentId}) async {
+    try {
+      final payload = <String, dynamic>{
+        'name': name.trim(),
+        'slug': slug,
+      };
+      if (parentId != null && parentId.trim().isNotEmpty) {
+        payload['parent_id'] = parentId.trim();
+      }
+      await supabaseClient.from('categories').insert(payload);
+    } on PostgrestException catch (e) {
+      if (e.code == '23505') {
+        throw PostgrestException(
+          message: 'Kategori "${name.trim()}" sudah ada.',
+          code: e.code,
+        );
+      }
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateCategory(String id, String name, String slug, {String? parentId}) async {
+    final payload = <String, dynamic>{
+      'name': name.trim(),
+      'slug': slug.trim(),
+      'parent_id': (parentId != null && parentId.trim().isNotEmpty) ? parentId.trim() : null,
+    };
+    await supabaseClient.from('categories').update(payload).eq('id', id);
+  }
+
+  @override
+  Future<void> deleteCategory(String id) async {
+    await supabaseClient.from('categories').delete().eq('id', id);
   }
 
   // ---------------- STORAGE HELPER ----------------

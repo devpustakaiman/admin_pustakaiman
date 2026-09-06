@@ -36,24 +36,25 @@ class _CustomSidebarState extends State<CustomSidebar> {
 
     final kelolaDataSubItems = [
       _NavItemData('Katalog Buku', LucideIcons.bookOpen, 1),
-      _NavItemData('Pesanan Pre-Order', LucideIcons.shoppingBag, 2),
-      _NavItemData('Naskah Masuk', LucideIcons.inbox, 3),
-      _NavItemData('Data Penulis', LucideIcons.users, 4),
-      _NavItemData('Artikel & Berita', LucideIcons.fileText, 5),
-      _NavItemData('Video Media', LucideIcons.video, 6),
+      _NavItemData('Kelola Kategori', LucideIcons.tags, 2),
+      _NavItemData('Pesanan Pre-Order', LucideIcons.shoppingBag, 3),
+      _NavItemData('Naskah Masuk', LucideIcons.inbox, 4),
+      _NavItemData('Data Penulis', LucideIcons.users, 5),
+      _NavItemData('Artikel & Berita', LucideIcons.fileText, 6),
+      _NavItemData('Video Media', LucideIcons.video, 7),
     ];
 
     final kelolaHalamanSubItems = [
-      _NavItemData('Beranda & Hero', LucideIcons.home, 7),
-      _NavItemData('Katalog Buku', Icons.auto_stories_outlined, 8),
-      _NavItemData('Pre-Order', LucideIcons.receipt, 9),
-      _NavItemData('Tentang Kami', LucideIcons.info, 10),
-      _NavItemData('Kontak & Layanan', LucideIcons.headphones, 11),
-      _NavItemData('Kirim Naskah', LucideIcons.bookOpen, 12),
+      _NavItemData('Beranda & Hero', LucideIcons.home, 8),
+      _NavItemData('Katalog Buku', Icons.auto_stories_outlined, 9),
+      _NavItemData('Pre-Order', LucideIcons.receipt, 10),
+      _NavItemData('Tentang Kami', LucideIcons.info, 11),
+      _NavItemData('Kontak & Layanan', LucideIcons.headphones, 12),
+      _NavItemData('Kirim Naskah', LucideIcons.bookOpen, 13),
     ];
 
     final bottomNavItems = [
-      _NavItemData('Keranjang Sampah', LucideIcons.trash2, 13),
+      _NavItemData('Keranjang Sampah', LucideIcons.trash2, 14),
     ];
 
     Widget buildNavItem(_NavItemData item, {bool isSubItem = false}) {
@@ -346,7 +347,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
                       icon: LucideIcons.boxes,
                       isExpandedRx: controller.isKelolaDataExpanded,
                       minRangeIndex: 1,
-                      maxRangeIndex: 6,
+                      maxRangeIndex: 7,
                       onTap: () => controller.toggleKelolaData(),
                       subItems: kelolaDataSubItems,
                     ),
@@ -356,8 +357,8 @@ class _CustomSidebarState extends State<CustomSidebar> {
                       title: 'Kelola Halaman',
                       icon: LucideIcons.layers,
                       isExpandedRx: controller.isKelolaHalamanExpanded,
-                      minRangeIndex: 7,
-                      maxRangeIndex: 12,
+                      minRangeIndex: 8,
+                      maxRangeIndex: 13,
                       onTap: () => controller.toggleKelolaHalaman(),
                       subItems: kelolaHalamanSubItems,
                     ),

@@ -5,6 +5,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_theme.dart';
 import '../controllers/book_controller.dart';
 
+import '../controllers/category_controller.dart';
+
 class CategoryFilterSelector extends StatefulWidget {
   final BookController controller;
 
@@ -23,10 +25,28 @@ class _CategoryFilterSelectorState extends State<CategoryFilterSelector> {
   String? _hoveredMainCategory;
   final RxString _searchQuery = ''.obs;
 
-  // Build hierarchical map from mizanCategories
-  static Map<String, List<String>> get categoryHierarchy {
+  // Build hierarchical map from CategoryController or mizanCategories fallback
+  Map<String, List<String>> get categoryHierarchy {
+    final catCtrl = Get.isRegistered<CategoryController>() ? Get.find<CategoryController>() : null;
+    if (catCtrl != null && catCtrl.mainCategories.isNotEmpty) {
+      final Map<String, List<String>> map = {};
+      for (final mainCat in catCtrl.mainCategories) {
+        final subs = catCtrl.getSubCategories(mainCat.id);
+        if (subs.isNotEmpty) {
+          map[mainCat.name] = subs.map((s) => '${mainCat.name} - ${s.name}').toList();
+        } else {
+          map[mainCat.name] = [mainCat.name];
+        }
+      }
+      return map;
+    }
+
+    final categoriesList = (catCtrl != null && catCtrl.categoryNames.isNotEmpty)
+        ? catCtrl.categoryNames
+        : BookController.mizanCategories;
+
     final Map<String, List<String>> map = {};
-    for (final cat in BookController.mizanCategories) {
+    for (final cat in categoriesList) {
       if (cat.contains(' - ')) {
         final parts = cat.split(' - ');
         final mainCat = parts[0].trim();
@@ -154,7 +174,11 @@ class _CategoryFilterSelectorState extends State<CategoryFilterSelector> {
 
                                 // 1. TYPING RECOMMENDATION MODE
                                 if (query.isNotEmpty) {
-                                  final matchingCategories = BookController.mizanCategories
+                                  final catCtrl = Get.isRegistered<CategoryController>() ? Get.find<CategoryController>() : null;
+                                  final categoriesList = (catCtrl != null && catCtrl.categoryNames.isNotEmpty)
+                                      ? catCtrl.categoryNames
+                                      : BookController.mizanCategories;
+                                  final matchingCategories = categoriesList
                                       .where((cat) => cat.toLowerCase().contains(query))
                                       .toList();
 

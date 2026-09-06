@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/app_toast.dart';
 import '../controllers/book_controller.dart';
+import '../controllers/category_controller.dart';
 
 class BookFormDialog extends StatelessWidget {
   final BookController controller;
@@ -17,6 +19,193 @@ class BookFormDialog extends StatelessWidget {
       'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
     ];
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  }
+
+  void _showAddMainCategoryDialog(BuildContext context) {
+    final nameController = TextEditingController();
+    final catCtrl = Get.isRegistered<CategoryController>() ? Get.find<CategoryController>() : null;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(LucideIcons.folderPlus, color: AppTheme.primaryColor, size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'Tambah Kategori Utama',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Kategori Utama baru akan ditambahkan di level teratas.',
+              style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: nameController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Nama Kategori Utama *',
+                hintText: 'Misal: Sejarah, Fiksi, Sains',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Batal', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              Navigator.of(dialogContext).pop();
+
+              if (catCtrl != null) {
+                final success = await catCtrl.addCategory(name, parentId: null);
+                if (success) {
+                  controller.onMainCategorySelected(name);
+                }
+              } else {
+                controller.onMainCategorySelected(name);
+              }
+            },
+            child: const Text('Simpan & Pilih'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddSubCategoryDialog(BuildContext context) {
+    final parentName = controller.selectedMainCategory.value.trim();
+    if (parentName.isEmpty) {
+      AppToast.showInfo(context, 'Silakan pilih Kategori Utama terlebih dahulu.');
+      return;
+    }
+
+    final catCtrl = Get.isRegistered<CategoryController>() ? Get.find<CategoryController>() : null;
+    final mainCats = catCtrl?.mainCategories ?? [];
+    final parentObj = mainCats.firstWhereOrNull(
+      (m) => m.name.trim().toLowerCase() == parentName.toLowerCase(),
+    );
+
+    final nameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(LucideIcons.tag, color: AppTheme.primaryColor, size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'Tambah Sub-Kategori',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.inputFillColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.borderColor),
+              ),
+              child: Row(
+                children: [
+                  const Icon(LucideIcons.folder, size: 16, color: AppTheme.primaryColor),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Kategori Utama: ${parentObj?.name ?? parentName}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: nameController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Nama Sub-Kategori *',
+                hintText: 'Misal: Novel Romansa, Sejarah Islam',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Batal', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              Navigator.of(dialogContext).pop();
+
+              if (catCtrl != null) {
+                final success = await catCtrl.addCategory(
+                  name,
+                  parentId: parentObj?.id,
+                  parentName: parentObj?.name ?? parentName,
+                );
+                if (success) {
+                  controller.subCategoryController.text = name;
+                }
+              } else {
+                controller.subCategoryController.text = name;
+              }
+            },
+            child: const Text('Simpan & Pilih'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildSectionHeader(String title, IconData icon) {
@@ -190,91 +379,237 @@ class BookFormDialog extends StatelessWidget {
                             children: [
                               _buildSectionHeader('Klasifikasi & Harga', LucideIcons.tag),
                               const SizedBox(height: 16),
+                              // Row 1: Kategori Utama (Required) & Sub-Kategori (Dependent)
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // Field 1: Kategori Utama (Required)
                                   Expanded(
-                                    flex: 3,
-                                    child: Autocomplete<String>(
-                                      initialValue: TextEditingValue(
-                                        text: controller.categoryController.text,
-                                      ),
-                                      optionsBuilder: (TextEditingValue textEditingValue) {
-                                        if (textEditingValue.text.isEmpty) {
-                                          return BookController.mizanCategories;
-                                        }
-                                        return BookController.mizanCategories.where(
-                                          (String option) => option.toLowerCase().contains(
-                                                textEditingValue.text.toLowerCase(),
-                                              ),
-                                        );
-                                      },
-                                      onSelected: (String selection) {
-                                        controller.categoryController.text = selection;
-                                      },
-                                      optionsViewBuilder: (context, onSelected, options) {
-                                        return Align(
-                                          alignment: Alignment.topLeft,
-                                          child: Material(
-                                            elevation: 8,
-                                            borderRadius: BorderRadius.circular(16),
-                                            color: Colors.white,
-                                            child: Container(
-                                              width: (MediaQuery.of(context).size.width - 64).clamp(240.0, 380.0),
-                                              constraints: const BoxConstraints(maxHeight: 250),
-                                              decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(16),
-                                                border: Border.all(color: AppTheme.borderColor),
-                                              ),
-                                              child: ListView.builder(
-                                                padding: const EdgeInsets.symmetric(vertical: 4),
-                                                shrinkWrap: true,
-                                                itemCount: options.length,
-                                                itemBuilder: (BuildContext context, int index) {
-                                                  final String option = options.elementAt(index);
-                                                  return ListTile(
-                                                    dense: true,
-                                                    title: Text(
-                                                      option,
-                                                      style: const TextStyle(
-                                                        fontSize: 13,
-                                                        fontWeight: FontWeight.w500,
-                                                      ),
-                                                    ),
-                                                    onTap: () => onSelected(option),
-                                                  );
-                                                },
-                                              ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Autocomplete<String>(
+                                            initialValue: TextEditingValue(
+                                              text: controller.categoryController.text,
                                             ),
+                                            optionsBuilder: (TextEditingValue textEditingValue) {
+                                              final catCtrl = Get.isRegistered<CategoryController>()
+                                                  ? Get.find<CategoryController>()
+                                                  : null;
+                                              final mainNames = catCtrl?.mainCategoryNames ?? [];
+                                              final optionsList = mainNames.isNotEmpty
+                                                  ? mainNames
+                                                  : BookController.mizanCategories;
+                                              final allOptions = optionsList.toList()..sort();
+
+                                              if (textEditingValue.text.isEmpty) {
+                                                return allOptions;
+                                              }
+                                              return allOptions.where(
+                                                (String option) => option.toLowerCase().contains(
+                                                      textEditingValue.text.toLowerCase(),
+                                                    ),
+                                              );
+                                            },
+                                            onSelected: (String selection) {
+                                              controller.onMainCategorySelected(selection);
+                                            },
+                                            optionsViewBuilder: (context, onSelected, options) {
+                                              return Align(
+                                                alignment: Alignment.topLeft,
+                                                child: Material(
+                                                  elevation: 8,
+                                                  borderRadius: BorderRadius.circular(16),
+                                                  color: Colors.white,
+                                                  child: Container(
+                                                    width: (MediaQuery.of(context).size.width - 64).clamp(240.0, 380.0),
+                                                    constraints: const BoxConstraints(maxHeight: 250),
+                                                    decoration: BoxDecoration(
+                                                      borderRadius: BorderRadius.circular(16),
+                                                      border: Border.all(color: AppTheme.borderColor),
+                                                    ),
+                                                    child: ListView.builder(
+                                                      padding: const EdgeInsets.symmetric(vertical: 4),
+                                                      shrinkWrap: true,
+                                                      itemCount: options.length,
+                                                      itemBuilder: (BuildContext context, int index) {
+                                                        final String option = options.elementAt(index);
+                                                        return ListTile(
+                                                          dense: true,
+                                                          title: Text(
+                                                            option,
+                                                            style: const TextStyle(
+                                                              fontSize: 13,
+                                                              fontWeight: FontWeight.w500,
+                                                            ),
+                                                          ),
+                                                          onTap: () => onSelected(option),
+                                                        );
+                                                      },
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+                                              textController.addListener(() {
+                                                if (controller.categoryController.text != textController.text) {
+                                                  controller.categoryController.text = textController.text;
+                                                  controller.selectedMainCategory.value = textController.text;
+                                                }
+                                              });
+                                              return TextField(
+                                                controller: textController,
+                                                focusNode: focusNode,
+                                                decoration: const InputDecoration(
+                                                  labelText: 'Kategori Utama *',
+                                                  hintText: 'Pilih kategori utama...',
+                                                  prefixIcon: Icon(LucideIcons.folder, size: 18),
+                                                  suffixIcon: Icon(LucideIcons.chevronDown, size: 18),
+                                                ),
+                                              );
+                                            },
                                           ),
-                                        );
-                                      },
-                                      fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
-                                        textController.addListener(() {
-                                          controller.categoryController.text = textController.text;
-                                        });
-                                        return TextField(
-                                          controller: textController,
-                                          focusNode: focusNode,
-                                          decoration: const InputDecoration(
-                                            labelText: 'Kategori Buku *',
-                                            hintText: 'Cari atau pilih kategori...',
-                                            prefixIcon: Icon(LucideIcons.folder, size: 18),
-                                            suffixIcon: Icon(LucideIcons.chevronDown, size: 18),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.add_circle_outline,
+                                            color: AppTheme.primaryColor,
+                                            size: 24,
                                           ),
-                                        );
-                                      },
+                                          tooltip: 'Tambah Kategori Utama Baru',
+                                          onPressed: () => _showAddMainCategoryDialog(context),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(width: 12),
+
+                                  // Field 2: Sub-Kategori (Dependent on Kategori Utama)
                                   Expanded(
-                                    flex: 2,
+                                    child: Obx(() {
+                                      final catCtrl = Get.isRegistered<CategoryController>()
+                                          ? Get.find<CategoryController>()
+                                          : null;
+                                      final parentName = controller.selectedMainCategory.value.trim();
+                                      final categoriesCount = catCtrl?.categories.length ?? 0;
+                                      final subNames = catCtrl?.getSubCategoryNamesByParentName(parentName) ?? [];
+                                      final hasParent = parentName.isNotEmpty;
+                                      final hasSubs = subNames.isNotEmpty;
+
+                                      return Row(
+                                        children: [
+                                          Expanded(
+                                            child: Autocomplete<String>(
+                                              key: ValueKey('sub_cat_${parentName}_${controller.subCategoryController.text}_$categoriesCount'),
+                                              initialValue: TextEditingValue(
+                                                text: controller.subCategoryController.text,
+                                              ),
+                                              optionsBuilder: (TextEditingValue textEditingValue) {
+                                                if (subNames.isEmpty) return const [];
+                                                if (textEditingValue.text.isEmpty) {
+                                                  return subNames;
+                                                }
+                                                return subNames.where(
+                                                  (String option) => option.toLowerCase().contains(
+                                                        textEditingValue.text.toLowerCase(),
+                                                      ),
+                                                );
+                                              },
+                                              onSelected: (String selection) {
+                                                controller.subCategoryController.text = selection;
+                                              },
+                                              optionsViewBuilder: (context, onSelected, options) {
+                                                return Align(
+                                                  alignment: Alignment.topLeft,
+                                                  child: Material(
+                                                    elevation: 8,
+                                                    borderRadius: BorderRadius.circular(16),
+                                                    color: Colors.white,
+                                                    child: Container(
+                                                      width: (MediaQuery.of(context).size.width - 64).clamp(240.0, 380.0),
+                                                      constraints: const BoxConstraints(maxHeight: 250),
+                                                      decoration: BoxDecoration(
+                                                        borderRadius: BorderRadius.circular(16),
+                                                        border: Border.all(color: AppTheme.borderColor),
+                                                      ),
+                                                      child: ListView.builder(
+                                                        padding: const EdgeInsets.symmetric(vertical: 4),
+                                                        shrinkWrap: true,
+                                                        itemCount: options.length,
+                                                        itemBuilder: (BuildContext context, int index) {
+                                                          final String option = options.elementAt(index);
+                                                          return ListTile(
+                                                            dense: true,
+                                                            title: Text(
+                                                              option,
+                                                              style: const TextStyle(
+                                                                fontSize: 13,
+                                                                fontWeight: FontWeight.w500,
+                                                              ),
+                                                            ),
+                                                            onTap: () => onSelected(option),
+                                                          );
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              fieldViewBuilder: (context, textController, focusNode, onFieldSubmitted) {
+                                                textController.addListener(() {
+                                                  if (controller.subCategoryController.text != textController.text) {
+                                                    controller.subCategoryController.text = textController.text;
+                                                  }
+                                                });
+
+                                                final String hintText = hasSubs
+                                                    ? 'Pilih sub-kategori...'
+                                                    : (hasParent ? '(Ketik sub-kategori atau klik +)' : 'Pilih Kategori Utama dulu');
+
+                                                return TextField(
+                                                  controller: textController,
+                                                  focusNode: focusNode,
+                                                  enabled: hasParent,
+                                                  decoration: InputDecoration(
+                                                    labelText: 'Sub-Kategori',
+                                                    hintText: hintText,
+                                                    prefixIcon: const Icon(LucideIcons.tag, size: 18),
+                                                    suffixIcon: const Icon(LucideIcons.chevronDown, size: 18),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          IconButton(
+                                            icon: Icon(
+                                              Icons.add_circle_outline,
+                                              color: hasParent ? AppTheme.primaryColor : Colors.grey,
+                                              size: 24,
+                                            ),
+                                            tooltip: 'Tambah Sub-Kategori Baru',
+                                            onPressed: () => _showAddSubCategoryDialog(context),
+                                          ),
+                                        ],
+                                      );
+                                    }),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+
+                              // Row 2: Harga Buku
+                              Row(
+                                children: [
+                                  Expanded(
                                     child: TextFormField(
                                       controller: controller.priceController,
                                       keyboardType: TextInputType.number,
                                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                       decoration: const InputDecoration(
-                                        labelText: 'Harga Buku',
+                                        labelText: 'Harga Buku *',
                                         hintText: '0',
                                         prefixIcon: Padding(
                                           padding: EdgeInsets.all(12),
