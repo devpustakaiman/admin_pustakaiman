@@ -215,7 +215,7 @@ class _BankAccountDialogState extends State<BankAccountDialog> {
                 controller: _accountHolderController,
                 textCapitalization: TextCapitalization.words,
                 decoration: InputDecoration(
-                  hintText: 'Contoh: PT Pustaka Ilman Utama',
+                  hintText: 'Contoh: PT Pustaka Iman Utama',
                   prefixIcon: const Icon(LucideIcons.userCheck, size: 18, color: Color(0xFF94A3B8)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),

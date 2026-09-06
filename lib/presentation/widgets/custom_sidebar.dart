@@ -271,7 +271,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'PUSTAKA ILMAN',
+                        'PUSTAKA IMAN',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,

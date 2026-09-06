@@ -52,7 +52,7 @@ class WebSettingsPage extends StatelessWidget {
           // Page Header Title
           CmsPageHeader(
             title: 'Pengaturan Web (Landing Page CMS)',
-            subtitle: 'Kustomisasi konten Hero Section publik pada frontend Pustaka Ilman',
+            subtitle: 'Kustomisasi konten Hero Section publik pada frontend Pustaka Iman',
             isSaving: controller.isSaving.value,
             onSave: () async {
               final success = await controller.saveSettings();

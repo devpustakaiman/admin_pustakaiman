@@ -27,7 +27,7 @@ class LoginController extends GetxController {
     final password = passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      errorMessage.value = 'Email dan Password wajib diisi';
+      errorMessage.value = 'Email dan kata sandi wajib diisi.';
       return;
     }
 
@@ -43,12 +43,12 @@ class LoginController extends GetxController {
       if (response.session != null) {
         Get.offAllNamed(AppRoutes.mainLayout);
       } else {
-        errorMessage.value = 'Gagal melakukan otentikasi. Sesi tidak ditemukan.';
+        errorMessage.value = 'Email atau kata sandi yang Anda masukkan salah. Silakan coba lagi.';
       }
-    } on AuthException catch (e) {
-      errorMessage.value = e.message;
-    } catch (e) {
-      errorMessage.value = 'Terjadi kesalahan: $e';
+    } on AuthException catch (_) {
+      errorMessage.value = 'Email atau kata sandi yang Anda masukkan salah. Silakan coba lagi.';
+    } catch (_) {
+      errorMessage.value = 'Email atau kata sandi yang Anda masukkan salah. Silakan coba lagi.';
     } finally {
       isLoading.value = false;
     }

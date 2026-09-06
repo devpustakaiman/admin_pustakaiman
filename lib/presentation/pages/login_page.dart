@@ -63,7 +63,7 @@ class LoginPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   const Text(
-                    'Pustaka Ilman Admin',
+                    'Pustaka Iman Admin',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 22,
@@ -86,7 +86,7 @@ class LoginPage extends StatelessWidget {
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
                       labelText: 'Alamat Email',
-                      hintText: 'admin@pustakailman.com',
+                      hintText: 'admin@pustakaiman.com',
                       prefixIcon: Icon(LucideIcons.mail, size: 18),
                     ),
                   ),
