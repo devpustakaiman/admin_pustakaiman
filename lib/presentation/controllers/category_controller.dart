@@ -80,9 +80,54 @@ class CategoryController extends GetxController {
         .toList();
   }
 
+  final RxInt currentPage = 0.obs;
+  final int pageSize = 10;
+
+  List<Category> get filteredMainCategories {
+    final q = searchQuery.value.trim().toLowerCase();
+    return mainCategories.where((m) {
+      if (q.isEmpty) return true;
+      final matchMain = m.name.toLowerCase().contains(q) || m.slug.toLowerCase().contains(q);
+      final subs = getSubCategories(m.id);
+      final matchSub = subs.any((s) => s.name.toLowerCase().contains(q) || s.slug.toLowerCase().contains(q));
+      return matchMain || matchSub;
+    }).toList();
+  }
+
+  List<Category> get paginatedMainCategories {
+    final allItems = filteredMainCategories;
+    final total = allItems.length;
+    if (total == 0) return [];
+    int start = currentPage.value * pageSize;
+    if (start >= total) {
+      currentPage.value = 0;
+      start = 0;
+    }
+    int end = (start + pageSize > total) ? total : start + pageSize;
+    return allItems.sublist(start, end);
+  }
+
+  List<Category> getPaginatedMainCategories(List<Category> filteredList) {
+    return paginatedMainCategories;
+  }
+
+  void nextPage([int? totalItems]) {
+    final total = totalItems ?? filteredMainCategories.length;
+    if ((currentPage.value + 1) * pageSize < total) {
+      currentPage.value++;
+    }
+  }
+
+  void prevPage() {
+    if (currentPage.value > 0) {
+      currentPage.value--;
+    }
+  }
+
   @override
   void onInit() {
     super.onInit();
+    ever(searchQuery, (_) => currentPage.value = 0);
     fetchCategories(isInitial: true);
   }
 

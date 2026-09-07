@@ -113,13 +113,19 @@ class VideoManagementPage extends GetView<VideoController> {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            'Kelola galeri video "Cerita dalam Sorotan", liputan khusus, dan narasumber Warta',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[600],
-            ),
-          ),
+          Obx(() {
+            final total = controller.filteredVideos.length;
+            final displayed = controller.paginatedVideos.length;
+            return Text(
+              total == 0
+                  ? 'Menampilkan 0 dari 0 video terdaftar'
+                  : 'Menampilkan $displayed dari $total video terdaftar',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[600],
+              ),
+            );
+          }),
           const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
@@ -163,15 +169,21 @@ class VideoManagementPage extends GetView<VideoController> {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
-              Text(
-                'Kelola galeri video "Cerita dalam Sorotan", liputan khusus, dan narasumber Warta',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+              Obx(() {
+                final total = controller.filteredVideos.length;
+                final displayed = controller.paginatedVideos.length;
+                return Text(
+                  total == 0
+                      ? 'Menampilkan 0 dari 0 video terdaftar'
+                      : 'Menampilkan $displayed dari $total video terdaftar',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                );
+              }),
             ],
           ),
         ),
@@ -354,7 +366,9 @@ class VideoManagementPage extends GetView<VideoController> {
         );
       }
 
-      return Container(
+      final displayedVideos = controller.paginatedVideos;
+
+      final listWidget = Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -364,10 +378,10 @@ class VideoManagementPage extends GetView<VideoController> {
         child: ListView.separated(
           shrinkWrap: isMobileScroll,
           physics: isMobileScroll ? const NeverScrollableScrollPhysics() : null,
-          itemCount: videoList.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1, color: AppTheme.borderColor),
-                  itemBuilder: (context, index) {
-                    final video = videoList[index];
+          itemCount: displayedVideos.length,
+          separatorBuilder: (_, __) => const Divider(height: 1, color: AppTheme.borderColor),
+          itemBuilder: (context, index) {
+            final video = displayedVideos[index];
                     final thumbUrl = video.effectiveThumbnailUrl;
 
                     final isMobileCard = MediaQuery.of(context).size.width < 768;
@@ -695,6 +709,128 @@ class VideoManagementPage extends GetView<VideoController> {
                   },
                 ),
               );
-            });
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          listWidget,
+          const SizedBox(height: 16),
+          _buildPaginationFooter(context, isMobile: isMobileScroll),
+        ],
+      );
+    });
+  }
+
+  Widget _buildPaginationFooter(BuildContext context, {required bool isMobile}) {
+    return Obx(() {
+      final total = controller.filteredVideos.length;
+      final page = controller.currentPage.value;
+      final pageSize = controller.pageSize;
+      final start = total == 0 ? 0 : (page * pageSize) + 1;
+      final end = ((page + 1) * pageSize).clamp(0, total);
+      final hasPrev = page > 0;
+      final hasNext = (page + 1) * pageSize < total;
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppTheme.borderColor),
+          boxShadow: AppTheme.softShadow,
+        ),
+        child: isMobile
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    total > 0
+                        ? 'Menampilkan $start - $end dari $total video'
+                        : 'Menampilkan 0 dari 0',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        onPressed: hasPrev ? controller.prevPage : null,
+                        icon: const Icon(LucideIcons.chevronLeft, size: 16),
+                        tooltip: 'Sebelumnya',
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          'Halaman ${page + 1}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: hasNext ? controller.nextPage : null,
+                        icon: const Icon(LucideIcons.chevronRight, size: 16),
+                        tooltip: 'Selanjutnya',
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    total > 0
+                        ? 'Menampilkan $start - $end dari $total video (Halaman ${page + 1})'
+                        : 'Menampilkan 0 dari 0',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: hasPrev ? controller.prevPage : null,
+                        icon: const Icon(LucideIcons.chevronLeft, size: 14),
+                        label: const Text('Sebelumnya'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          textStyle: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'Halaman ${page + 1}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: hasNext ? controller.nextPage : null,
+                        icon: const Icon(LucideIcons.chevronRight, size: 14),
+                        label: const Text('Selanjutnya'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          textStyle: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+      );
+    });
   }
 }

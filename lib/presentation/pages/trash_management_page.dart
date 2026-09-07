@@ -440,13 +440,19 @@ class TrashManagementPage extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Kelola dan pulihkan data terhapus (Buku, Penulis, Artikel, Naskah Masuk, Pre-Order)',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
+                      Obx(() {
+                        final total = controller.currentFilteredList.length;
+                        final displayed = controller.paginatedList.length;
+                        return Text(
+                          total == 0
+                              ? 'Menampilkan 0 dari 0 data terhapus'
+                              : 'Menampilkan $displayed dari $total data terhapus',
+                          style: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 13,
+                          ),
+                        );
+                      }),
                     ],
                   ),
                 ),
@@ -796,14 +802,16 @@ class TrashManagementPage extends StatelessWidget {
           );
         }
 
-        return ListView.separated(
+        final displayedList = controller.paginatedList;
+
+        final listWidget = ListView.separated(
           padding: EdgeInsets.all(isMobile ? 16 : 28),
           shrinkWrap: isMobileScroll,
           physics: isMobileScroll ? const NeverScrollableScrollPhysics() : null,
-          itemCount: list.length,
+          itemCount: displayedList.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
-            final item = list[index];
+            final item = displayedList[index];
             final itemId = _getItemId(item);
 
             return Obx(() {
@@ -853,96 +861,117 @@ class TrashManagementPage extends StatelessWidget {
                               icon: const Icon(
                                 LucideIcons.rotateCcw,
                                 size: 18,
-                                        color: Color(0xFF10B981),
-                                      ),
-                                      tooltip: 'Pulihkan Data Ini',
-                                      onPressed: () async {
-                                        controller.selectedIds.clear();
-                                        controller.selectedIds.add(itemId);
-                                        await controller.restoreSelectedItems();
-                                        if (context.mounted) {
-                                          AppToast.showSuccess(
-                                            context,
-                                            'Data berhasil dipulihkan.',
-                                          );
-                                        }
-                                      },
-                                    ),
-                                    // Individual Permanent Delete Button
-                                    IconButton(
-                                      icon: const Icon(
-                                        LucideIcons.trash2,
-                                        size: 18,
-                                        color: Colors.redAccent,
-                                      ),
-                                      tooltip: 'Hapus Permanen',
-                                      onPressed: () => _showPermanentDeleteConfirmation(
-                                        context,
-                                        controller,
-                                        singleId: itemId,
-                                        singleTitle: _getItemTitle(item),
-                                      ),
-                                    ),
-                                  ],
-                                );
-
-                                if (isMobileCard) {
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Checkbox(
-                                            value: isSelected,
-                                            activeColor: AppTheme.primaryColor,
-                                            onChanged: (val) => controller.toggleSelectItem(
-                                              itemId,
-                                              val,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          _buildItemLeading(item),
-                                          const SizedBox(width: 12),
-                                          Expanded(child: _buildItemTitleSubtitle(item)),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Align(
-                                        alignment: Alignment.centerRight,
-                                        child: actionButtons,
-                                      ),
-                                    ],
+                                color: Color(0xFF10B981),
+                              ),
+                              tooltip: 'Pulihkan Data Ini',
+                              onPressed: () async {
+                                controller.selectedIds.clear();
+                                controller.selectedIds.add(itemId);
+                                await controller.restoreSelectedItems();
+                                if (context.mounted) {
+                                  AppToast.showSuccess(
+                                    context,
+                                    'Data berhasil dipulihkan.',
                                   );
                                 }
-
-                                return Row(
-                                  children: [
-                                    Checkbox(
-                                      value: isSelected,
-                                      activeColor: AppTheme.primaryColor,
-                                      onChanged: (val) => controller.toggleSelectItem(
-                                        itemId,
-                                        val,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    _buildItemLeading(item),
-                                    const SizedBox(width: 16),
-                                    Expanded(child: _buildItemTitleSubtitle(item)),
-                                    const SizedBox(width: 16),
-                                    actionButtons,
-                                  ],
-                                );
                               },
                             ),
-                          ),
-                        ),
-                      );
-                    });
-                  },
-                );
-              });
-            }
+                            // Individual Permanent Delete Button
+                            IconButton(
+                              icon: const Icon(
+                                LucideIcons.trash2,
+                                size: 18,
+                                color: Colors.redAccent,
+                              ),
+                              tooltip: 'Hapus Permanen',
+                              onPressed: () => _showPermanentDeleteConfirmation(
+                                context,
+                                controller,
+                                singleId: itemId,
+                                singleTitle: _getItemTitle(item),
+                              ),
+                            ),
+                          ],
+                        );
+
+                        if (isMobileCard) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Checkbox(
+                                    value: isSelected,
+                                    activeColor: AppTheme.primaryColor,
+                                    onChanged: (val) => controller.toggleSelectItem(
+                                      itemId,
+                                      val,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _buildItemLeading(item),
+                                  const SizedBox(width: 12),
+                                  Expanded(child: _buildItemTitleSubtitle(item)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: actionButtons,
+                              ),
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            Checkbox(
+                              value: isSelected,
+                              activeColor: AppTheme.primaryColor,
+                              onChanged: (val) => controller.toggleSelectItem(
+                                itemId,
+                                val,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            _buildItemLeading(item),
+                            const SizedBox(width: 16),
+                            Expanded(child: _buildItemTitleSubtitle(item)),
+                            actionButtons,
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            });
+          },
+        );
+
+        if (isMobileScroll) {
+          return Column(
+            children: [
+              listWidget,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: _buildPaginationFooter(context, controller, isMobile: true),
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            Expanded(child: listWidget),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(28, 0, 28, 16),
+              child: _buildPaginationFooter(context, controller, isMobile: false),
+            ),
+          ],
+        );
+      });
+    }
 
             return Scaffold(
               backgroundColor: AppTheme.backgroundColor,
@@ -1173,5 +1202,118 @@ class TrashManagementPage extends StatelessWidget {
     if (item is Submission) return item.senderName;
     if (item is PreorderModel) return 'Pre-Order ${item.customerName}';
     return 'Item';
+  }
+
+  Widget _buildPaginationFooter(BuildContext context, TrashController controller, {required bool isMobile}) {
+    return Obx(() {
+      final total = controller.currentFilteredList.length;
+      final page = controller.currentPage.value;
+      final pageSize = controller.pageSize;
+      final start = total == 0 ? 0 : (page * pageSize) + 1;
+      final end = ((page + 1) * pageSize).clamp(0, total);
+      final hasPrev = page > 0;
+      final hasNext = (page + 1) * pageSize < total;
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppTheme.borderColor),
+          boxShadow: AppTheme.softShadow,
+        ),
+        child: isMobile
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    total > 0
+                        ? 'Menampilkan $start - $end dari $total data terhapus'
+                        : 'Menampilkan 0 dari 0',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        onPressed: hasPrev ? controller.prevPage : null,
+                        icon: const Icon(LucideIcons.chevronLeft, size: 16),
+                        tooltip: 'Sebelumnya',
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          'Halaman ${page + 1}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: hasNext ? controller.nextPage : null,
+                        icon: const Icon(LucideIcons.chevronRight, size: 16),
+                        tooltip: 'Selanjutnya',
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    total > 0
+                        ? 'Menampilkan $start - $end dari $total data terhapus (Halaman ${page + 1})'
+                        : 'Menampilkan 0 dari 0',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: hasPrev ? controller.prevPage : null,
+                        icon: const Icon(LucideIcons.chevronLeft, size: 14),
+                        label: const Text('Sebelumnya'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          textStyle: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'Halaman ${page + 1}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: hasNext ? controller.nextPage : null,
+                        icon: const Icon(LucideIcons.chevronRight, size: 14),
+                        label: const Text('Selanjutnya'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          textStyle: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+      );
+    });
   }
 }

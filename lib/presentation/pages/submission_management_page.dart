@@ -113,10 +113,10 @@ class SubmissionManagementPage extends StatelessWidget {
     final isMobile = MediaQuery.of(context).size.width < 768;
 
     Widget buildHeader() {
-      return const Column(
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Submission Naskah',
             style: TextStyle(
               fontSize: 24,
@@ -124,14 +124,20 @@ class SubmissionManagementPage extends StatelessWidget {
               color: AppTheme.textPrimary,
             ),
           ),
-          SizedBox(height: 4),
-          Text(
-            'Kelola naskah buku yang dikirimkan oleh calon penulis',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.textSecondary,
-            ),
-          ),
+          const SizedBox(height: 4),
+          Obx(() {
+            final total = controller.filteredSubmissions.length;
+            final displayed = controller.paginatedSubmissions.length;
+            return Text(
+              total == 0
+                  ? 'Menampilkan 0 dari 0 naskah terdaftar'
+                  : 'Menampilkan $displayed dari $total naskah terdaftar',
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppTheme.textSecondary,
+              ),
+            );
+          }),
         ],
       );
     }
@@ -301,7 +307,7 @@ class SubmissionManagementPage extends StatelessWidget {
           );
         }
 
-        final displaySubmissions = controller.filteredSubmissions;
+        final displaySubmissions = controller.paginatedSubmissions;
 
         if (displaySubmissions.isEmpty) {
           return Center(
@@ -620,7 +626,7 @@ class SubmissionManagementPage extends StatelessWidget {
 
     Widget buildPaginationFooter() {
       return Obx(() {
-        final total = controller.totalSubmissionsCount.value;
+        final total = controller.filteredSubmissions.length;
         final page = controller.currentPage.value;
         final pageSize = controller.pageSize;
         final start = total == 0 ? 0 : (page * pageSize) + 1;
@@ -644,7 +650,7 @@ class SubmissionManagementPage extends StatelessWidget {
                     Text(
                       total > 0
                           ? 'Menampilkan $start - $end dari $total naskah'
-                          : 'Belum ada data naskah',
+                          : 'Menampilkan 0 dari 0',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppTheme.textSecondary,
@@ -686,7 +692,7 @@ class SubmissionManagementPage extends StatelessWidget {
                     Text(
                       total > 0
                           ? 'Menampilkan $start - $end dari $total naskah (Halaman ${page + 1})'
-                          : 'Belum ada data naskah',
+                          : 'Menampilkan 0 dari 0',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppTheme.textSecondary,

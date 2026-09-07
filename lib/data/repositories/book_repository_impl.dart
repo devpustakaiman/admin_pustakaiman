@@ -11,7 +11,7 @@ class BookRepositoryImpl implements BookRepository {
   BookRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Either<Failure, List<Book>>> getBooks({int page = 0, int pageSize = 15}) async {
+  Future<Either<Failure, List<Book>>> getBooks({int? page, int? pageSize}) async {
     try {
       final data = await remoteDataSource.getBooks(page: page, pageSize: pageSize);
       final books = data.map((json) => BookModel.fromJson(json)).toList();

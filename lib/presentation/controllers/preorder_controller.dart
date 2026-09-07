@@ -70,7 +70,37 @@ class PreorderController extends GetxController {
     applyFilters();
   }
 
+  final RxInt currentPage = 0.obs;
+  final int pageSize = 15;
+
+  List<PreorderModel> get paginatedPreorders {
+    final allItems = filteredPreorders;
+    final totalItems = allItems.length;
+    if (totalItems == 0) return [];
+
+    int startIndex = currentPage.value * pageSize;
+    if (startIndex >= totalItems) {
+      currentPage.value = 0;
+      startIndex = 0;
+    }
+    int endIndex = (startIndex + pageSize > totalItems) ? totalItems : startIndex + pageSize;
+    return allItems.sublist(startIndex, endIndex);
+  }
+
+  void nextPage() {
+    if ((currentPage.value + 1) * pageSize < filteredPreorders.length) {
+      currentPage.value++;
+    }
+  }
+
+  void prevPage() {
+    if (currentPage.value > 0) {
+      currentPage.value--;
+    }
+  }
+
   void applyFilters() {
+    currentPage.value = 0;
     List<PreorderModel> result = List.from(preorders);
 
     final status = selectedStatusFilter.value.toLowerCase();

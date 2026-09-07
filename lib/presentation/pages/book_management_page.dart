@@ -154,13 +154,19 @@ class BookManagementPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Obx(() => Text(
-                  'Menampilkan ${controller.filteredBooks.length} dari ${controller.books.length} buku terdaftar',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppTheme.textSecondary,
-                  ),
-                )),
+            Obx(() {
+              final total = controller.filteredBooks.length;
+              final displayed = controller.paginatedBooks.length;
+              return Text(
+                total == 0
+                    ? 'Menampilkan 0 dari 0 buku terdaftar'
+                    : 'Menampilkan $displayed dari $total buku terdaftar',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textSecondary,
+                ),
+              );
+            }),
           ],
         ),
 
@@ -452,7 +458,7 @@ class BookManagementPage extends StatelessWidget {
         );
       }
 
-      final displayBooks = controller.filteredBooks;
+      final displayBooks = controller.paginatedBooks;
 
       if (displayBooks.isEmpty) {
         return Center(
@@ -819,7 +825,7 @@ class BookManagementPage extends StatelessWidget {
 
   Widget _buildPaginationFooter(BuildContext context, BookController controller, {required bool isMobile}) {
     return Obx(() {
-      final total = controller.totalBooksCount.value;
+      final total = controller.filteredBooks.length;
       final page = controller.currentPage.value;
       final pageSize = controller.pageSize;
       final start = total == 0 ? 0 : (page * pageSize) + 1;
@@ -842,7 +848,7 @@ class BookManagementPage extends StatelessWidget {
                   Text(
                     total > 0
                         ? 'Menampilkan $start - $end dari $total buku'
-                        : 'Belum ada data buku',
+                        : 'Menampilkan 0 dari 0',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,
@@ -884,7 +890,7 @@ class BookManagementPage extends StatelessWidget {
                   Text(
                     total > 0
                         ? 'Menampilkan $start - $end dari $total buku (Halaman ${page + 1})'
-                        : 'Belum ada data buku',
+                        : 'Menampilkan 0 dari 0',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,

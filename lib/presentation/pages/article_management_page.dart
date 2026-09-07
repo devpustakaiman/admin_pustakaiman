@@ -111,10 +111,10 @@ class ArticleManagementPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Page Header Title
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Manajemen Artikel',
               style: TextStyle(
                 fontSize: 24,
@@ -122,14 +122,20 @@ class ArticleManagementPage extends StatelessWidget {
                 color: AppTheme.textPrimary,
               ),
             ),
-            SizedBox(height: 4),
-            Text(
-              'Kelola publikasi artikel berita dan kabar pustaka',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppTheme.textSecondary,
-              ),
-            ),
+            const SizedBox(height: 4),
+            Obx(() {
+              final total = controller.filteredArticles.length;
+              final displayed = controller.paginatedArticles.length;
+              return Text(
+                total == 0
+                    ? 'Menampilkan 0 dari 0 artikel terdaftar'
+                    : 'Menampilkan $displayed dari $total artikel terdaftar',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textSecondary,
+                ),
+              );
+            }),
           ],
         ),
 
@@ -387,7 +393,7 @@ class ArticleManagementPage extends StatelessWidget {
         );
       }
 
-      final displayArticles = controller.filteredArticles;
+      final displayArticles = controller.paginatedArticles;
 
       if (displayArticles.isEmpty) {
         return Center(
@@ -541,7 +547,7 @@ class ArticleManagementPage extends StatelessWidget {
 
   Widget _buildPaginationFooter(BuildContext context, ArticleController controller, {required bool isMobile}) {
     return Obx(() {
-      final total = controller.totalArticlesCount.value;
+      final total = controller.filteredArticles.length;
       final page = controller.currentPage.value;
       final pageSize = controller.pageSize;
       final start = total == 0 ? 0 : (page * pageSize) + 1;
@@ -564,7 +570,7 @@ class ArticleManagementPage extends StatelessWidget {
                   Text(
                     total > 0
                         ? 'Menampilkan $start - $end dari $total artikel'
-                        : 'Belum ada data artikel',
+                        : 'Menampilkan 0 dari 0',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,
@@ -606,7 +612,7 @@ class ArticleManagementPage extends StatelessWidget {
                   Text(
                     total > 0
                         ? 'Menampilkan $start - $end dari $total artikel (Halaman ${page + 1})'
-                        : 'Belum ada data artikel',
+                        : 'Menampilkan 0 dari 0',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,

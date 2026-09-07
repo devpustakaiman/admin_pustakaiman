@@ -17,6 +17,7 @@ class SubmissionController extends GetxController {
 
   final RxList<Submission> submissions = <Submission>[].obs;
   final RxString statusFilter = 'Semua Status'.obs;
+  final RxString searchQuery = ''.obs;
   final RxString sortBy = 'date'.obs; // 'date', 'name'
   final RxBool isAscending = false.obs; // false = newest first by default
 
@@ -32,6 +33,16 @@ class SubmissionController extends GetxController {
       result = result.where((sub) => sub.status.toLowerCase() == targetStatus).toList();
     }
 
+    if (searchQuery.value.trim().isNotEmpty) {
+      final q = searchQuery.value.trim().toLowerCase();
+      result = result.where((sub) {
+        return sub.senderName.toLowerCase().contains(q) ||
+            sub.email.toLowerCase().contains(q) ||
+            sub.title.toLowerCase().contains(q) ||
+            sub.synopsis.toLowerCase().contains(q);
+      }).toList();
+    }
+
     result.sort((a, b) {
       int comparison = 0;
       if (sortBy.value == 'name') {
@@ -45,12 +56,27 @@ class SubmissionController extends GetxController {
     return result;
   }
 
+  List<Submission> get paginatedSubmissions {
+    final allItems = filteredSubmissions;
+    final totalItems = allItems.length;
+    if (totalItems == 0) return [];
+    int start = currentPage.value * pageSize;
+    if (start >= totalItems) {
+      currentPage.value = 0;
+      start = 0;
+    }
+    int end = (start + pageSize > totalItems) ? totalItems : start + pageSize;
+    return allItems.sublist(start, end);
+  }
+
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
+    ever(statusFilter, (_) => currentPage.value = 0);
+    ever(searchQuery, (_) => currentPage.value = 0);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchSubmissions();
     });
@@ -61,18 +87,10 @@ class SubmissionController extends GetxController {
     isLoading.value = true;
     errorMessage.value = '';
 
-    // Server-side exact count
-    final countRes = await submissionRepository.getSubmissionsCount(
-      status: statusFilter.value == 'Semua Status' ? null : statusFilter.value,
-    );
+    final countRes = await submissionRepository.getSubmissionsCount();
     countRes.fold((_) {}, (cnt) => totalSubmissionsCount.value = cnt);
 
-    // 15-item lazy loading / pagination
-    final result = await getSubmissionsUseCase.call(
-      page: currentPage.value,
-      pageSize: pageSize,
-      status: statusFilter.value == 'Semua Status' ? null : statusFilter.value,
-    );
+    final result = await getSubmissionsUseCase.call();
     result.fold(
       (failure) {
         errorMessage.value = failure.message;
@@ -86,14 +104,14 @@ class SubmissionController extends GetxController {
   }
 
   void nextPage() {
-    if ((currentPage.value + 1) * pageSize < totalSubmissionsCount.value) {
-      fetchSubmissions(page: currentPage.value + 1);
+    if ((currentPage.value + 1) * pageSize < filteredSubmissions.length) {
+      currentPage.value++;
     }
   }
 
   void prevPage() {
     if (currentPage.value > 0) {
-      fetchSubmissions(page: currentPage.value - 1);
+      currentPage.value--;
     }
   }
 

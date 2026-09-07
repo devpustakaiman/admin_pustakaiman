@@ -105,6 +105,7 @@ class ArticleController extends GetxController {
         slugController.text = generateSlug(titleController.text);
       }
     });
+    ever(searchQuery, (_) => currentPage.value = 0);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchArticles();
     });
@@ -475,17 +476,28 @@ class ArticleController extends GetxController {
     }
   }
 
+  List<Article> get paginatedArticles {
+    final allItems = filteredArticles;
+    final totalItems = allItems.length;
+    if (totalItems == 0) return [];
+    int startIndex = currentPage.value * pageSize;
+    if (startIndex >= totalItems) {
+      currentPage.value = 0;
+      startIndex = 0;
+    }
+    int endIndex = (startIndex + pageSize > totalItems) ? totalItems : startIndex + pageSize;
+    return allItems.sublist(startIndex, endIndex);
+  }
+
   Future<void> fetchArticles({int? page}) async {
     if (page != null) currentPage.value = page;
     isLoading.value = true;
     errorMessage.value = '';
 
-    // Server-side exact count
     final countRes = await Get.find<ArticleRepository>().getArticlesCount();
     countRes.fold((_) {}, (cnt) => totalArticlesCount.value = cnt);
 
-    // 15-item lazy loading / pagination
-    final result = await getArticlesUseCase.call(page: currentPage.value, pageSize: pageSize);
+    final result = await getArticlesUseCase.call();
     result.fold(
       (failure) {
         errorMessage.value = failure.message;
@@ -499,14 +511,14 @@ class ArticleController extends GetxController {
   }
 
   void nextPage() {
-    if ((currentPage.value + 1) * pageSize < totalArticlesCount.value) {
-      fetchArticles(page: currentPage.value + 1);
+    if ((currentPage.value + 1) * pageSize < filteredArticles.length) {
+      currentPage.value++;
     }
   }
 
   void prevPage() {
     if (currentPage.value > 0) {
-      fetchArticles(page: currentPage.value - 1);
+      currentPage.value--;
     }
   }
 

@@ -11,7 +11,7 @@ class AuthorRepositoryImpl implements AuthorRepository {
   AuthorRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Either<Failure, List<Author>>> getAuthors({int page = 0, int pageSize = 15}) async {
+  Future<Either<Failure, List<Author>>> getAuthors({int? page, int? pageSize}) async {
     try {
       final data = await remoteDataSource.getAuthors(page: page, pageSize: pageSize);
       final authors = data.map((json) => AuthorModel.fromJson(json)).toList();

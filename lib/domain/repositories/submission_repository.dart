@@ -4,8 +4,8 @@ import '../entities/submission.dart';
 
 abstract class SubmissionRepository {
   Future<Either<Failure, List<Submission>>> getSubmissions({
-    int page = 0,
-    int pageSize = 15,
+    int? page,
+    int? pageSize,
     String? status,
   });
   Future<Either<Failure, Submission?>> getSubmissionById(String id);

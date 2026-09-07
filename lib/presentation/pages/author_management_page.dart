@@ -54,10 +54,10 @@ class AuthorManagementPage extends StatelessWidget {
     final isMobile = MediaQuery.of(context).size.width < 768;
 
     Widget buildHeader() {
-      return const Column(
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'Data Penulis',
             style: TextStyle(
               fontSize: 24,
@@ -65,14 +65,20 @@ class AuthorManagementPage extends StatelessWidget {
               color: AppTheme.textPrimary,
             ),
           ),
-          SizedBox(height: 4),
-          Text(
-            'Kelola profil dan biografi penulis pustaka',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.textSecondary,
-            ),
-          ),
+          const SizedBox(height: 4),
+          Obx(() {
+            final total = controller.filteredAuthors.length;
+            final displayed = controller.paginatedAuthors.length;
+            return Text(
+              total == 0
+                  ? 'Menampilkan 0 dari 0 penulis terdaftar'
+                  : 'Menampilkan $displayed dari $total penulis terdaftar',
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppTheme.textSecondary,
+              ),
+            );
+          }),
         ],
       );
     }
@@ -331,7 +337,7 @@ class AuthorManagementPage extends StatelessWidget {
           );
         }
 
-        final displayAuthors = controller.filteredAuthors;
+        final displayAuthors = controller.paginatedAuthors;
 
         if (displayAuthors.isEmpty) {
           return Center(
@@ -463,7 +469,7 @@ class AuthorManagementPage extends StatelessWidget {
 
     Widget buildPaginationFooter() {
       return Obx(() {
-        final total = controller.totalAuthorsCount.value;
+        final total = controller.filteredAuthors.length;
         final page = controller.currentPage.value;
         final pageSize = controller.pageSize;
         final start = total == 0 ? 0 : (page * pageSize) + 1;
@@ -487,7 +493,7 @@ class AuthorManagementPage extends StatelessWidget {
                     Text(
                       total > 0
                           ? 'Menampilkan $start - $end dari $total penulis'
-                          : 'Belum ada data penulis',
+                          : 'Menampilkan 0 dari 0',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppTheme.textSecondary,
@@ -529,7 +535,7 @@ class AuthorManagementPage extends StatelessWidget {
                     Text(
                       total > 0
                           ? 'Menampilkan $start - $end dari $total penulis (Halaman ${page + 1})'
-                          : 'Belum ada data penulis',
+                          : 'Menampilkan 0 dari 0',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppTheme.textSecondary,

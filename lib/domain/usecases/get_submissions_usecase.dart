@@ -9,8 +9,8 @@ class GetSubmissionsUseCase {
   GetSubmissionsUseCase(this.repository);
 
   Future<Either<Failure, List<Submission>>> call({
-    int page = 0,
-    int pageSize = 15,
+    int? page,
+    int? pageSize,
     String? status,
   }) async {
     return await repository.getSubmissions(

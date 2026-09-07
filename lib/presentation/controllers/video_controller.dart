@@ -68,9 +68,39 @@ class VideoController extends GetxController {
     return result;
   }
 
+  final RxInt currentPage = 0.obs;
+  final int pageSize = 12;
+
+  List<MediaVideo> get paginatedVideos {
+    final allItems = filteredVideos;
+    final totalItems = allItems.length;
+    if (totalItems == 0) return [];
+    int start = currentPage.value * pageSize;
+    if (start >= totalItems) {
+      currentPage.value = 0;
+      start = 0;
+    }
+    int end = (start + pageSize > totalItems) ? totalItems : start + pageSize;
+    return allItems.sublist(start, end);
+  }
+
+  void nextPage() {
+    if ((currentPage.value + 1) * pageSize < filteredVideos.length) {
+      currentPage.value++;
+    }
+  }
+
+  void prevPage() {
+    if (currentPage.value > 0) {
+      currentPage.value--;
+    }
+  }
+
   @override
   void onInit() {
     super.onInit();
+    ever(searchQuery, (_) => currentPage.value = 0);
+    ever(selectedCategoryFilter, (_) => currentPage.value = 0);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchVideos();
     });

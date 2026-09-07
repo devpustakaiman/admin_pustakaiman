@@ -52,11 +52,10 @@ class CategoryManagementPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Page Header Title
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Kelola Kategori Buku',
               style: TextStyle(
                 fontSize: 24,
@@ -64,14 +63,20 @@ class CategoryManagementPage extends StatelessWidget {
                 color: AppTheme.textPrimary,
               ),
             ),
-            SizedBox(height: 4),
-            Text(
-              'Kelola taksonomi 2-tier (Kategori Utama & Sub-Kategori) untuk katalog publik',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppTheme.textSecondary,
-              ),
-            ),
+            const SizedBox(height: 4),
+            Obx(() {
+              final countTotal = controller.filteredMainCategories.length;
+              final displayed = controller.paginatedMainCategories.length;
+              return Text(
+                countTotal == 0
+                    ? 'Menampilkan 0 dari 0 kategori terdaftar'
+                    : 'Menampilkan $displayed dari $countTotal kategori utama terdaftar',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppTheme.textSecondary,
+                ),
+              );
+            }),
           ],
         ),
 
@@ -316,13 +321,15 @@ class CategoryManagementPage extends StatelessWidget {
         );
       }
 
-      return ListView.builder(
+      final displayedMainCategories = controller.getPaginatedMainCategories(filteredMainCategories);
+
+      final listWidget = ListView.builder(
         shrinkWrap: isMobileScroll,
         physics: isMobileScroll ? const NeverScrollableScrollPhysics() : null,
         key: const PageStorageKey('category_management_list'),
-        itemCount: filteredMainCategories.length,
-                  itemBuilder: (context, index) {
-                    final mainCat = filteredMainCategories[index];
+        itemCount: displayedMainCategories.length,
+        itemBuilder: (context, index) {
+          final mainCat = displayedMainCategories[index];
                     final subCats = controller.getSubCategories(mainCat.id);
                     final filteredSubCats = q.isEmpty
                         ? subCats
@@ -665,7 +672,25 @@ class CategoryManagementPage extends StatelessWidget {
                     });
                   },
                 );
-              });
+
+      if (isMobileScroll) {
+        return Column(
+          children: [
+            listWidget,
+            const SizedBox(height: 16),
+            _buildPaginationFooter(context, controller, filteredMainCategories.length, isMobile: true),
+          ],
+        );
+      }
+
+      return Column(
+        children: [
+          Expanded(child: listWidget),
+          const SizedBox(height: 16),
+          _buildPaginationFooter(context, controller, filteredMainCategories.length, isMobile: false),
+        ],
+      );
+    });
   }
 
   void _openCategoryFormDialog(
@@ -825,5 +850,117 @@ class CategoryManagementPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Widget _buildPaginationFooter(BuildContext context, CategoryController controller, int total, {required bool isMobile}) {
+    return Obx(() {
+      final page = controller.currentPage.value;
+      final pageSize = controller.pageSize;
+      final start = total == 0 ? 0 : (page * pageSize) + 1;
+      final end = ((page + 1) * pageSize).clamp(0, total);
+      final hasPrev = page > 0;
+      final hasNext = (page + 1) * pageSize < total;
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppTheme.borderColor),
+          boxShadow: AppTheme.softShadow,
+        ),
+        child: isMobile
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    total > 0
+                        ? 'Menampilkan $start - $end dari $total kategori'
+                        : 'Menampilkan 0 dari 0',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        onPressed: hasPrev ? controller.prevPage : null,
+                        icon: const Icon(LucideIcons.chevronLeft, size: 16),
+                        tooltip: 'Sebelumnya',
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          'Halaman ${page + 1}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: hasNext ? () => controller.nextPage(total) : null,
+                        icon: const Icon(LucideIcons.chevronRight, size: 16),
+                        tooltip: 'Selanjutnya',
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    total > 0
+                        ? 'Menampilkan $start - $end dari $total kategori (Halaman ${page + 1})'
+                        : 'Menampilkan 0 dari 0',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: hasPrev ? controller.prevPage : null,
+                        icon: const Icon(LucideIcons.chevronLeft, size: 14),
+                        label: const Text('Sebelumnya'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          textStyle: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'Halaman ${page + 1}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: hasNext ? () => controller.nextPage(total) : null,
+                        icon: const Icon(LucideIcons.chevronRight, size: 14),
+                        label: const Text('Selanjutnya'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          textStyle: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+      );
+    });
   }
 }

@@ -3,7 +3,7 @@ import '../../core/error/failures.dart';
 import '../entities/author.dart';
 
 abstract class AuthorRepository {
-  Future<Either<Failure, List<Author>>> getAuthors({int page = 0, int pageSize = 15});
+  Future<Either<Failure, List<Author>>> getAuthors({int? page, int? pageSize});
   Future<Either<Failure, Author?>> getAuthorById(String id);
   Future<Either<Failure, int>> getAuthorsCount();
   Future<Either<Failure, List<Author>>> getDeletedAuthors();

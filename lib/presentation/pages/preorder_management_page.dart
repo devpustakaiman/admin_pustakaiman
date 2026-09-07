@@ -113,15 +113,21 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Kelola pesanan pre-order buku, verifikasi bukti pembayaran, dan kirim konfirmasi WhatsApp.',
-                    style: TextStyle(
-                      color: Color(0xFF64748B),
-                      fontSize: 13,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                  ),
+                  Obx(() {
+                    final total = controller.filteredPreorders.length;
+                    final displayed = controller.paginatedPreorders.length;
+                    return Text(
+                      total == 0
+                          ? 'Menampilkan 0 dari 0 pesanan terdaftar'
+                          : 'Menampilkan $displayed dari $total pesanan terdaftar',
+                      style: const TextStyle(
+                        color: Color(0xFF64748B),
+                        fontSize: 13,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    );
+                  }),
                 ],
               ),
             ),
@@ -297,13 +303,15 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
         );
       }
 
-      if (isMobile) {
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: list.length,
-          itemBuilder: (context, index) {
-            final item = list[index];
+      final displayedList = controller.paginatedPreorders;
+
+      final tableWidget = isMobile
+          ? ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: displayedList.length,
+              itemBuilder: (context, index) {
+                final item = displayedList[index];
             final dateStr =
                 '${item.createdAt.day.toString().padLeft(2, '0')}/${item.createdAt.month.toString().padLeft(2, '0')}/${item.createdAt.year} ${item.createdAt.hour.toString().padLeft(2, '0')}:${item.createdAt.minute.toString().padLeft(2, '0')}';
 
@@ -430,10 +438,8 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
               ),
             );
           },
-        );
-      }
-
-      return Container(
+        )
+      : Container(
         width: double.infinity,
         decoration: BoxDecoration(
           color: Colors.white,
@@ -532,7 +538,7 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
                           ),
                         ),
                       ],
-                      rows: list.map((item) => _buildRow(context, item, controller)).toList(),
+                      rows: displayedList.map((item) => _buildRow(context, item, controller)).toList(),
                     ),
                   ),
                 ),
@@ -540,6 +546,15 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
             );
           },
         ),
+      );
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          tableWidget,
+          const SizedBox(height: 16),
+          _buildPaginationFooter(context, controller, isMobile: isMobile),
+        ],
       );
     });
   }
@@ -1010,5 +1025,124 @@ class _PreorderManagementPageState extends State<PreorderManagementPage> {
         ],
       ),
     );
+  }
+
+  Widget _buildPaginationFooter(BuildContext context, PreorderController controller, {required bool isMobile}) {
+    return Obx(() {
+      final total = controller.filteredPreorders.length;
+      final page = controller.currentPage.value;
+      final pageSize = controller.pageSize;
+      final start = total == 0 ? 0 : (page * pageSize) + 1;
+      final end = ((page + 1) * pageSize).clamp(0, total);
+      final hasPrev = page > 0;
+      final hasNext = (page + 1) * pageSize < total;
+
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: isMobile
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    total > 0
+                        ? 'Menampilkan $start - $end dari $total pesanan'
+                        : 'Menampilkan 0 dari 0',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        onPressed: hasPrev ? controller.prevPage : null,
+                        icon: const Icon(LucideIcons.chevronLeft, size: 16),
+                        tooltip: 'Sebelumnya',
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          'Halaman ${page + 1}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: hasNext ? controller.nextPage : null,
+                        icon: const Icon(LucideIcons.chevronRight, size: 16),
+                        tooltip: 'Selanjutnya',
+                      ),
+                    ],
+                  ),
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    total > 0
+                        ? 'Menampilkan $start - $end dari $total pesanan (Halaman ${page + 1})'
+                        : 'Menampilkan 0 dari 0',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: hasPrev ? controller.prevPage : null,
+                        icon: const Icon(LucideIcons.chevronLeft, size: 14),
+                        label: const Text('Sebelumnya'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          textStyle: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'Halaman ${page + 1}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: hasNext ? controller.nextPage : null,
+                        icon: const Icon(LucideIcons.chevronRight, size: 14),
+                        label: const Text('Selanjutnya'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          textStyle: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+      );
+    });
   }
 }

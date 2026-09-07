@@ -3,7 +3,7 @@ import '../../core/error/failures.dart';
 import '../entities/book.dart';
 
 abstract class BookRepository {
-  Future<Either<Failure, List<Book>>> getBooks({int page = 0, int pageSize = 15});
+  Future<Either<Failure, List<Book>>> getBooks({int? page, int? pageSize});
   Future<Either<Failure, Book?>> getBookById(String id);
   Future<Either<Failure, int>> getBooksCount();
   Future<Either<Failure, List<Book>>> getDeletedBooks();

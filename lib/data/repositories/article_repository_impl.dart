@@ -11,7 +11,7 @@ class ArticleRepositoryImpl implements ArticleRepository {
   ArticleRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Either<Failure, List<Article>>> getArticles({int page = 0, int pageSize = 15}) async {
+  Future<Either<Failure, List<Article>>> getArticles({int? page, int? pageSize}) async {
     try {
       final data = await remoteDataSource.getArticles(page: page, pageSize: pageSize);
       final articles = data.map((json) => ArticleModel.fromJson(json)).toList();

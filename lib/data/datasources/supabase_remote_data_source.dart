@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class SupabaseRemoteDataSource {
   // Books CRUD & Trash
-  Future<List<Map<String, dynamic>>> getBooks({int page = 0, int pageSize = 15});
+  Future<List<Map<String, dynamic>>> getBooks({int? page, int? pageSize});
   Future<Map<String, dynamic>?> getBookById(String id);
   Future<int> getBooksCount();
   Future<int> getActivePromosCount();
@@ -15,7 +15,7 @@ abstract class SupabaseRemoteDataSource {
   Future<void> permanentlyDeleteBooks(List<String> ids);
 
   // Authors CRUD & Trash
-  Future<List<Map<String, dynamic>>> getAuthors({int page = 0, int pageSize = 15});
+  Future<List<Map<String, dynamic>>> getAuthors({int? page, int? pageSize});
   Future<Map<String, dynamic>?> getAuthorById(String id);
   Future<int> getAuthorsCount();
   Future<List<Map<String, dynamic>>> getDeletedAuthors();
@@ -26,7 +26,7 @@ abstract class SupabaseRemoteDataSource {
   Future<void> permanentlyDeleteAuthors(List<String> ids);
 
   // Articles CRUD & Trash
-  Future<List<Map<String, dynamic>>> getArticles({int page = 0, int pageSize = 15});
+  Future<List<Map<String, dynamic>>> getArticles({int? page, int? pageSize});
   Future<Map<String, dynamic>?> getArticleById(String id);
   Future<int> getArticlesCount();
   Future<List<Map<String, dynamic>>> getDeletedArticles();
@@ -37,7 +37,7 @@ abstract class SupabaseRemoteDataSource {
   Future<void> permanentlyDeleteArticles(List<String> ids);
 
   // Submissions CRUD & Trash
-  Future<List<Map<String, dynamic>>> getSubmissions({int page = 0, int pageSize = 15, String? status});
+  Future<List<Map<String, dynamic>>> getSubmissions({int? page, int? pageSize, String? status});
   Future<Map<String, dynamic>?> getSubmissionById(String id);
   Future<int> getSubmissionsCount({String? status});
   Future<int> getPendingSubmissionsCount();
@@ -125,34 +125,35 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
 
   // ---------------- BOOK METHODS ----------------
   @override
-  Future<List<Map<String, dynamic>>> getBooks({int page = 0, int pageSize = 15}) async {
-    final from = page * pageSize;
-    final to = from + pageSize - 1;
+  Future<List<Map<String, dynamic>>> getBooks({int? page, int? pageSize}) async {
     try {
-      // Lightweight fetch: include cover_url and coverUrl gracefully
-      final response = await supabaseClient
+      dynamic query = supabaseClient
           .from('books')
-          .select('id, title, author, category, price, is_promo, promo_price, promo_percentage, promo_end_date, is_recommended, cover_url, created_at, updated_at')
+          .select()
           .isFilter('deleted_at', null)
-          .order('created_at', ascending: false)
-          .range(from, to);
+          .order('created_at', ascending: false);
+      if (page != null && pageSize != null) {
+        final from = page * pageSize;
+        final to = from + pageSize - 1;
+        query = query.range(from, to);
+      }
+      final response = await query;
       return List<Map<String, dynamic>>.from(response);
     } catch (_) {
       try {
-        final response = await supabaseClient
-            .from('books')
-            .select('id, title, author, category, price, is_promo, promo_price, is_recommended, cover_url, created_at')
-            .isFilter('deleted_at', null)
-            .range(from, to);
-        return List<Map<String, dynamic>>.from(response);
-      } catch (_) {
-        // Fallback
-        final response = await supabaseClient
+        dynamic query = supabaseClient
             .from('books')
             .select()
-            .isFilter('deleted_at', null)
-            .limit(pageSize);
+            .isFilter('deleted_at', null);
+        if (page != null && pageSize != null) {
+          final from = page * pageSize;
+          final to = from + pageSize - 1;
+          query = query.range(from, to);
+        }
+        final response = await query;
         return List<Map<String, dynamic>>.from(response);
+      } catch (_) {
+        return [];
       }
     }
   }
@@ -363,32 +364,35 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
 
   // ---------------- AUTHOR METHODS ----------------
   @override
-  Future<List<Map<String, dynamic>>> getAuthors({int page = 0, int pageSize = 15}) async {
-    final from = page * pageSize;
-    final to = from + pageSize - 1;
+  Future<List<Map<String, dynamic>>> getAuthors({int? page, int? pageSize}) async {
     try {
-      final response = await supabaseClient
+      dynamic query = supabaseClient
           .from('authors')
           .select()
           .isFilter('deleted_at', null)
-          .order('created_at', ascending: false)
-          .range(from, to);
+          .order('created_at', ascending: false);
+      if (page != null && pageSize != null) {
+        final from = page * pageSize;
+        final to = from + pageSize - 1;
+        query = query.range(from, to);
+      }
+      final response = await query;
       return List<Map<String, dynamic>>.from(response);
     } catch (_) {
       try {
-        final response = await supabaseClient
+        dynamic query = supabaseClient
             .from('authors')
             .select()
-            .isFilter('deleted_at', null)
-            .range(from, to);
+            .isFilter('deleted_at', null);
+        if (page != null && pageSize != null) {
+          final from = page * pageSize;
+          final to = from + pageSize - 1;
+          query = query.range(from, to);
+        }
+        final response = await query;
         return List<Map<String, dynamic>>.from(response);
       } catch (_) {
-        final response = await supabaseClient
-            .from('authors')
-            .select()
-            .isFilter('deleted_at', null)
-            .limit(pageSize);
-        return List<Map<String, dynamic>>.from(response);
+        return [];
       }
     }
   }
@@ -543,32 +547,35 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
 
   // ---------------- ARTICLE METHODS ----------------
   @override
-  Future<List<Map<String, dynamic>>> getArticles({int page = 0, int pageSize = 15}) async {
-    final from = page * pageSize;
-    final to = from + pageSize - 1;
+  Future<List<Map<String, dynamic>>> getArticles({int? page, int? pageSize}) async {
     try {
-      final response = await supabaseClient
+      dynamic query = supabaseClient
           .from('articles')
           .select()
           .isFilter('deleted_at', null)
-          .order('created_at', ascending: false)
-          .range(from, to);
+          .order('created_at', ascending: false);
+      if (page != null && pageSize != null) {
+        final from = page * pageSize;
+        final to = from + pageSize - 1;
+        query = query.range(from, to);
+      }
+      final response = await query;
       return List<Map<String, dynamic>>.from(response);
     } catch (_) {
       try {
-        final response = await supabaseClient
+        dynamic query = supabaseClient
             .from('articles')
             .select()
-            .isFilter('deleted_at', null)
-            .range(from, to);
+            .isFilter('deleted_at', null);
+        if (page != null && pageSize != null) {
+          final from = page * pageSize;
+          final to = from + pageSize - 1;
+          query = query.range(from, to);
+        }
+        final response = await query;
         return List<Map<String, dynamic>>.from(response);
       } catch (_) {
-        final response = await supabaseClient
-            .from('articles')
-            .select()
-            .isFilter('deleted_at', null)
-            .limit(pageSize);
-        return List<Map<String, dynamic>>.from(response);
+        return [];
       }
     }
   }
@@ -727,15 +734,12 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
   // ---------------- SUBMISSION METHODS ----------------
   @override
   Future<List<Map<String, dynamic>>> getSubmissions({
-    int page = 0,
-    int pageSize = 15,
+    int? page,
+    int? pageSize,
     String? status,
   }) async {
-    final from = page * pageSize;
-    final to = from + pageSize - 1;
     try {
-      // Lightweight fetch: omit heavy synopsis and pdf document url on list cards
-      var query = supabaseClient
+      dynamic query = supabaseClient
           .from('submissions')
           .select()
           .isFilter('deleted_at', null);
@@ -746,25 +750,30 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
         query = query.eq('status', status.toLowerCase());
       }
 
-      final response = await query
-          .order('created_at', ascending: false)
-          .range(from, to);
+      query = query.order('created_at', ascending: false);
+      if (page != null && pageSize != null) {
+        final from = page * pageSize;
+        final to = from + pageSize - 1;
+        query = query.range(from, to);
+      }
+
+      final response = await query;
       return List<Map<String, dynamic>>.from(response);
     } catch (_) {
       try {
-        final response = await supabaseClient
+        dynamic query = supabaseClient
             .from('submissions')
             .select()
-            .isFilter('deleted_at', null)
-            .range(from, to);
+            .isFilter('deleted_at', null);
+        if (page != null && pageSize != null) {
+          final from = page * pageSize;
+          final to = from + pageSize - 1;
+          query = query.range(from, to);
+        }
+        final response = await query;
         return List<Map<String, dynamic>>.from(response);
       } catch (_) {
-        final response = await supabaseClient
-            .from('submissions')
-            .select()
-            .isFilter('deleted_at', null)
-            .limit(pageSize);
-        return List<Map<String, dynamic>>.from(response);
+        return [];
       }
     }
   }

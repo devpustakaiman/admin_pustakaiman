@@ -12,8 +12,8 @@ class SubmissionRepositoryImpl implements SubmissionRepository {
 
   @override
   Future<Either<Failure, List<Submission>>> getSubmissions({
-    int page = 0,
-    int pageSize = 15,
+    int? page,
+    int? pageSize,
     String? status,
   }) async {
     try {

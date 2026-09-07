@@ -47,15 +47,45 @@ class TrashController extends GetxController {
   final RxString errorMessage = ''.obs;
   final RxString searchQuery = ''.obs;
 
+  final RxInt currentPage = 0.obs;
+  final int pageSize = 10;
+
+  List<dynamic> get paginatedList {
+    final allItems = currentFilteredList;
+    final total = allItems.length;
+    if (total == 0) return [];
+    int start = currentPage.value * pageSize;
+    if (start >= total) {
+      currentPage.value = 0;
+      start = 0;
+    }
+    int end = (start + pageSize > total) ? total : start + pageSize;
+    return allItems.sublist(start, end);
+  }
+
+  void nextPage() {
+    if ((currentPage.value + 1) * pageSize < currentFilteredList.length) {
+      currentPage.value++;
+    }
+  }
+
+  void prevPage() {
+    if (currentPage.value > 0) {
+      currentPage.value--;
+    }
+  }
+
   @override
   void onInit() {
     super.onInit();
+    ever(searchQuery, (_) => currentPage.value = 0);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchAllDeleted();
     });
   }
 
   void changeCategory(TrashCategory category) {
+    currentPage.value = 0;
     activeCategory.value = category;
     selectedIds.clear();
     fetchCurrentCategory();

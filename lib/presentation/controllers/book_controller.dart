@@ -211,6 +211,10 @@ class BookController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    ever(searchQuery, (_) => currentPage.value = 0);
+    ever(selectedCategoryFilter, (_) => currentPage.value = 0);
+    ever(recommendedFilter, (_) => currentPage.value = 0);
+    ever(promoFilter, (_) => currentPage.value = 0);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchBooks();
     });
@@ -487,17 +491,29 @@ class BookController extends GetxController {
     }
   }
 
+  List<Book> get paginatedBooks {
+    final allItems = filteredBooks;
+    final totalItems = allItems.length;
+    if (totalItems == 0) return [];
+
+    int startIndex = currentPage.value * pageSize;
+    if (startIndex >= totalItems) {
+      currentPage.value = 0;
+      startIndex = 0;
+    }
+    int endIndex = (startIndex + pageSize > totalItems) ? totalItems : startIndex + pageSize;
+    return allItems.sublist(startIndex, endIndex);
+  }
+
   Future<void> fetchBooks({int? page}) async {
     if (page != null) currentPage.value = page;
     isLoading.value = true;
     errorMessage.value = '';
 
-    // Server-side exact count
     final countResult = await Get.find<BookRepository>().getBooksCount();
     countResult.fold((_) {}, (cnt) => totalBooksCount.value = cnt);
 
-    // 15-item lazy loading / pagination
-    final result = await getBooksUseCase.call(page: currentPage.value, pageSize: pageSize);
+    final result = await getBooksUseCase.call();
     result.fold(
       (failure) {
         errorMessage.value = failure.message;
@@ -511,14 +527,14 @@ class BookController extends GetxController {
   }
 
   void nextPage() {
-    if ((currentPage.value + 1) * pageSize < totalBooksCount.value) {
-      fetchBooks(page: currentPage.value + 1);
+    if ((currentPage.value + 1) * pageSize < filteredBooks.length) {
+      currentPage.value++;
     }
   }
 
   void prevPage() {
     if (currentPage.value > 0) {
-      fetchBooks(page: currentPage.value - 1);
+      currentPage.value--;
     }
   }
 
