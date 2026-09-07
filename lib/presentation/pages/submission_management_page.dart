@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/app_toast.dart';
 import '../../domain/entities/submission.dart';
 import '../controllers/submission_controller.dart';
+import '../widgets/submission_review_dialog.dart';
 
 class SubmissionManagementPage extends StatelessWidget {
   const SubmissionManagementPage({super.key});
@@ -356,6 +357,27 @@ class SubmissionManagementPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (submission.title.isNotEmpty) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Judul Naskah: ${submission.title}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+
                     if (isMobile) ...[
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,6 +429,22 @@ class SubmissionManagementPage extends StatelessWidget {
                               ),
                             ],
                           ),
+                          if (submission.phone.isNotEmpty)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(LucideIcons.phoneCall, size: 13, color: Color(0xFF10B981)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  submission.phone,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -464,6 +502,22 @@ class SubmissionManagementPage extends StatelessWidget {
                                         ),
                                       ],
                                     ),
+                                    if (submission.phone.isNotEmpty)
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(LucideIcons.phoneCall, size: 13, color: Color(0xFF10B981)),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            submission.phone,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppTheme.textPrimary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -497,7 +551,7 @@ class SubmissionManagementPage extends StatelessWidget {
                         ),
                         child: Text(
                           submission.synopsis,
-                          maxLines: 3,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 13,
@@ -516,20 +570,32 @@ class SubmissionManagementPage extends StatelessWidget {
                       spacing: 10,
                       runSpacing: 8,
                       children: [
-                        OutlinedButton.icon(
-                          onPressed: () => controller.previewPdf(
-                            submission.pdfDocumentUrl,
-                          ),
-                          icon: const Icon(LucideIcons.eye, size: 16),
-                          label: const Text('Preview PDF'),
-                        ),
                         ElevatedButton.icon(
-                          onPressed: () => controller.downloadPdf(
-                            submission.pdfDocumentUrl,
+                          onPressed: () {
+                            Get.dialog(
+                              SubmissionReviewDialog(
+                                submission: submission,
+                                onStatusChanged: (newStatus) {
+                                  controller.updateStatus(submission.id, newStatus);
+                                },
+                              ),
+                            );
+                          },
+                          icon: const Icon(LucideIcons.fileText, size: 16),
+                          label: const Text('Review Detail'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
                           ),
-                          icon: const Icon(LucideIcons.download, size: 16),
-                          label: const Text('Unduh PDF'),
                         ),
+                        if (submission.pdfDocumentUrl.isNotEmpty)
+                          OutlinedButton.icon(
+                            onPressed: () => controller.previewPdf(
+                              submission.pdfDocumentUrl,
+                            ),
+                            icon: const Icon(LucideIcons.eye, size: 16),
+                            label: const Text('Naskah PDF'),
+                          ),
                         IconButton(
                           icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.redAccent),
                           tooltip: 'Hapus Submission',

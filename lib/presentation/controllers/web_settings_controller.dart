@@ -111,6 +111,10 @@ class WebSettingsController extends GetxController {
   final RxList<TextEditingController> manuscriptCriteriaControllers = <TextEditingController>[].obs;
   final manuscriptContactDescController = TextEditingController();
   final manuscriptWhatsappController = TextEditingController();
+  final RxBool manuscriptWhatsappEnabled = true.obs;
+  final manuscriptWhatsappNumberController = TextEditingController();
+  final manuscriptConfirmationWaController = TextEditingController();
+  final manuscriptRedaksiWaController = TextEditingController();
   final RxBool isSavingManuscriptInfo = false.obs;
 
   // Bank Accounts Settings
@@ -231,6 +235,9 @@ class WebSettingsController extends GetxController {
     }
     manuscriptContactDescController.dispose();
     manuscriptWhatsappController.dispose();
+    manuscriptWhatsappNumberController.dispose();
+    manuscriptConfirmationWaController.dispose();
+    manuscriptRedaksiWaController.dispose();
     catalogTitleController.dispose();
     catalogSubtitleController.dispose();
     catalogPromoBannerLinkController.dispose();
@@ -391,7 +398,23 @@ class WebSettingsController extends GetxController {
 
         manuscriptContactDescController.text = settings['manuscript_contact_desc']?.toString() ??
             'Punya pertanyaan seputar penerbitan, kerja sama, atau butuh panduan khusus naskah? Tim redaksi Pustaka Iman siap membantu Anda.';
-        manuscriptWhatsappController.text = settings['manuscript_whatsapp']?.toString() ?? '6281234567890';
+        manuscriptWhatsappEnabled.value = settings['manuscript_whatsapp_enabled'] != false;
+        
+        final confirmationWaRaw = settings['manuscript_confirmation_wa']?.toString() ??
+            settings['manuscript_whatsapp_number']?.toString() ??
+            settings['manuscript_whatsapp']?.toString() ??
+            settings['whatsapp_naskah']?.toString() ??
+            '6281234567890';
+
+        final redaksiWaRaw = settings['manuscript_redaksi_wa']?.toString() ??
+            settings['manuscript_whatsapp']?.toString() ??
+            settings['whatsapp_naskah']?.toString() ??
+            '6281234567890';
+
+        manuscriptConfirmationWaController.text = formatWaNumber(confirmationWaRaw);
+        manuscriptRedaksiWaController.text = formatWaNumber(redaksiWaRaw);
+        manuscriptWhatsappNumberController.text = manuscriptConfirmationWaController.text;
+        manuscriptWhatsappController.text = manuscriptRedaksiWaController.text;
 
         // Catalog settings load
         catalogTitleController.text = settings['catalog_title']?.toString() ?? defaultCatalogTitle;
@@ -635,12 +658,25 @@ class WebSettingsController extends GetxController {
           .where((text) => text.isNotEmpty)
           .toList();
 
+      final confirmationWa = formatWaNumber(manuscriptConfirmationWaController.text);
+      final redaksiWa = formatWaNumber(manuscriptRedaksiWaController.text);
+
+      manuscriptConfirmationWaController.text = confirmationWa;
+      manuscriptRedaksiWaController.text = redaksiWa;
+      manuscriptWhatsappNumberController.text = confirmationWa;
+      manuscriptWhatsappController.text = redaksiWa;
+
       final payload = {
         'id': 'default',
         'manuscript_steps': stepsList,
         'manuscript_criteria': criteriaList,
         'manuscript_contact_desc': manuscriptContactDescController.text.trim(),
-        'manuscript_whatsapp': manuscriptWhatsappController.text.trim(),
+        'manuscript_whatsapp_enabled': manuscriptWhatsappEnabled.value,
+        'manuscript_confirmation_wa': confirmationWa,
+        'manuscript_redaksi_wa': redaksiWa,
+        'manuscript_whatsapp_number': confirmationWa,
+        'manuscript_whatsapp': redaksiWa,
+        'whatsapp_naskah': redaksiWa,
       };
 
       await remoteDataSource.updateSiteSettings(payload);

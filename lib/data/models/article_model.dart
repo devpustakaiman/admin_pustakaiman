@@ -4,6 +4,7 @@ class ArticleModel extends Article {
   const ArticleModel({
     required super.id,
     required super.title,
+    super.slug = '',
     required super.content,
     required super.date,
     required super.author,
@@ -24,6 +25,7 @@ class ArticleModel extends Article {
     return ArticleModel(
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
+      slug: json['slug'] as String? ?? '',
       content: json['content'] as String? ?? '',
       date: parseDateTime(json['date']) ?? DateTime.now(),
       author: json['author'] as String? ?? '',
@@ -37,6 +39,7 @@ class ArticleModel extends Article {
     final map = <String, dynamic>{
       'id': id,
       'title': title,
+      'slug': slug,
       'content': content,
       'date': date.toIso8601String(),
       'author': author,
@@ -53,6 +56,7 @@ class ArticleModel extends Article {
     return ArticleModel(
       id: article.id,
       title: article.title,
+      slug: article.slug,
       content: article.content,
       date: article.date,
       author: article.author,

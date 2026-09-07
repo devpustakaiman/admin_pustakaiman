@@ -295,25 +295,140 @@ class ManuscriptSettingsPage extends StatelessWidget {
 
           const SizedBox(height: 16),
 
+          // --- 4. KONFIGURASI WHATSAPP 1: KONFIRMASI PASCA KIRIM NASKAH ---
           const Text(
-            'Nomor WhatsApp Khusus Redaksi',
+            'Pengaturan 1: Konfirmasi Pasca Kirim Naskah',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Konfigurasi WhatsApp otomatis untuk konfirmasi penulis setelah berhasil mengirimkan naskah.',
+            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 10),
+
+          Obx(() {
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: SwitchListTile(
+                value: controller.manuscriptWhatsappEnabled.value,
+                onChanged: (val) => controller.manuscriptWhatsappEnabled.value = val,
+                title: const Text(
+                  'Aktifkan Konfirmasi WhatsApp Naskah',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                ),
+                subtitle: const Text(
+                  'Tampilkan opsi konfirmasi WhatsApp ke penulis setelah submit formulir naskah',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
+                activeThumbColor: AppTheme.primaryColor,
+                contentPadding: EdgeInsets.zero,
+              ),
+            );
+          }),
+
+          const SizedBox(height: 12),
+
+          const Text(
+            'Nomor WhatsApp Konfirmasi Naskah',
             style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
           ),
           const SizedBox(height: 6),
           TextFormField(
-            controller: controller.manuscriptWhatsappController,
+            controller: controller.manuscriptConfirmationWaController,
             keyboardType: TextInputType.phone,
             decoration: InputDecoration(
-              hintText: 'Contoh: 6281234567890 atau 081234567890',
-              prefixIcon: const Icon(LucideIcons.messageSquare, size: 18, color: Color(0xFF94A3B8)),
+              hintText: '628xxxxxxxxxx',
+              helperText: 'Format angka tanpa spasi/strip. Contoh: 6281234567890',
+              prefixIcon: const Icon(LucideIcons.checkCircle, size: 18, color: Color(0xFF10B981)),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
 
+          const SizedBox(height: 20),
 
+          // --- 5. KONFIGURASI WHATSAPP 2: TOMBOL BANTUAN / CHAT REDAKSI ---
+          const Text(
+            'Pengaturan 2: Tombol Bantuan / Chat Redaksi',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Nomor tujuan pesan langsung untuk penulis yang ingin berkonsultasi dengan tim redaksi.',
+            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 10),
+
+          const Text(
+            'Nomor WhatsApp Chat Redaksi',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: controller.manuscriptRedaksiWaController,
+            keyboardType: TextInputType.phone,
+            decoration: InputDecoration(
+              hintText: '628xxxxxxxxxx',
+              helperText: 'Format angka tanpa spasi/strip. Contoh: 6281234567890',
+              prefixIcon: const Icon(LucideIcons.messageSquare, size: 18, color: AppTheme.primaryColor),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Divider(color: Color(0xFFE2E8F0)),
+          const SizedBox(height: 16),
+
+          Align(
+            alignment: Alignment.centerRight,
+            child: Obx(() {
+              return ElevatedButton.icon(
+                onPressed: controller.isSavingManuscriptInfo.value
+                    ? null
+                    : () async {
+                        final success = await controller.saveManuscriptInfo();
+                        if (context.mounted) {
+                          if (success) {
+                            AppToast.showSuccess(
+                              context,
+                              'Pengaturan Kirim Naskah & No. WhatsApp berhasil disimpan!',
+                            );
+                          } else {
+                            AppToast.showError(
+                              context,
+                              controller.errorMessage.value.isNotEmpty
+                                  ? controller.errorMessage.value
+                                  : 'Gagal menyimpan pengaturan kirim naskah.',
+                            );
+                          }
+                        }
+                      },
+                icon: controller.isSavingManuscriptInfo.value
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(LucideIcons.save, size: 16),
+                label: Text(
+                  controller.isSavingManuscriptInfo.value ? 'Menyimpan...' : 'Simpan Pengaturan Naskah',
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              );
+            }),
+          ),
         ],
       ),
     );
   }
 }
+

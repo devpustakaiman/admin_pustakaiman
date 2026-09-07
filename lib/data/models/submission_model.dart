@@ -5,8 +5,11 @@ class SubmissionModel extends Submission {
     required super.id,
     required super.senderName,
     required super.email,
+    super.phone = '',
+    super.title = '',
     required super.synopsis,
     required super.pdfDocumentUrl,
+    super.paymentProofUrl = '',
     required super.status,
     required super.createdAt,
     super.deletedAt,
@@ -31,6 +34,29 @@ class SubmissionModel extends Submission {
       return null;
     }
 
+    final parsedPhone = json['phone']?.toString() ??
+        json['whatsapp']?.toString() ??
+        json['no_wa']?.toString() ??
+        json['phone_number']?.toString() ??
+        json['whatsapp_number']?.toString() ??
+        json['no_telepon']?.toString() ??
+        '';
+
+    final parsedTitle = json['title']?.toString() ??
+        json['book_title']?.toString() ??
+        json['judul_naskah']?.toString() ??
+        json['naskah_title']?.toString() ??
+        json['judul']?.toString() ??
+        '';
+
+    final parsedPaymentProof = json['payment_proof_url']?.toString() ??
+        json['paymentProofUrl']?.toString() ??
+        json['bukti_transfer_url']?.toString() ??
+        json['bukti_transfer']?.toString() ??
+        json['proof_url']?.toString() ??
+        json['bukti_bayar']?.toString() ??
+        '';
+
     return SubmissionModel(
       id: json['id']?.toString() ?? '',
       senderName: json['sender_name']?.toString() ??
@@ -42,6 +68,8 @@ class SubmissionModel extends Submission {
       email: json['email']?.toString() ??
           json['email_address']?.toString() ??
           '-',
+      phone: parsedPhone,
+      title: parsedTitle,
       synopsis: json['synopsis']?.toString() ??
           json['description']?.toString() ??
           json['sinopsis']?.toString() ??
@@ -53,6 +81,7 @@ class SubmissionModel extends Submission {
           json['document_url']?.toString() ??
           json['url_pdf']?.toString() ??
           '',
+      paymentProofUrl: parsedPaymentProof,
       status: json['status']?.toString() ?? 'pending',
       createdAt: parsedCreatedAt,
       deletedAt: parseDateTime(json['deleted_at'] ?? json['deletedAt']),
@@ -64,8 +93,11 @@ class SubmissionModel extends Submission {
       'id': id,
       'sender_name': senderName,
       'email': email,
+      'phone': phone,
+      'title': title,
       'synopsis': synopsis,
       'pdf_document_url': pdfDocumentUrl,
+      'payment_proof_url': paymentProofUrl,
       'status': status,
       'created_at': createdAt.toIso8601String(),
     };

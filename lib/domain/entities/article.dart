@@ -1,6 +1,7 @@
 class Article {
   final String id;
   final String title;
+  final String slug;
   final String content;
   final DateTime date;
   final String author;
@@ -11,6 +12,7 @@ class Article {
   const Article({
     required this.id,
     required this.title,
+    this.slug = '',
     required this.content,
     required this.date,
     required this.author,
@@ -19,3 +21,4 @@ class Article {
     this.deletedAt,
   });
 }
+

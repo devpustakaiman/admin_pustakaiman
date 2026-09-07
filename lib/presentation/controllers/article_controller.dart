@@ -79,9 +79,19 @@ class ArticleController extends GetxController {
 
   // Form Controllers
   final titleController = TextEditingController();
+  final slugController = TextEditingController();
   final authorController = TextEditingController();
   final imageUrlController = TextEditingController();
   final Rx<DateTime> selectedDate = DateTime.now().obs;
+  bool isSlugManuallyEdited = false;
+
+  static String generateSlug(String text) {
+    String slug = text.trim().toLowerCase();
+    slug = slug.replaceAll(RegExp(r'[^a-z0-9\s-]'), '');
+    slug = slug.replaceAll(RegExp(r'\s+'), '-');
+    slug = slug.replaceAll(RegExp(r'-+'), '-');
+    return slug.replaceAll(RegExp(r'^-+|-+$'), '');
+  }
 
   // Quill Controller for Rich Text Content
   late QuillController quillController;
@@ -90,6 +100,11 @@ class ArticleController extends GetxController {
   void onInit() {
     super.onInit();
     quillController = QuillController.basic();
+    titleController.addListener(() {
+      if (!isSlugManuallyEdited) {
+        slugController.text = generateSlug(titleController.text);
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchArticles();
     });
@@ -98,6 +113,7 @@ class ArticleController extends GetxController {
   @override
   void onClose() {
     titleController.dispose();
+    slugController.dispose();
     authorController.dispose();
     imageUrlController.dispose();
     quillController.dispose();
@@ -106,9 +122,11 @@ class ArticleController extends GetxController {
 
   void clearForm() {
     titleController.clear();
+    slugController.clear();
     authorController.clear();
     imageUrlController.clear();
     selectedDate.value = DateTime.now();
+    isSlugManuallyEdited = false;
     quillController.document = Document();
     selectedHeaderImageFile.value = null;
     uploadStatusMessage.value = '';
@@ -188,6 +206,8 @@ class ArticleController extends GetxController {
     if (article != null) {
       editingArticleId.value = article.id;
       titleController.text = article.title;
+      slugController.text = article.slug.isNotEmpty ? article.slug : generateSlug(article.title);
+      isSlugManuallyEdited = article.slug.isNotEmpty;
       authorController.text = article.author;
       imageUrlController.text = article.imageUrl;
       selectedDate.value = article.date;
@@ -245,6 +265,29 @@ class ArticleController extends GetxController {
                         decoration: const InputDecoration(
                           labelText: 'Judul Artikel',
                           border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: slugController,
+                        onChanged: (val) {
+                          isSlugManuallyEdited = val.trim().isNotEmpty;
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Slug URL (Auto dari Judul)',
+                          hintText: 'misal: sang-pemberontak',
+                          helperText: slugController.text.isNotEmpty
+                              ? 'URL Frontend: /warta/${slugController.text}'
+                              : 'Terisi otomatis jika dikosongkan',
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.refresh, size: 18),
+                            tooltip: 'Generate Ulang dari Judul',
+                            onPressed: () {
+                              slugController.text = generateSlug(titleController.text);
+                              isSlugManuallyEdited = false;
+                            },
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -529,9 +572,14 @@ class ArticleController extends GetxController {
   }
 
   Future<bool> addArticle() async {
+    final finalSlug = slugController.text.trim().isNotEmpty
+        ? slugController.text.trim()
+        : generateSlug(titleController.text);
+
     final newArticle = Article(
       id: '',
       title: titleController.text.trim(),
+      slug: finalSlug,
       content: getContentAsString(),
       date: selectedDate.value,
       author: authorController.text.trim(),
@@ -555,9 +603,14 @@ class ArticleController extends GetxController {
   }
 
   Future<bool> updateArticle() async {
+    final finalSlug = slugController.text.trim().isNotEmpty
+        ? slugController.text.trim()
+        : generateSlug(titleController.text);
+
     final updatedArticle = Article(
       id: editingArticleId.value,
       title: titleController.text.trim(),
+      slug: finalSlug,
       content: getContentAsString(),
       date: selectedDate.value,
       author: authorController.text.trim(),

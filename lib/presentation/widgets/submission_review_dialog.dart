@@ -24,6 +24,9 @@ class _SubmissionReviewDialogState extends State<SubmissionReviewDialog> {
   late String _currentStatus;
   String _fullSynopsis = '';
   String _fullPdfUrl = '';
+  String _fullTitle = '';
+  String _fullPhone = '';
+  String _fullPaymentProof = '';
   bool _isLoadingDetails = true;
 
   @override
@@ -32,13 +35,15 @@ class _SubmissionReviewDialogState extends State<SubmissionReviewDialog> {
     _currentStatus = widget.submission.status;
     _fullSynopsis = widget.submission.synopsis;
     _fullPdfUrl = widget.submission.pdfDocumentUrl;
+    _fullTitle = widget.submission.title;
+    _fullPhone = widget.submission.phone;
+    _fullPaymentProof = widget.submission.paymentProofUrl;
 
     _fetchFullDetails();
   }
 
   Future<void> _fetchFullDetails() async {
-    // If synopsis or PDF URL is missing from list view, fetch single full row
-    if (_fullSynopsis.isEmpty || _fullPdfUrl.isEmpty) {
+    if (_fullSynopsis.isEmpty || _fullPdfUrl.isEmpty || _fullTitle.isEmpty || _fullPhone.isEmpty || _fullPaymentProof.isEmpty) {
       try {
         final ds = Get.find<SupabaseRemoteDataSource>();
         final detail = await ds.getSubmissionById(widget.submission.id);
@@ -49,6 +54,20 @@ class _SubmissionReviewDialogState extends State<SubmissionReviewDialog> {
                 detail['pdfDocumentUrl']?.toString() ??
                 detail['pdf_url']?.toString() ??
                 _fullPdfUrl;
+            _fullTitle = detail['title']?.toString() ??
+                detail['book_title']?.toString() ??
+                detail['judul_naskah']?.toString() ??
+                _fullTitle;
+            _fullPhone = detail['phone']?.toString() ??
+                detail['whatsapp']?.toString() ??
+                detail['no_wa']?.toString() ??
+                detail['phone_number']?.toString() ??
+                _fullPhone;
+            _fullPaymentProof = detail['payment_proof_url']?.toString() ??
+                detail['paymentProofUrl']?.toString() ??
+                detail['bukti_transfer_url']?.toString() ??
+                detail['bukti_transfer']?.toString() ??
+                _fullPaymentProof;
             _isLoadingDetails = false;
           });
           return;
@@ -63,12 +82,22 @@ class _SubmissionReviewDialogState extends State<SubmissionReviewDialog> {
     }
   }
 
-  Future<void> _openPdf(String url) async {
+  Future<void> _openUrl(String url) async {
     if (url.trim().isEmpty) return;
     try {
       final uri = Uri.parse(url);
       await launchUrl(uri, webOnlyWindowName: '_blank');
     } catch (_) {}
+  }
+
+  Future<void> _openWhatsApp(String phone) async {
+    if (phone.trim().isEmpty) return;
+    String cleanNumber = phone.replaceAll(RegExp(r'\D'), '');
+    if (cleanNumber.startsWith('08')) {
+      cleanNumber = '62${cleanNumber.substring(1)}';
+    }
+    final url = 'https://wa.me/$cleanNumber';
+    _openUrl(url);
   }
 
   String _formatDate(DateTime date) {
@@ -111,7 +140,7 @@ class _SubmissionReviewDialogState extends State<SubmissionReviewDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       elevation: 16,
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 650, maxHeight: 700),
+        constraints: const BoxConstraints(maxWidth: 700, maxHeight: 750),
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -181,9 +210,9 @@ class _SubmissionReviewDialogState extends State<SubmissionReviewDialog> {
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             const Divider(height: 1),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Scrollable Content
             Expanded(
@@ -191,6 +220,43 @@ class _SubmissionReviewDialogState extends State<SubmissionReviewDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Judul Naskah Card
+                    if (_fullTitle.isNotEmpty) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'JUDUL NASKAH',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryColor,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _fullTitle,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
                     // Sender Info Card
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -199,47 +265,105 @@ class _SubmissionReviewDialogState extends State<SubmissionReviewDialog> {
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(color: AppTheme.borderColor),
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const CircleAvatar(
-                            radius: 22,
-                            backgroundColor: Colors.white,
-                            child: Icon(LucideIcons.user, size: 22, color: AppTheme.primaryColor),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.submission.senderName,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppTheme.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-                                Row(
+                          Row(
+                            children: [
+                              const CircleAvatar(
+                                radius: 22,
+                                backgroundColor: Colors.white,
+                                child: Icon(LucideIcons.user, size: 22, color: AppTheme.primaryColor),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(LucideIcons.mail, size: 13, color: AppTheme.textSecondary),
-                                    const SizedBox(width: 4),
                                     Text(
-                                      widget.submission.email,
-                                      style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                      widget.submission.senderName,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.textPrimary,
+                                      ),
                                     ),
-                                    const SizedBox(width: 14),
-                                    const Icon(LucideIcons.calendar, size: 13, color: AppTheme.textMuted),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      _formatDate(widget.submission.createdAt),
-                                      style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                                    const SizedBox(height: 4),
+                                    Wrap(
+                                      spacing: 12,
+                                      runSpacing: 4,
+                                      children: [
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(LucideIcons.mail, size: 13, color: AppTheme.textSecondary),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              widget.submission.email,
+                                              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(LucideIcons.calendar, size: 13, color: AppTheme.textMuted),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              _formatDate(widget.submission.createdAt),
+                                              style: const TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
+                              ),
+                            ],
+                          ),
+                          if (_fullPhone.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            const Divider(height: 1),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                const Icon(LucideIcons.phoneCall, size: 14, color: Color(0xFF10B981)),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  'WhatsApp: ',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+                                ),
+                                Text(
+                                  _fullPhone,
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                                ),
+                                const SizedBox(width: 10),
+                                InkWell(
+                                  onTap: () => _openWhatsApp(_fullPhone),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(LucideIcons.messageSquare, size: 12, color: Color(0xFF10B981)),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Chat WA',
+                                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
@@ -330,8 +454,8 @@ class _SubmissionReviewDialogState extends State<SubmissionReviewDialog> {
                                 const SizedBox(height: 2),
                                 Text(
                                   _fullPdfUrl.isNotEmpty
-                                      ? 'Klik tombol di kanan untuk membuka atau membaca naskah'
-                                      : 'Pengirim tidak melampirkan berkas',
+                                      ? 'Direct URL Supabase Storage'
+                                      : 'Pengirim tidak melampirkan berkas naskah',
                                   style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
                                 ),
                               ],
@@ -339,9 +463,9 @@ class _SubmissionReviewDialogState extends State<SubmissionReviewDialog> {
                           ),
                           if (_fullPdfUrl.isNotEmpty)
                             ElevatedButton.icon(
-                              onPressed: () => _openPdf(_fullPdfUrl),
+                              onPressed: () => _openUrl(_fullPdfUrl),
                               icon: const Icon(LucideIcons.externalLink, size: 15),
-                              label: const Text('Buka PDF'),
+                              label: const Text('Buka / Unduh PDF'),
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                                 textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
@@ -355,9 +479,9 @@ class _SubmissionReviewDialogState extends State<SubmissionReviewDialog> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             const Divider(height: 1),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Footer Status Change Actions
             Row(
@@ -367,28 +491,41 @@ class _SubmissionReviewDialogState extends State<SubmissionReviewDialog> {
                   onPressed: () => Get.back(),
                   child: const Text('Tutup Dialog'),
                 ),
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() => _currentStatus = 'pending');
+                        widget.onStatusChanged('pending');
+                        Get.back();
+                      },
+                      icon: const Icon(LucideIcons.clock, size: 15, color: Colors.orangeAccent),
+                      label: const Text('Pending', style: TextStyle(color: Colors.orangeAccent)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.orangeAccent, width: 1.2),
+                      ),
+                    ),
                     OutlinedButton.icon(
                       onPressed: () {
                         setState(() => _currentStatus = 'ditolak');
                         widget.onStatusChanged('ditolak');
                         Get.back();
                       },
-                      icon: const Icon(LucideIcons.xCircle, size: 16, color: Colors.redAccent),
+                      icon: const Icon(LucideIcons.xCircle, size: 15, color: Colors.redAccent),
                       label: const Text('Tolak Naskah', style: TextStyle(color: Colors.redAccent)),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.redAccent, width: 1.2),
                       ),
                     ),
-                    const SizedBox(width: 12),
                     ElevatedButton.icon(
                       onPressed: () {
                         setState(() => _currentStatus = 'diterima');
                         widget.onStatusChanged('diterima');
                         Get.back();
                       },
-                      icon: const Icon(LucideIcons.checkCircle, size: 16),
+                      icon: const Icon(LucideIcons.checkCircle, size: 15),
                       label: const Text('Terima Naskah'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF10B981),

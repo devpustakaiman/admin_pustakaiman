@@ -737,7 +737,7 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
       // Lightweight fetch: omit heavy synopsis and pdf document url on list cards
       var query = supabaseClient
           .from('submissions')
-          .select('id, sender_name, email, status, created_at')
+          .select()
           .isFilter('deleted_at', null);
 
       if (status != null &&
@@ -754,7 +754,7 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
       try {
         final response = await supabaseClient
             .from('submissions')
-            .select('id, sender_name, email, status, created_at')
+            .select()
             .isFilter('deleted_at', null)
             .range(from, to);
         return List<Map<String, dynamic>>.from(response);
