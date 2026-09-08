@@ -8,10 +8,10 @@ class MainLayoutController extends GetxController {
 
   void changePage(int index) {
     selectedIndex.value = index;
-    if (index >= 1 && index <= 6) {
+    if (index >= 1 && index <= 7) {
       isKelolaDataExpanded.value = true;
       isKelolaHalamanExpanded.value = false;
-    } else if (index >= 7 && index <= 12) {
+    } else if (index >= 8 && index <= 13) {
       isKelolaHalamanExpanded.value = true;
       isKelolaDataExpanded.value = false;
     }
