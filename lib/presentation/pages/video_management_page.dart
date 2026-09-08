@@ -713,7 +713,7 @@ class VideoManagementPage extends GetView<VideoController> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          listWidget,
+          isMobileScroll ? listWidget : Expanded(child: listWidget),
           const SizedBox(height: 16),
           _buildPaginationFooter(context, isMobile: isMobileScroll),
         ],
