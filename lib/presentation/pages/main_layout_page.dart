@@ -16,6 +16,7 @@ import 'video_management_page.dart';
 import 'web_settings/about_settings_page.dart';
 import 'web_settings/catalog_settings_page.dart';
 import 'web_settings/contact_settings_page.dart';
+import 'web_settings/footer_settings_page.dart';
 import 'web_settings/hero_settings_page.dart';
 import 'web_settings/manuscript_settings_page.dart';
 import 'web_settings/preorder_settings_page.dart';
@@ -41,6 +42,7 @@ class MainLayoutPage extends StatelessWidget {
       AboutSettingsPage(),
       ContactSettingsPage(),
       ManuscriptSettingsPage(),
+      FooterSettingsPage(),
       TrashManagementPage(),
     ];
 
@@ -59,6 +61,7 @@ class MainLayoutPage extends StatelessWidget {
       'Tentang Kami',
       'Kontak & Layanan',
       'Kirim Naskah',
+      'Kelola Footer & Media Sosial',
       'Keranjang Sampah',
     ];
 

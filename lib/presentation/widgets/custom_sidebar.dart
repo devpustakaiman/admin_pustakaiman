@@ -51,10 +51,11 @@ class _CustomSidebarState extends State<CustomSidebar> {
       _NavItemData('Tentang Kami', LucideIcons.info, 11),
       _NavItemData('Kontak & Layanan', LucideIcons.headphones, 12),
       _NavItemData('Kirim Naskah', LucideIcons.bookOpen, 13),
+      _NavItemData('Kelola Footer & Media Sosial', LucideIcons.share2, 14),
     ];
 
     final bottomNavItems = [
-      _NavItemData('Keranjang Sampah', LucideIcons.trash2, 14),
+      _NavItemData('Keranjang Sampah', LucideIcons.trash2, 15),
     ];
 
     Widget buildNavItem(_NavItemData item, {bool isSubItem = false}) {
@@ -358,7 +359,7 @@ class _CustomSidebarState extends State<CustomSidebar> {
                       icon: LucideIcons.layers,
                       isExpandedRx: controller.isKelolaHalamanExpanded,
                       minRangeIndex: 8,
-                      maxRangeIndex: 13,
+                      maxRangeIndex: 14,
                       onTap: () => controller.toggleKelolaHalaman(),
                       subItems: kelolaHalamanSubItems,
                     ),

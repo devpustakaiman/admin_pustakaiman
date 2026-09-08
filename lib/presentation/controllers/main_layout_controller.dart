@@ -11,7 +11,7 @@ class MainLayoutController extends GetxController {
     if (index >= 1 && index <= 7) {
       isKelolaDataExpanded.value = true;
       isKelolaHalamanExpanded.value = false;
-    } else if (index >= 8 && index <= 13) {
+    } else if (index >= 8 && index <= 14) {
       isKelolaHalamanExpanded.value = true;
       isKelolaDataExpanded.value = false;
     }

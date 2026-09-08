@@ -56,6 +56,8 @@ abstract class SupabaseRemoteDataSource {
   Future<List<Map<String, dynamic>>> getBooksForDropdown();
   Future<Map<String, dynamic>?> getSiteSettings();
   Future<void> updateSiteSettings(Map<String, dynamic> settings);
+  Future<Map<String, dynamic>?> getFooterSettings();
+  Future<void> updateFooterSettings(Map<String, dynamic> footerSettings);
   Future<Map<String, dynamic>> getPreorderWaSettings();
   Future<void> updatePreorderWaSettings({required bool enabled, required String number});
   Future<List<Map<String, dynamic>>> getBankAccounts();
@@ -1131,6 +1133,38 @@ class SupabaseRemoteDataSourceImpl implements SupabaseRemoteDataSource {
     if (!payload.containsKey('id') || payload['id'] == null) {
       payload['id'] = 'default';
     }
+    await supabaseClient.from('site_settings').upsert(payload);
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getFooterSettings() async {
+    try {
+      final res = await supabaseClient
+          .from('site_settings')
+          .select('facebook_url, x_url, twitter_url, instagram_url, tiktok_url, mizanstore_url')
+          .eq('id', 'default')
+          .maybeSingle();
+      if (res != null) return Map<String, dynamic>.from(res);
+    } catch (_) {}
+
+    try {
+      final res = await supabaseClient
+          .from('site_settings')
+          .select()
+          .limit(1)
+          .maybeSingle();
+      if (res != null) return Map<String, dynamic>.from(res);
+    } catch (_) {}
+
+    return null;
+  }
+
+  @override
+  Future<void> updateFooterSettings(Map<String, dynamic> footerSettings) async {
+    final payload = Map<String, dynamic>.from(footerSettings);
+    payload['id'] = 'default';
+    payload['updated_at'] = DateTime.now().toIso8601String();
+
     await supabaseClient.from('site_settings').upsert(payload);
   }
 

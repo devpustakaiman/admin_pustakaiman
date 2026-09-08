@@ -136,6 +136,14 @@ class WebSettingsController extends GetxController {
   final RxList<String> catalogFeaturedCategories = <String>[].obs;
   final RxBool isSavingCatalogInfo = false.obs;
 
+  // Footer & Media Sosial Settings
+  final footerFacebookController = TextEditingController();
+  final footerXController = TextEditingController();
+  final footerInstagramController = TextEditingController();
+  final footerTiktokController = TextEditingController();
+  final footerMizanstoreController = TextEditingController();
+  final RxBool isSavingFooterInfo = false.obs;
+
   final RxString bannerUrl = ''.obs;
   final Rx<PlatformFile?> selectedBannerFile = Rx<PlatformFile?>(null);
 
@@ -163,6 +171,12 @@ class WebSettingsController extends GetxController {
   static const String defaultCatalogTitle = 'Katalog Buku Pustaka Iman';
   static const String defaultCatalogSubtitle =
       'Jelajahi koleksi buku Islam kontemporer, spiritualitas, wawasan kebangsaan, dan novel bermakna karya penulis terkemuka.';
+
+  static const String defaultFacebookUrl = 'https://www.facebook.com/penerbit.imania/';
+  static const String defaultXUrl = 'https://x.com/penerbitimania';
+  static const String defaultInstagramUrl = 'https://www.instagram.com/penerbitimania/';
+  static const String defaultTiktokUrl = 'https://www.tiktok.com/@penerbitimania';
+  static const String defaultMizanstoreUrl = 'https://www.mizanstore.com/';
 
   static const List<String> defaultCatalogCategories = [
     'Agama & Filsafat',
@@ -242,6 +256,11 @@ class WebSettingsController extends GetxController {
     catalogSubtitleController.dispose();
     catalogPromoBannerLinkController.dispose();
     preorderWaNumberController.dispose();
+    footerFacebookController.dispose();
+    footerXController.dispose();
+    footerInstagramController.dispose();
+    footerTiktokController.dispose();
+    footerMizanstoreController.dispose();
     super.onClose();
   }
 
@@ -284,23 +303,38 @@ class WebSettingsController extends GetxController {
     errorMessage.value = '';
 
     try {
-      // Run settings load, books fetch, bank accounts load, and preorder WA settings load concurrently
+      // Run settings load, books fetch, bank accounts load, preorder WA, and footer settings load concurrently
       final results = await Future.wait([
         remoteDataSource.getSiteSettings(),
         remoteDataSource.getBooksForDropdown(),
         remoteDataSource.getBankAccounts(),
         remoteDataSource.getPreorderWaSettings(),
+        remoteDataSource.getFooterSettings(),
       ]);
 
       final settings = results[0] as Map<String, dynamic>?;
       final rawBooks = results[1] as List<Map<String, dynamic>>? ?? [];
       final rawBankAccounts = results[2] as List<Map<String, dynamic>>? ?? [];
       final preorderWa = results[3] as Map<String, dynamic>? ?? {};
+      final footerSettings = results[4] as Map<String, dynamic>?;
 
       booksList.value = rawBooks.map((m) => FeaturedBookItem.fromJson(m)).toList();
       bankAccounts.value = rawBankAccounts.map((json) => BankAccountModel.fromJson(json)).toList();
       preorderWaEnabled.value = preorderWa['preorder_wa_enabled'] ?? true;
       preorderWaNumberController.text = preorderWa['preorder_wa_number']?.toString() ?? '';
+
+      // Populate Footer & Media Sosial settings
+      final fbUrl = footerSettings?['facebook_url']?.toString() ?? settings?['facebook_url']?.toString();
+      final xUrl = footerSettings?['x_url']?.toString() ?? footerSettings?['twitter_url']?.toString() ?? settings?['x_url']?.toString() ?? settings?['twitter_url']?.toString();
+      final igUrl = footerSettings?['instagram_url']?.toString() ?? settings?['instagram_url']?.toString();
+      final ttUrl = footerSettings?['tiktok_url']?.toString() ?? settings?['tiktok_url']?.toString();
+      final msUrl = footerSettings?['mizanstore_url']?.toString() ?? settings?['mizanstore_url']?.toString();
+
+      footerFacebookController.text = (fbUrl != null && fbUrl.isNotEmpty) ? fbUrl : defaultFacebookUrl;
+      footerXController.text = (xUrl != null && xUrl.isNotEmpty) ? xUrl : defaultXUrl;
+      footerInstagramController.text = (igUrl != null && igUrl.isNotEmpty) ? igUrl : defaultInstagramUrl;
+      footerTiktokController.text = (ttUrl != null && ttUrl.isNotEmpty) ? ttUrl : defaultTiktokUrl;
+      footerMizanstoreController.text = (msUrl != null && msUrl.isNotEmpty) ? msUrl : defaultMizanstoreUrl;
 
       final defaultStats = [
         {'value': '2001', 'label': 'Tahun Berdiri'},
@@ -610,6 +644,65 @@ class WebSettingsController extends GetxController {
       return true;
     } catch (e) {
       isSavingContactInfo.value = false;
+      errorMessage.value = e.toString();
+      return false;
+    }
+  }
+
+  bool isValidUrl(String input) {
+    final trimmed = input.trim();
+    if (trimmed.isEmpty) return true;
+    final uri = Uri.tryParse(trimmed);
+    return uri != null && uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https');
+  }
+
+  Future<bool> saveFooterInfo() async {
+    final fb = footerFacebookController.text.trim();
+    final x = footerXController.text.trim();
+    final ig = footerInstagramController.text.trim();
+    final tt = footerTiktokController.text.trim();
+    final ms = footerMizanstoreController.text.trim();
+
+    if (!isValidUrl(fb)) {
+      errorMessage.value = 'URL Facebook tidak valid. Harap sertakan http:// atau https://';
+      return false;
+    }
+    if (!isValidUrl(x)) {
+      errorMessage.value = 'URL X (Twitter) tidak valid. Harap sertakan http:// atau https://';
+      return false;
+    }
+    if (!isValidUrl(ig)) {
+      errorMessage.value = 'URL Instagram tidak valid. Harap sertakan http:// atau https://';
+      return false;
+    }
+    if (!isValidUrl(tt)) {
+      errorMessage.value = 'URL TikTok tidak valid. Harap sertakan http:// atau https://';
+      return false;
+    }
+    if (!isValidUrl(ms)) {
+      errorMessage.value = 'URL Mizanstore tidak valid. Harap sertakan http:// atau https://';
+      return false;
+    }
+
+    isSavingFooterInfo.value = true;
+    errorMessage.value = '';
+
+    try {
+      final payload = {
+        'id': 'default',
+        'facebook_url': fb,
+        'x_url': x,
+        'twitter_url': x,
+        'instagram_url': ig,
+        'tiktok_url': tt,
+        'mizanstore_url': ms,
+      };
+
+      await remoteDataSource.updateFooterSettings(payload);
+      isSavingFooterInfo.value = false;
+      return true;
+    } catch (e) {
+      isSavingFooterInfo.value = false;
       errorMessage.value = e.toString();
       return false;
     }
