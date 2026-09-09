@@ -206,51 +206,6 @@ class FooterSettingsPage extends StatelessWidget {
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
-
-          const SizedBox(height: 24),
-
-          // Simpan Perubahan Button
-          Align(
-            alignment: Alignment.centerRight,
-            child: Obx(
-              () => ElevatedButton.icon(
-                onPressed: controller.isSavingFooterInfo.value
-                    ? null
-                    : () async {
-                        final success = await controller.saveFooterInfo();
-                        if (context.mounted) {
-                          if (success) {
-                            AppToast.showSuccess(
-                              context,
-                              'Perubahan footer berhasil disimpan',
-                            );
-                          } else {
-                            AppToast.showError(
-                              context,
-                              controller.errorMessage.value.isNotEmpty
-                                  ? controller.errorMessage.value
-                                  : 'Gagal menyimpan perubahan footer.',
-                            );
-                          }
-                        }
-                      },
-                icon: controller.isSavingFooterInfo.value
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(LucideIcons.save, size: 16),
-                label: Text(controller.isSavingFooterInfo.value ? 'Menyimpan...' : 'Simpan Perubahan'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
