@@ -398,8 +398,13 @@ class _CustomSidebarState extends State<CustomSidebar> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          Supabase.instance.client.auth.currentUser?.email ??
-                              'Administrator',
+                          () {
+                            try {
+                              return Supabase.instance.client.auth.currentUser?.email ?? 'Administrator';
+                            } catch (_) {
+                              return 'Administrator';
+                            }
+                          }(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 12,
@@ -423,7 +428,9 @@ class _CustomSidebarState extends State<CustomSidebar> {
                     icon: const Icon(LucideIcons.logOut, size: 18, color: Colors.redAccent),
                     tooltip: 'Keluar Portal',
                     onPressed: () async {
-                      await Supabase.instance.client.auth.signOut();
+                      try {
+                        await Supabase.instance.client.auth.signOut();
+                      } catch (_) {}
                       Get.offAllNamed(AppRoutes.login);
                     },
                   ),

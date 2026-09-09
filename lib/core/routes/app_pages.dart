@@ -1,10 +1,7 @@
 import 'package:get/get.dart';
+import '../../main.dart';
 import '../../presentation/bindings/dashboard_binding.dart';
-import '../../presentation/pages/book_management_page.dart';
 import '../../presentation/pages/login_page.dart';
-import '../../presentation/pages/main_layout_page.dart';
-import '../../presentation/pages/submission_management_page.dart';
-import '../middleware/auth_middleware.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -15,21 +12,19 @@ class AppPages {
     ),
     GetPage(
       name: AppRoutes.mainLayout,
-      page: () => const MainLayoutPage(),
+      page: () => const AppAuthGate(),
       binding: DashboardBinding(),
-      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: AppRoutes.bookManagement,
-      page: () => const BookManagementPage(),
+      page: () => const AppAuthGate(),
       binding: DashboardBinding(),
-      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: AppRoutes.submissionManagement,
-      page: () => const SubmissionManagementPage(),
+      page: () => const AppAuthGate(),
       binding: DashboardBinding(),
-      middlewares: [AuthMiddleware()],
     ),
   ];
 }
+
