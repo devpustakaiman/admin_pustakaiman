@@ -53,12 +53,22 @@ class BookModel extends Book {
       return null;
     }
 
+    String parsedCover = '';
+    final coverKeys = ['coverUrl', 'cover_url', 'cover_image', 'image_url', 'cover'];
+    for (final k in coverKeys) {
+      final val = json[k]?.toString().trim();
+      if (val != null && val.isNotEmpty && val != 'null') {
+        parsedCover = val;
+        break;
+      }
+    }
+
     return BookModel(
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
       author: json['author'] as String? ?? '',
       synopsis: json['synopsis'] as String? ?? '',
-      coverUrl: json['cover_url'] as String? ?? json['coverUrl'] as String? ?? '',
+      coverUrl: parsedCover,
       pdfPreviewUrl: json['pdf_preview_url'] as String? ?? json['pdfPreviewUrl'] as String? ?? '',
       mizanstoreUrl: json['mizanstore_url'] as String? ?? json['mizanstoreUrl'] as String? ?? '',
       category: json['category'] as String? ?? '',

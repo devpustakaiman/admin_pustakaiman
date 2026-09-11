@@ -7,6 +7,7 @@ import '../../core/utils/app_toast.dart';
 import '../../data/models/bank_account_model.dart';
 import '../controllers/web_settings_controller.dart';
 import '../widgets/bank_account_dialog.dart';
+import '../widgets/book_selection_dialog.dart';
 import '../widgets/cms_page_header.dart';
 
 class WebSettingsPage extends StatelessWidget {
@@ -794,189 +795,14 @@ class WebSettingsPage extends StatelessWidget {
 
   // Book Picker Search Dialog
   void _showBookPickerModal(BuildContext context, WebSettingsController controller) {
-    final searchCtrl = TextEditingController();
-    final RxString searchFilter = ''.obs;
-
     showDialog(
       context: context,
-      builder: (dialogCtx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: Colors.white,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 580, maxHeight: 600),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Modal Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(LucideIcons.bookOpen, color: AppTheme.primaryColor, size: 20),
-                      SizedBox(width: 10),
-                      Text(
-                        'Pilih Buku untuk Floating Badge',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(LucideIcons.x, size: 18),
-                    onPressed: () => Navigator.of(dialogCtx).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              // Search Box
-              TextField(
-                controller: searchCtrl,
-                onChanged: (v) => searchFilter.value = v.trim().toLowerCase(),
-                decoration: InputDecoration(
-                  hintText: 'Cari judul buku...',
-                  prefixIcon: const Icon(LucideIcons.search, size: 18, color: AppTheme.textSecondary),
-                  suffixIcon: IconButton(
-                    icon: const Icon(LucideIcons.x, size: 16),
-                    onPressed: () {
-                      searchCtrl.clear();
-                      searchFilter.value = '';
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Books List
-              Expanded(
-                child: Obx(() {
-                  final query = searchFilter.value;
-                  final allBooks = controller.booksList;
-
-                  final filtered = query.isEmpty
-                      ? allBooks
-                      : allBooks.where((b) => b.title.toLowerCase().contains(query)).toList();
-
-                  if (filtered.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(LucideIcons.bookX, size: 36, color: AppTheme.textMuted),
-                          const SizedBox(height: 10),
-                          Text(
-                            query.isEmpty ? 'Belum ada data buku' : 'Tidak ada buku cocok dengan "$query"',
-                            style: const TextStyle(fontSize: 13, color: AppTheme.textSecondary),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return ListView.separated(
-                    itemCount: filtered.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (ctx, i) {
-                      final book = filtered[i];
-                      final isSelected = controller.selectedFeaturedBookId.value == book.id;
-                      final hasDiscount = book.discountPrice != null && book.discountPrice! > 0;
-
-                      return ListTile(
-                        onTap: () {
-                          controller.setFeaturedBook(book.id);
-                          Navigator.of(dialogCtx).pop();
-                        },
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: book.coverUrl.isNotEmpty
-                              ? CachedNetworkImage(
-                                  imageUrl: book.coverUrl,
-                                  width: 40,
-                                  height: 56,
-                                  fit: BoxFit.cover,
-                                  errorWidget: (_, __, ___) => Container(
-                                    width: 40,
-                                    height: 56,
-                                    color: AppTheme.inputFillColor,
-                                    child: const Icon(LucideIcons.book, size: 18, color: AppTheme.textMuted),
-                                  ),
-                                )
-                              : Container(
-                                  width: 40,
-                                  height: 56,
-                                  color: AppTheme.inputFillColor,
-                                  child: const Icon(LucideIcons.book, size: 18, color: AppTheme.textMuted),
-                                ),
-                        ),
-                        title: Text(
-                          book.title,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                            color: isSelected ? AppTheme.primaryColor : AppTheme.textPrimary,
-                          ),
-                        ),
-                        subtitle: Row(
-                          children: [
-                            if (hasDiscount) ...[
-                              Text(
-                                _formatPrice(book.discountPrice!),
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F766E)),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _formatPrice(book.price),
-                                style: const TextStyle(fontSize: 10, color: AppTheme.textMuted, decoration: TextDecoration.lineThrough),
-                              ),
-                            ] else ...[
-                              Text(
-                                _formatPrice(book.price),
-                                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
-                              ),
-                            ],
-                          ],
-                        ),
-                        trailing: isSelected
-                            ? Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: const BoxDecoration(
-                                  color: AppTheme.primaryColor,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(LucideIcons.check, size: 14, color: Colors.white),
-                              )
-                            : null,
-                      );
-                    },
-                  );
-                }),
-              ),
-              const SizedBox(height: 12),
-
-              // Footer
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      controller.setFeaturedBook(null);
-                      Navigator.of(dialogCtx).pop();
-                    },
-                    icon: const Icon(LucideIcons.xCircle, size: 16, color: Colors.redAccent),
-                    label: const Text('Hapus Pilihan (Kosongkan)', style: TextStyle(color: Colors.redAccent)),
-                  ),
-                  OutlinedButton(
-                    onPressed: () => Navigator.of(dialogCtx).pop(),
-                    child: const Text('Batal'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+      builder: (dialogCtx) => BookSelectionDialog(
+        controller: controller,
+        title: 'Pilih Buku untuk Floating Badge',
+        onSelected: (book) {
+          controller.setFeaturedBook(book.id);
+        },
       ),
     );
   }

@@ -7,22 +7,42 @@ import '../../core/utils/app_toast.dart';
 import '../../data/datasources/supabase_remote_data_source.dart';
 import '../../data/models/bank_account_model.dart';
 
+String formatCoverUrl(String rawUrl) {
+  final trimmed = rawUrl.trim();
+  if (trimmed.isEmpty) return '';
+  if (trimmed.startsWith('http://') ||
+      trimmed.startsWith('https://') ||
+      trimmed.startsWith('data:') ||
+      trimmed.startsWith('blob:')) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('/')) {
+    return 'https://bswcdqzgjitgpcekviuv.supabase.co$trimmed';
+  }
+  if (trimmed.startsWith('storage/')) {
+    return 'https://bswcdqzgjitgpcekviuv.supabase.co/$trimmed';
+  }
+  return 'https://bswcdqzgjitgpcekviuv.supabase.co/storage/v1/object/public/pustaka-assets/$trimmed';
+}
+
 class FeaturedBookItem {
   final String id;
   final String title;
   final String author;
+  final String category;
   final int price;
   final int? discountPrice;
   final String coverUrl;
 
-  const FeaturedBookItem({
+  FeaturedBookItem({
     required this.id,
     required this.title,
     this.author = '',
+    this.category = '',
     required this.price,
     this.discountPrice,
-    this.coverUrl = '',
-  });
+    String coverUrl = '',
+  }) : coverUrl = formatCoverUrl(coverUrl);
 
   factory FeaturedBookItem.fromJson(Map<String, dynamic> json) {
     int parsedPrice = 0;
@@ -41,16 +61,27 @@ class FeaturedBookItem {
       parsedDiscount = int.tryParse(rawDiscount);
     }
 
-    final cover = json['cover_url'] ?? json['coverUrl'] ?? '';
+    String cover = '';
+    final coverKeys = ['coverUrl', 'cover_url', 'cover_image', 'image_url', 'cover'];
+    for (final k in coverKeys) {
+      final val = json[k]?.toString().trim();
+      if (val != null && val.isNotEmpty && val != 'null') {
+        cover = val;
+        break;
+      }
+    }
+
     final authorStr = json['author'] ?? json['penulis'] ?? '';
+    final categoryStr = json['category'] ?? json['category_name'] ?? json['categoryName'] ?? '';
 
     return FeaturedBookItem(
       id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
       author: authorStr?.toString() ?? '',
+      category: categoryStr?.toString() ?? '',
       price: parsedPrice,
       discountPrice: parsedDiscount,
-      coverUrl: cover?.toString() ?? '',
+      coverUrl: cover,
     );
   }
 }
@@ -762,6 +793,7 @@ class WebSettingsController extends GetxController {
         'main': {
           'category': mainCat,
           'book_ids': featuredMainBooks.where((b) => b != null).map((b) => b!.id).toList(),
+          'covers': featuredMainBooks.where((b) => b != null).map((b) => b!.coverUrl).toList(),
           'books': featuredMainBooks.where((b) => b != null).map((b) => {
             'id': b!.id,
             'title': b.title,
@@ -769,6 +801,7 @@ class WebSettingsController extends GetxController {
             'price': b.price,
             'discount_price': b.discountPrice,
             'cover_url': b.coverUrl,
+            'coverUrl': b.coverUrl,
           }).toList(),
         },
         'supporting': featuredSupportingSlots.map((slot) {
@@ -776,6 +809,7 @@ class WebSettingsController extends GetxController {
             'slot': slot.slotIndex,
             'category': slot.category.value.trim(),
             'book_ids': slot.books.where((b) => b != null).map((b) => b!.id).toList(),
+            'covers': slot.books.where((b) => b != null).map((b) => b!.coverUrl).toList(),
             'books': slot.books.where((b) => b != null).map((b) => {
               'id': b!.id,
               'title': b.title,
@@ -783,6 +817,7 @@ class WebSettingsController extends GetxController {
               'price': b.price,
               'discount_price': b.discountPrice,
               'cover_url': b.coverUrl,
+              'coverUrl': b.coverUrl,
             }).toList(),
           };
         }).toList(),

@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../controllers/web_settings_controller.dart';
+import '../../widgets/book_selection_dialog.dart';
 import '../../widgets/cms_page_header.dart';
 
 class HeroSettingsPage extends StatelessWidget {
@@ -1452,6 +1453,7 @@ class HeroSettingsPage extends StatelessWidget {
                       onSelect: () => _showCoverSourcePicker(
                         context,
                         controller,
+                        categoryContext: controller.featuredMainCategory.value,
                         onImageUploaded: (url) => controller.setMainCategoryBook(
                           index,
                           FeaturedBookItem(id: '', title: 'Cover ${index + 1}', price: 0, coverUrl: url),
@@ -1612,6 +1614,7 @@ class HeroSettingsPage extends StatelessWidget {
                               onSelect: () => _showCoverSourcePicker(
                                 context,
                                 controller,
+                                categoryContext: slot.category.value,
                                 onImageUploaded: (url) => controller.setSupportingCategoryBook(
                                   slotIdx, 0,
                                   FeaturedBookItem(id: '', title: 'Cover 1', price: 0, coverUrl: url),
@@ -1629,6 +1632,7 @@ class HeroSettingsPage extends StatelessWidget {
                               onSelect: () => _showCoverSourcePicker(
                                 context,
                                 controller,
+                                categoryContext: slot.category.value,
                                 onImageUploaded: (url) => controller.setSupportingCategoryBook(
                                   slotIdx, 1,
                                   FeaturedBookItem(id: '', title: 'Cover 2', price: 0, coverUrl: url),
@@ -1687,18 +1691,24 @@ class HeroSettingsPage extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: book.coverUrl.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: book.coverUrl,
+                          ? Image.network(
+                              book.coverUrl,
                               width: width,
                               height: coverHeight,
                               fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) => Container(
-                                color: AppTheme.inputFillColor,
-                                child: const Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(LucideIcons.imageOff, size: 18, color: AppTheme.textMuted),
-                                  ],
+                              errorBuilder: (_, __, ___) => CachedNetworkImage(
+                                imageUrl: book.coverUrl,
+                                width: width,
+                                height: coverHeight,
+                                fit: BoxFit.cover,
+                                errorWidget: (_, __, ___) => Container(
+                                  color: AppTheme.inputFillColor,
+                                  child: const Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(LucideIcons.imageOff, size: 18, color: AppTheme.textMuted),
+                                    ],
+                                  ),
                                 ),
                               ),
                             )
@@ -1830,6 +1840,7 @@ class HeroSettingsPage extends StatelessWidget {
   void _showCoverSourcePicker(
     BuildContext context,
     WebSettingsController controller, {
+    String? categoryContext,
     required ValueChanged<String> onImageUploaded,
     required ValueChanged<FeaturedBookItem> onBookSelected,
   }) {
@@ -1921,7 +1932,12 @@ class HeroSettingsPage extends StatelessWidget {
                 InkWell(
                   onTap: () {
                     Navigator.of(ctx).pop();
-                    _showBookSearchDialog(context, controller, onSelected: onBookSelected);
+                    _showBookSearchDialog(
+                      context,
+                      controller,
+                      categoryContext: categoryContext,
+                      onSelected: onBookSelected,
+                    );
                   },
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
@@ -1969,106 +1985,16 @@ class HeroSettingsPage extends StatelessWidget {
   void _showBookSearchDialog(
     BuildContext context,
     WebSettingsController controller, {
+    String? categoryContext,
     required ValueChanged<FeaturedBookItem> onSelected,
   }) {
-    final searchCtrl = TextEditingController();
-    final RxString filterText = ''.obs;
-
     showDialog(
       context: context,
       builder: (dialogContext) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Container(
-            width: 500,
-            constraints: const BoxConstraints(maxHeight: 600),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Pilih Buku (Cover 2D)',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                    ),
-                    IconButton(
-                      icon: const Icon(LucideIcons.x, size: 18),
-                      onPressed: () => Navigator.of(dialogContext).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: searchCtrl,
-                  autofocus: true,
-                  onChanged: (val) => filterText.value = val,
-                  decoration: const InputDecoration(
-                    hintText: 'Cari judul buku atau penulis...',
-                    prefixIcon: Icon(LucideIcons.search, size: 18),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Expanded(
-                  child: Obx(() {
-                    final query = filterText.value.toLowerCase().trim();
-                    final allBooks = controller.booksList;
-                    final filtered = query.isEmpty
-                        ? allBooks
-                        : allBooks.where((b) =>
-                            b.title.toLowerCase().contains(query) ||
-                            b.author.toLowerCase().contains(query)).toList();
-
-                    if (filtered.isEmpty) {
-                      return const Center(
-                        child: Text('Buku tidak ditemukan', style: TextStyle(color: AppTheme.textMuted)),
-                      );
-                    }
-
-                    return ListView.separated(
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
-                      itemBuilder: (context, idx) {
-                        final item = filtered[idx];
-                        return ListTile(
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: item.coverUrl.isNotEmpty
-                                ? CachedNetworkImage(
-                                    imageUrl: item.coverUrl,
-                                    width: 36,
-                                    height: 50,
-                                    fit: BoxFit.cover,
-                                    errorWidget: (_, __, ___) => Container(
-                                      width: 36,
-                                      height: 50,
-                                      color: AppTheme.inputFillColor,
-                                      child: const Icon(LucideIcons.book, size: 16),
-                                    ),
-                                  )
-                                : Container(
-                                    width: 36,
-                                    height: 50,
-                                    color: AppTheme.inputFillColor,
-                                    child: const Icon(LucideIcons.book, size: 16),
-                                  ),
-                          ),
-                          title: Text(item.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                          subtitle: Text(item.author.isNotEmpty ? item.author : 'Penulis tidak diketahui', style: const TextStyle(fontSize: 11)),
-                          onTap: () {
-                            onSelected(item);
-                            Navigator.of(dialogContext).pop();
-                          },
-                        );
-                      },
-                    );
-                  }),
-                ),
-              ],
-            ),
-          ),
+        return BookSelectionDialog(
+          controller: controller,
+          initialCategory: categoryContext,
+          onSelected: onSelected,
         );
       },
     );
