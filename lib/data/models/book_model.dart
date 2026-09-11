@@ -17,6 +17,8 @@ class BookModel extends Book {
     super.promoPercentage,
     super.promoEndDate,
     super.isRecommended = false,
+    super.isUpcoming = false,
+    super.releaseDate,
     super.updatedAt,
     super.createdAt,
     super.deletedAt,
@@ -67,6 +69,8 @@ class BookModel extends Book {
       promoPercentage: parseOptionalInt(json['promo_percentage'] ?? json['promoPercentage']),
       promoEndDate: parseDateTime(json['promo_end_date'] ?? json['promoEndDate']),
       isRecommended: json['is_recommended'] as bool? ?? json['isRecommended'] as bool? ?? false,
+      isUpcoming: json['is_upcoming'] as bool? ?? json['isUpcoming'] as bool? ?? false,
+      releaseDate: parseDateTime(json['release_date'] ?? json['releaseDate']),
       updatedAt: parseDateTime(json['updated_at'] ?? json['updatedAt']),
       createdAt: parseDateTime(json['created_at'] ?? json['createdAt']),
       deletedAt: parseDateTime(json['deleted_at'] ?? json['deletedAt']),
@@ -89,6 +93,8 @@ class BookModel extends Book {
       'promo_percentage': promoPercentage,
       'promo_end_date': promoEndDate?.toIso8601String(),
       'is_recommended': isRecommended,
+      'is_upcoming': isUpcoming,
+      'release_date': releaseDate?.toIso8601String(),
     };
     if (id.isNotEmpty) {
       map['id'] = id;

@@ -14,6 +14,8 @@ class Book {
   final int? promoPercentage;
   final DateTime? promoEndDate;
   final bool isRecommended;
+  final bool isUpcoming;
+  final DateTime? releaseDate;
   final DateTime? updatedAt;
   final DateTime? createdAt;
   final DateTime? deletedAt;
@@ -34,6 +36,8 @@ class Book {
     this.promoPercentage,
     this.promoEndDate,
     this.isRecommended = false,
+    this.isUpcoming = false,
+    this.releaseDate,
     this.updatedAt,
     this.createdAt,
     this.deletedAt,

@@ -89,6 +89,7 @@ class BookController extends GetxController {
   final RxString selectedCategoryFilter = 'Semua Kategori'.obs;
   final Rxn<bool> recommendedFilter = Rxn<bool>(); // null: Semua, true: Ya, false: Tidak
   final Rxn<bool> promoFilter = Rxn<bool>(); // null: Semua, true: Ya, false: Tidak
+  final Rxn<bool> upcomingFilter = Rxn<bool>(); // null: Semua, true: Ya, false: Tidak
   final RxString sortBy = 'title'.obs; // 'title', 'author', 'price', 'category', 'date'
   final RxBool isAscending = true.obs;
   final RxInt currentPage = 0.obs;
@@ -140,7 +141,14 @@ class BookController extends GetxController {
       }
     }
 
-    // 5. Sorting (Judul, Penulis, Harga, Kategori, Tanggal)
+    // 5. Segera Terbit Filter (Tri-State)
+    if (upcomingFilter.value != null) {
+      result = result
+          .where((book) => book.isUpcoming == upcomingFilter.value)
+          .toList();
+    }
+
+    // 6. Sorting (Judul, Penulis, Harga, Kategori, Tanggal)
     result.sort((a, b) {
       int comparison = 0;
       switch (sortBy.value) {
@@ -207,6 +215,8 @@ class BookController extends GetxController {
   final RxBool isRecommended = false.obs;
   final RxBool isPromo = false.obs;
   final Rxn<DateTime> promoEndDate = Rxn<DateTime>();
+  final RxBool isUpcoming = false.obs;
+  final Rxn<DateTime> releaseDate = Rxn<DateTime>();
 
   @override
   void onInit() {
@@ -215,6 +225,7 @@ class BookController extends GetxController {
     ever(selectedCategoryFilter, (_) => currentPage.value = 0);
     ever(recommendedFilter, (_) => currentPage.value = 0);
     ever(promoFilter, (_) => currentPage.value = 0);
+    ever(upcomingFilter, (_) => currentPage.value = 0);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchBooks();
     });
@@ -259,6 +270,8 @@ class BookController extends GetxController {
     isRecommended.value = false;
     isPromo.value = false;
     promoEndDate.value = null;
+    isUpcoming.value = false;
+    releaseDate.value = null;
     selectedCoverFile.value = null;
     selectedPdfFile.value = null;
     existingGalleryUrls.clear();
@@ -454,6 +467,8 @@ class BookController extends GetxController {
       isRecommended.value = book.isRecommended;
       isPromo.value = book.isPromo;
       promoEndDate.value = book.promoEndDate;
+      isUpcoming.value = book.isUpcoming;
+      releaseDate.value = book.releaseDate;
       promoPriceController.text = book.promoPrice != null ? book.promoPrice.toString() : '';
       promoPercentageController.text = book.promoPercentage != null ? book.promoPercentage.toString() : '';
       selectedCoverFile.value = null;
@@ -679,11 +694,13 @@ class BookController extends GetxController {
           : categoryController.text.trim(),
       galleryUrls: galleryUrls,
       price: priceInt,
-      isPromo: isPromo.value,
-      promoPrice: promoPriceInt,
-      promoPercentage: promoPercentInt,
-      promoEndDate: isPromo.value ? promoEndDate.value : null,
-      isRecommended: isRecommended.value,
+      isPromo: isUpcoming.value ? false : isPromo.value,
+      promoPrice: isUpcoming.value ? null : promoPriceInt,
+      promoPercentage: isUpcoming.value ? null : promoPercentInt,
+      promoEndDate: (isUpcoming.value || !isPromo.value) ? null : promoEndDate.value,
+      isRecommended: isUpcoming.value ? false : isRecommended.value,
+      isUpcoming: isUpcoming.value,
+      releaseDate: releaseDate.value,
       updatedAt: DateTime.now(),
     );
 
@@ -720,11 +737,13 @@ class BookController extends GetxController {
           : categoryController.text.trim(),
       galleryUrls: galleryUrls,
       price: priceInt,
-      isPromo: isPromo.value,
-      promoPrice: promoPriceInt,
-      promoPercentage: promoPercentInt,
-      promoEndDate: isPromo.value ? promoEndDate.value : null,
-      isRecommended: isRecommended.value,
+      isPromo: isUpcoming.value ? false : isPromo.value,
+      promoPrice: isUpcoming.value ? null : promoPriceInt,
+      promoPercentage: isUpcoming.value ? null : promoPercentInt,
+      promoEndDate: (isUpcoming.value || !isPromo.value) ? null : promoEndDate.value,
+      isRecommended: isUpcoming.value ? false : isRecommended.value,
+      isUpcoming: isUpcoming.value,
+      releaseDate: releaseDate.value,
       updatedAt: DateTime.now(),
     );
 

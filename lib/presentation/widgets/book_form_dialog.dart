@@ -605,25 +605,30 @@ class BookFormDialog extends StatelessWidget {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: TextFormField(
-                                      controller: controller.priceController,
-                                      keyboardType: TextInputType.number,
-                                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                      decoration: const InputDecoration(
-                                        labelText: 'Harga Buku *',
-                                        hintText: '0',
-                                        prefixIcon: Padding(
-                                          padding: EdgeInsets.all(12),
-                                          child: Text(
-                                            'Rp',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: AppTheme.primaryColor,
+                                    child: Obx(() {
+                                      final isUpcoming = controller.isUpcoming.value;
+                                      return TextFormField(
+                                        controller: controller.priceController,
+                                        enabled: !isUpcoming,
+                                        readOnly: isUpcoming,
+                                        keyboardType: TextInputType.number,
+                                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                        decoration: InputDecoration(
+                                          labelText: isUpcoming ? 'Harga Buku (Opsional - Segera Terbit)' : 'Harga Buku *',
+                                          hintText: isUpcoming ? 'Belum ditetapkan' : '0',
+                                          prefixIcon: Padding(
+                                            padding: const EdgeInsets.all(12),
+                                            child: Text(
+                                              'Rp',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: isUpcoming ? AppTheme.textMuted : AppTheme.primaryColor,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ),
+                                      );
+                                    }),
                                   ),
                                 ],
                               ),
@@ -638,20 +643,167 @@ class BookFormDialog extends StatelessWidget {
                               _buildSectionHeader('Kurasi & Promosi', LucideIcons.sparkles),
                               const SizedBox(height: 12),
 
-                              // SwitchListTile: Rekomendasikan Buku Ini
+                              // SwitchListTile: Buku Segera Terbit
                               Obx(() {
                                 return SwitchListTile(
-                                  value: controller.isRecommended.value,
-                                  onChanged: (val) => controller.isRecommended.value = val,
+                                  value: controller.isUpcoming.value,
+                                  onChanged: isBusy
+                                      ? null
+                                      : (val) {
+                                          controller.isUpcoming.value = val;
+                                          if (val) {
+                                            controller.isRecommended.value = false;
+                                            controller.isPromo.value = false;
+                                            controller.promoPriceController.clear();
+                                            controller.promoPercentageController.clear();
+                                            controller.promoEndDate.value = null;
+                                          }
+                                        },
                                   activeThumbColor: AppTheme.primaryColor,
                                   contentPadding: EdgeInsets.zero,
                                   title: const Text(
-                                    'Rekomendasikan Buku Ini',
+                                    'Buku Segera Terbit',
                                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                                   ),
                                   subtitle: const Text(
-                                    'Tampilkan lencana rekomendasi emas di katalog & aplikasi',
+                                    'Tandai sebagai buku yang akan datang/segera rilis',
                                     style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                  ),
+                                );
+                              }),
+
+                              // Optional Release Date Picker (revealed when isUpcoming is true)
+                              Obx(() {
+                                if (!controller.isUpcoming.value) return const SizedBox.shrink();
+
+                                final releaseDate = controller.releaseDate.value;
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(top: 8, bottom: 8),
+                                  child: InkWell(
+                                    onTap: isBusy
+                                        ? null
+                                        : () async {
+                                            final now = DateTime.now();
+                                            final initial = releaseDate ?? now;
+                                            final picked = await showDatePicker(
+                                              context: context,
+                                              initialDate: initial,
+                                              firstDate: DateTime(now.year - 1),
+                                              lastDate: DateTime(now.year + 5),
+                                              builder: (context, child) {
+                                                return Theme(
+                                                  data: Theme.of(context).copyWith(
+                                                    colorScheme: const ColorScheme.light(
+                                                      primary: AppTheme.primaryColor,
+                                                      onPrimary: Colors.white,
+                                                      onSurface: AppTheme.textPrimary,
+                                                    ),
+                                                  ),
+                                                  child: child!,
+                                                );
+                                              },
+                                            );
+                                            if (picked != null) {
+                                              controller.releaseDate.value = picked;
+                                            }
+                                          },
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.inputFillColor,
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(color: AppTheme.borderColor),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Text(
+                                                  'Perkiraan Tanggal Rilis',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: AppTheme.textSecondary,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  releaseDate != null
+                                                      ? _formatPromoDate(releaseDate)
+                                                      : 'Pilih Perkiraan Tanggal Rilis (Opsional)',
+                                                  style: TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: releaseDate != null
+                                                        ? FontWeight.w600
+                                                        : FontWeight.normal,
+                                                    color: releaseDate != null
+                                                        ? AppTheme.textPrimary
+                                                        : AppTheme.textMuted,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              if (releaseDate != null)
+                                                IconButton(
+                                                  icon: const Icon(LucideIcons.x, size: 16, color: AppTheme.textSecondary),
+                                                  onPressed: () => controller.releaseDate.value = null,
+                                                  tooltip: 'Hapus Tanggal',
+                                                  padding: EdgeInsets.zero,
+                                                  constraints: const BoxConstraints(),
+                                                ),
+                                              if (releaseDate != null) const SizedBox(width: 8),
+                                              const Icon(
+                                                LucideIcons.calendar,
+                                                size: 18,
+                                                color: AppTheme.primaryColor,
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+
+                              const Divider(height: 20),
+
+                              // SwitchListTile: Rekomendasikan Buku Ini
+                              Obx(() {
+                                final isUpcoming = controller.isUpcoming.value;
+                                return SwitchListTile(
+                                  value: isUpcoming ? false : controller.isRecommended.value,
+                                  onChanged: isUpcoming || isBusy
+                                      ? null
+                                      : (val) => controller.isRecommended.value = val,
+                                  activeThumbColor: AppTheme.primaryColor,
+                                  contentPadding: EdgeInsets.zero,
+                                  title: Text(
+                                    'Rekomendasikan Buku Ini',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: isUpcoming ? AppTheme.textMuted : AppTheme.textPrimary,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    isUpcoming
+                                        ? 'Tidak dapat direkomendasikan saat status Buku Segera Terbit aktif'
+                                        : 'Tampilkan lencana rekomendasi emas di katalog & aplikasi',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isUpcoming ? AppTheme.textMuted : AppTheme.textSecondary,
+                                    ),
                                   ),
                                 );
                               }),
@@ -660,31 +812,43 @@ class BookFormDialog extends StatelessWidget {
 
                               // SwitchListTile: Sedang Promo
                               Obx(() {
+                                final isUpcoming = controller.isUpcoming.value;
                                 return SwitchListTile(
-                                  value: controller.isPromo.value,
-                                  onChanged: (val) {
-                                    controller.isPromo.value = val;
-                                    if (!val) {
-                                      controller.promoPriceController.clear();
-                                      controller.promoPercentageController.clear();
-                                    }
-                                  },
+                                  value: isUpcoming ? false : controller.isPromo.value,
+                                  onChanged: isUpcoming || isBusy
+                                      ? null
+                                      : (val) {
+                                          controller.isPromo.value = val;
+                                          if (!val) {
+                                            controller.promoPriceController.clear();
+                                            controller.promoPercentageController.clear();
+                                          }
+                                        },
                                   activeThumbColor: Colors.redAccent,
                                   contentPadding: EdgeInsets.zero,
-                                  title: const Text(
+                                  title: Text(
                                     'Sedang Promo',
-                                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: isUpcoming ? AppTheme.textMuted : AppTheme.textPrimary,
+                                    ),
                                   ),
-                                  subtitle: const Text(
-                                    'Aktifkan potongan harga khusus dan diskon persentase',
-                                    style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                                  subtitle: Text(
+                                    isUpcoming
+                                        ? 'Tidak dapat diatur promo saat status Buku Segera Terbit aktif'
+                                        : 'Aktifkan potongan harga khusus dan diskon persentase',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isUpcoming ? AppTheme.textMuted : AppTheme.textSecondary,
+                                    ),
                                   ),
                                 );
                               }),
 
-                              // Bi-directional Promo Fields & Date Picker (Revealed when isPromo is true)
+                              // Bi-directional Promo Fields & Date Picker (Revealed when isPromo is true and not upcoming)
                               Obx(() {
-                                if (!controller.isPromo.value) return const SizedBox.shrink();
+                                if (controller.isUpcoming.value || !controller.isPromo.value) return const SizedBox.shrink();
 
                                 final promoEndDate = controller.promoEndDate.value;
 

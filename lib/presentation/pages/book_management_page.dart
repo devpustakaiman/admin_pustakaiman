@@ -348,6 +348,16 @@ class BookManagementPage extends StatelessWidget {
               onChanged: (val) => controller.recommendedFilter.value = val,
             )),
 
+        // Segera Terbit Tri-State Filter Button
+        Obx(() => TriStateFilterButton(
+              value: controller.upcomingFilter.value,
+              label: 'Segera Terbit',
+              activeLabel: 'Segera Terbit',
+              inactiveLabel: 'Bukan Segera Terbit',
+              icon: LucideIcons.clock,
+              onChanged: (val) => controller.upcomingFilter.value = val,
+            )),
+
         // Sort By Field Dropdown
         Container(
           height: 44,
@@ -659,6 +669,35 @@ class BookManagementPage extends StatelessWidget {
                           scrollDirection: Axis.horizontal,
                           child: Row(
                             children: [
+                              // Segera Terbit Badge
+                              if (book.isUpcoming) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE0F2FE),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFF0284C7)),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(LucideIcons.clock, size: 12, color: Color(0xFF0284C7)),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        book.releaseDate != null
+                                            ? 'Segera Terbit (${_formatShortDate(book.releaseDate!)})'
+                                            : 'Segera Terbit',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF0369A1),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+
                               // Gold Recommended Badge
                               if (book.isRecommended) ...[
                                 Container(
