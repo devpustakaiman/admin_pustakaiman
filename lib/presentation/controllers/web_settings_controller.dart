@@ -55,6 +55,23 @@ class FeaturedBookItem {
   }
 }
 
+class SupportingCategorySlot {
+  final int slotIndex;
+  final RxString category = ''.obs;
+  final RxList<FeaturedBookItem?> books = <FeaturedBookItem?>[null, null].obs;
+
+  SupportingCategorySlot({
+    required this.slotIndex,
+    String initialCategory = '',
+    List<FeaturedBookItem?>? initialBooks,
+  }) {
+    category.value = initialCategory;
+    if (initialBooks != null && initialBooks.length >= 2) {
+      books.assignAll(initialBooks.sublist(0, 2));
+    }
+  }
+}
+
 class ManuscriptStepItem {
   final TextEditingController titleController;
   final TextEditingController descriptionController;
@@ -155,6 +172,28 @@ class WebSettingsController extends GetxController {
   FeaturedBookItem? get selectedFeaturedBook {
     if (selectedFeaturedBookId.value == null) return null;
     return booksList.firstWhereOrNull((b) => b.id == selectedFeaturedBookId.value);
+  }
+
+  // Featured Categories Settings (Kustomisasi Kategori Pilihan di Beranda)
+  final RxString featuredMainCategory = ''.obs;
+  final RxList<FeaturedBookItem?> featuredMainBooks = <FeaturedBookItem?>[null, null, null].obs;
+  final RxList<SupportingCategorySlot> featuredSupportingSlots = RxList.generate(
+    4,
+    (index) => SupportingCategorySlot(slotIndex: index + 2),
+  );
+
+  void setMainCategoryBook(int index, FeaturedBookItem? book) {
+    if (index >= 0 && index < 3) {
+      featuredMainBooks[index] = book;
+      featuredMainBooks.refresh();
+    }
+  }
+
+  void setSupportingCategoryBook(int slotIndex, int bookIndex, FeaturedBookItem? book) {
+    if (slotIndex >= 0 && slotIndex < featuredSupportingSlots.length && bookIndex >= 0 && bookIndex < 2) {
+      featuredSupportingSlots[slotIndex].books[bookIndex] = book;
+      featuredSupportingSlots[slotIndex].books.refresh();
+    }
   }
 
   final RxBool isLoading = true.obs;
@@ -468,6 +507,66 @@ class WebSettingsController extends GetxController {
             'Parenting & Child Development',
           ]);
         }
+
+        // Load Featured Categories (Kategori Pilihan Beranda)
+        // Default 5-slot category names used when data is missing
+        const defaultFeaturedCategoryNames = [
+          'Agama & Filsafat',      // Slot 1 (main)
+          'Fiksi & Novel',          // Slot 2
+          'Buku Anak & Komik',      // Slot 3
+          'Non Fiksi & Biografi',   // Slot 4
+          'Pengembangan Diri',      // Slot 5
+        ];
+
+        if (settings['featured_categories'] != null && settings['featured_categories'] is Map) {
+          final fcMap = Map<String, dynamic>.from(settings['featured_categories'] as Map);
+
+          final mainData = fcMap['main'];
+          if (mainData is Map) {
+            featuredMainCategory.value = mainData['category']?.toString() ?? '';
+            final mainBooksRaw = mainData['books'];
+            if (mainBooksRaw is List) {
+              final list = <FeaturedBookItem?>[null, null, null];
+              for (int i = 0; i < 3 && i < mainBooksRaw.length; i++) {
+                if (mainBooksRaw[i] is Map) {
+                  list[i] = FeaturedBookItem.fromJson(Map<String, dynamic>.from(mainBooksRaw[i] as Map));
+                }
+              }
+              featuredMainBooks.assignAll(list);
+            }
+          }
+
+          final supportingRaw = fcMap['supporting'];
+          if (supportingRaw is List) {
+            for (int sIndex = 0; sIndex < 4 && sIndex < supportingRaw.length; sIndex++) {
+              final item = supportingRaw[sIndex];
+              if (item is Map) {
+                final cat = item['category']?.toString() ?? '';
+                featuredSupportingSlots[sIndex].category.value = cat;
+                final booksRaw = item['books'];
+                if (booksRaw is List) {
+                  final sList = <FeaturedBookItem?>[null, null];
+                  for (int bIndex = 0; bIndex < 2 && bIndex < booksRaw.length; bIndex++) {
+                    if (booksRaw[bIndex] is Map) {
+                      sList[bIndex] = FeaturedBookItem.fromJson(Map<String, dynamic>.from(booksRaw[bIndex] as Map));
+                    }
+                  }
+                  featuredSupportingSlots[sIndex].books.assignAll(sList);
+                }
+              }
+            }
+          }
+        }
+
+        // Apply default category names to any slot that is still empty
+        if (featuredMainCategory.value.isEmpty) {
+          featuredMainCategory.value = defaultFeaturedCategoryNames[0];
+        }
+        for (int i = 0; i < featuredSupportingSlots.length; i++) {
+          if (featuredSupportingSlots[i].category.value.isEmpty) {
+            featuredSupportingSlots[i].category.value = defaultFeaturedCategoryNames[i + 1];
+          }
+        }
       } else {
         headlineController.text = defaultHeadline;
         subheadlineController.text = defaultSubheadline;
@@ -572,6 +671,55 @@ class WebSettingsController extends GetxController {
     selectedBannerFile.value = null;
   }
 
+  /// Picks an image file and uploads it to Supabase Storage for featured
+  /// category cover slots. Returns the public URL or null if cancelled/failed.
+  Future<String?> pickAndUploadFeaturedCoverImage() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'webp'],
+        withData: true,
+      );
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        final bytes = file.bytes;
+        if (bytes != null) {
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final ext = file.name.contains('.')
+              ? file.name.split('.').last.toLowerCase()
+              : 'jpg';
+          final safeName = file.name
+              .replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_')
+              .toLowerCase();
+          final path = 'featured-covers/$timestamp-$safeName';
+          final mimeType = ext == 'png'
+              ? 'image/png'
+              : (ext == 'webp' ? 'image/webp' : 'image/jpeg');
+
+          try {
+            return await remoteDataSource.uploadStorageFile(
+              bucket: 'public_assets',
+              path: path,
+              bytes: bytes,
+              contentType: mimeType,
+            );
+          } catch (_) {
+            return await remoteDataSource.uploadStorageFile(
+              bucket: 'pustaka-assets',
+              path: path,
+              bytes: bytes,
+              contentType: mimeType,
+            );
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      errorMessage.value = 'Gagal mengunggah gambar cover: $e';
+      return null;
+    }
+  }
+
   Future<bool> saveSettings() async {
     if (headlineController.text.trim().isEmpty) {
       errorMessage.value = 'Headline utama tidak boleh kosong';
@@ -603,14 +751,50 @@ class WebSettingsController extends GetxController {
         }
       }
 
-      // 2. Upsert to Supabase site_settings table including featured_book_id
+      // 2. Upsert to Supabase site_settings table including featured_book_id & featured_categories
       uploadStatusMessage.value = 'Menyimpan konfigurasi situs...';
+
+      // Build featured_categories payload — no validation: null/empty fields are
+      // saved as-is so the web frontend falls back to its own defaults automatically.
+      final mainCat = featuredMainCategory.value.trim();
+
+      final featuredCategoriesPayload = {
+        'main': {
+          'category': mainCat,
+          'book_ids': featuredMainBooks.where((b) => b != null).map((b) => b!.id).toList(),
+          'books': featuredMainBooks.where((b) => b != null).map((b) => {
+            'id': b!.id,
+            'title': b.title,
+            'author': b.author,
+            'price': b.price,
+            'discount_price': b.discountPrice,
+            'cover_url': b.coverUrl,
+          }).toList(),
+        },
+        'supporting': featuredSupportingSlots.map((slot) {
+          return {
+            'slot': slot.slotIndex,
+            'category': slot.category.value.trim(),
+            'book_ids': slot.books.where((b) => b != null).map((b) => b!.id).toList(),
+            'books': slot.books.where((b) => b != null).map((b) => {
+              'id': b!.id,
+              'title': b.title,
+              'author': b.author,
+              'price': b.price,
+              'discount_price': b.discountPrice,
+              'cover_url': b.coverUrl,
+            }).toList(),
+          };
+        }).toList(),
+      };
+
       final payload = {
         'id': 'default',
         'hero_headline': headlineController.text.trim(),
         'hero_subheadline': subheadlineController.text.trim(),
         'hero_banner_url': currentBannerUrl,
         'featured_book_id': selectedFeaturedBookId.value,
+        'featured_categories': featuredCategoriesPayload,
       };
 
       await remoteDataSource.updateSiteSettings(payload);

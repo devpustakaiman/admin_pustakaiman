@@ -118,9 +118,14 @@ class HeroSettingsPage extends StatelessWidget {
                   ],
                 );
               }),
-          ],
-        ),
-      );
+
+          const SizedBox(height: 28),
+
+          // Section Card: Kustomisasi Kategori Pilihan di Halaman Beranda
+          _buildFeaturedCategoriesCard(context, controller),
+        ],
+      ),
+    );
   }
 
   // 1. Content Editor Card (Headline & Subheadline)
@@ -1228,4 +1233,845 @@ class HeroSettingsPage extends StatelessWidget {
       ),
     );
   }
+
+  // 4. Kustomisasi Kategori Pilihan di Halaman Beranda
+  Widget _buildFeaturedCategoriesCard(BuildContext context, WebSettingsController controller) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section Header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  LucideIcons.layoutGrid,
+                  color: AppTheme.primaryColor,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Kustomisasi Kategori Pilihan di Halaman Beranda',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Atur 1 Kategori Utama (Card Merah Besar + 3 cover 2D) & 4 Kategori Pendukung (Card Kecil + 2 cover 2D)',
+                      style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Help / Guidance Alert Note
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFBFDBFE)),
+            ),
+            child: const Row(
+              children: [
+                Icon(LucideIcons.info, size: 16, color: Color(0xFF1D4ED8)),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Catatan: Pilih buku dengan cover 2D (tampak depan datar) untuk hasil visual terbaik.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E40AF),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // PART 1: Kategori Utama (Card Merah Besar)
+          _buildMainFeaturedCategoryCard(context, controller),
+
+          const SizedBox(height: 24),
+
+          // PART 2: Kategori Pendukung (4 Card Kecil)
+          _buildSupportingFeaturedCategoriesGrid(context, controller),
+        ],
+      ),
+    );
+  }
+
+  // PART 1: Kategori Utama (Card Merah / Marun Tipis)
+  Widget _buildMainFeaturedCategoryCard(BuildContext context, WebSettingsController controller) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.3)),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Baris 1: Header kecil berlatar marun tipis dengan judul "Slot 1 - Kategori Utama" + badge "Wajib 3 Buku"
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(LucideIcons.crown, color: AppTheme.primaryColor, size: 16),
+                    SizedBox(width: 8),
+                    Text(
+                      'Slot 1 - Kategori Utama',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFF59E0B)),
+                ),
+                child: const Text(
+                  'Wajib 3 Buku',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFD97706)),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Baris 2: Dropdown Kategori Utama
+          const Text(
+            'Kategori Utama',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+          ),
+          const SizedBox(height: 6),
+          Obx(() {
+            final categories = controller.availableCatalogCategories;
+            final current = controller.featuredMainCategory.value;
+
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppTheme.borderColor),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: categories.contains(current) ? current : (categories.isNotEmpty ? categories.first : null),
+                  hint: const Text('Pilih Kategori Utama...'),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                  onChanged: (val) {
+                    if (val != null) {
+                      controller.featuredMainCategory.value = val;
+                    }
+                  },
+                  items: categories.map((cat) {
+                    return DropdownMenuItem<String>(
+                      value: cat,
+                      child: Text(cat),
+                    );
+                  }).toList(),
+                ),
+              ),
+            );
+          }),
+
+          const SizedBox(height: 16),
+
+          // Baris 3: Label kecil "Pilih 3 Buku (Cover 2D Datar)"
+          const Text(
+            'Pilih 3 Buku (Cover 2D Datar)',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+          ),
+          const SizedBox(height: 10),
+
+          // Baris 4: Daftar 3 Slot Buku — selalu berjejer horizontal
+          Obx(() {
+            final books = controller.featuredMainBooks;
+
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: List.generate(3, (index) {
+                  return Padding(
+                    padding: EdgeInsets.only(right: index < 2 ? 10.0 : 0),
+                    child: _buildBookPickerTile(
+                      context,
+                      controller,
+                      slotLabel: 'Buku ${index + 1}',
+                      book: books[index],
+                      onSelect: () => _showCoverSourcePicker(
+                        context,
+                        controller,
+                        onImageUploaded: (url) => controller.setMainCategoryBook(
+                          index,
+                          FeaturedBookItem(id: '', title: 'Cover ${index + 1}', price: 0, coverUrl: url),
+                        ),
+                        onBookSelected: (b) => controller.setMainCategoryBook(index, b),
+                      ),
+                      onRemove: () => controller.setMainCategoryBook(index, null),
+                    ),
+                  );
+                }),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // PART 2: Kategori Pendukung (4 Card Kecil Grid)
+  Widget _buildSupportingFeaturedCategoriesGrid(BuildContext context, WebSettingsController controller) {
+    final icons = [
+      LucideIcons.bookOpen,
+      LucideIcons.sparkles,
+      LucideIcons.heart,
+      LucideIcons.compass,
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Kategori Pendukung (4 Card Kecil)',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Masing-masing slot kategori pendukung memilih 1 nama Kategori dan tepat 2 Buku untuk cover 2D-nya.',
+          style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+        ),
+        const SizedBox(height: 16),
+
+        LayoutBuilder(builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= 768;
+          final itemWidth = isDesktop ? (constraints.maxWidth - 16) / 2 : constraints.maxWidth;
+
+          return Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: List.generate(4, (slotIdx) {
+              final slot = controller.featuredSupportingSlots[slotIdx];
+              final icon = icons[slotIdx % icons.length];
+
+              return Container(
+                width: itemWidth,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppTheme.borderColor),
+                  boxShadow: AppTheme.softShadow,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(icon, size: 16, color: AppTheme.primaryColor),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Slot ${slotIdx + 2} - Kategori Pendukung',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            '2 Buku',
+                            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Category Selector Dropdown
+                    Obx(() {
+                      final categories = controller.availableCatalogCategories;
+                      final current = slot.category.value;
+
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppTheme.borderColor),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            isExpanded: true,
+                            value: categories.contains(current) ? current : (categories.isNotEmpty ? categories.first : null),
+                            hint: const Text('Pilih Kategori...'),
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+                            onChanged: (val) {
+                              if (val != null) {
+                                slot.category.value = val;
+                              }
+                            },
+                            items: categories.map((cat) {
+                              return DropdownMenuItem<String>(
+                                value: cat,
+                                child: Text(cat, overflow: TextOverflow.ellipsis),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      );
+                    }),
+
+                    const SizedBox(height: 12),
+
+                    const Text(
+                      'Pilih 2 Buku (Cover 2D Datar)',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // 2 Book Pickers — selalu horizontal
+                    Obx(() {
+                      final books = slot.books;
+
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildBookPickerTile(
+                              context,
+                              controller,
+                              slotLabel: 'Buku 1',
+                              book: books[0],
+                              onSelect: () => _showCoverSourcePicker(
+                                context,
+                                controller,
+                                onImageUploaded: (url) => controller.setSupportingCategoryBook(
+                                  slotIdx, 0,
+                                  FeaturedBookItem(id: '', title: 'Cover 1', price: 0, coverUrl: url),
+                                ),
+                                onBookSelected: (b) => controller.setSupportingCategoryBook(slotIdx, 0, b),
+                              ),
+                              onRemove: () => controller.setSupportingCategoryBook(slotIdx, 0, null),
+                            ),
+                            const SizedBox(width: 10),
+                            _buildBookPickerTile(
+                              context,
+                              controller,
+                              slotLabel: 'Buku 2',
+                              book: books[1],
+                              onSelect: () => _showCoverSourcePicker(
+                                context,
+                                controller,
+                                onImageUploaded: (url) => controller.setSupportingCategoryBook(
+                                  slotIdx, 1,
+                                  FeaturedBookItem(id: '', title: 'Cover 2', price: 0, coverUrl: url),
+                                ),
+                                onBookSelected: (b) => controller.setSupportingCategoryBook(slotIdx, 1, b),
+                              ),
+                              onRemove: () => controller.setSupportingCategoryBook(slotIdx, 1, null),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              );
+            }),
+          );
+        }),
+      ],
+    );
+  }
+
+  // Compact mini 2D Cover Book Picker Tile Widget (75px wide, 4:3 aspect ratio)
+  Widget _buildBookPickerTile(
+    BuildContext context,
+    WebSettingsController controller, {
+    required String slotLabel,
+    required FeaturedBookItem? book,
+    required VoidCallback onSelect,
+    required VoidCallback onRemove,
+    double width = 75,
+  }) {
+    const double coverHeight = 100.0; // ~4:3 ratio for 75px width
+
+    if (book != null) {
+      return SizedBox(
+        width: width,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              children: [
+                InkWell(
+                  onTap: onSelect,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: width,
+                    height: coverHeight,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppTheme.borderColor),
+                      boxShadow: AppTheme.softShadow,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: book.coverUrl.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: book.coverUrl,
+                              width: width,
+                              height: coverHeight,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) => Container(
+                                color: AppTheme.inputFillColor,
+                                child: const Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(LucideIcons.imageOff, size: 18, color: AppTheme.textMuted),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : Container(
+                              color: AppTheme.inputFillColor,
+                              child: const Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(LucideIcons.book, size: 18, color: AppTheme.textMuted),
+                                ],
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+                // X/remove button overlay — top-right
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Material(
+                    color: Colors.black.withValues(alpha: 0.60),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      onTap: onRemove,
+                      customBorder: const CircleBorder(),
+                      child: const Padding(
+                        padding: EdgeInsets.all(3),
+                        child: Icon(LucideIcons.x, size: 10, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+                // Change/edit button overlay — bottom-right
+                Positioned(
+                  bottom: 4,
+                  right: 4,
+                  child: Material(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.85),
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      onTap: onSelect,
+                      customBorder: const CircleBorder(),
+                      child: const Padding(
+                        padding: EdgeInsets.all(3),
+                        child: Icon(LucideIcons.repeat, size: 10, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              book.title.isNotEmpty ? book.title : slotLabel,
+              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Unselected state — placeholder cover tile with "Belum dipilih" hint
+    return InkWell(
+      onTap: onSelect,
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: width,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                // Placeholder cover image background
+                Container(
+                  width: width,
+                  height: coverHeight,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF2F7),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFFCBD5E1),
+                      style: BorderStyle.solid,
+                    ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          LucideIcons.imageOff,
+                          size: 20,
+                          color: Colors.blueGrey.shade300,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Centered "+" add button overlay
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.85),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(LucideIcons.plus, size: 13, color: Colors.white),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              slotLabel,
+              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppTheme.textMuted),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Cover Source Picker Dialog: Upload File OR Katalog Buku
+  void _showCoverSourcePicker(
+    BuildContext context,
+    WebSettingsController controller, {
+    required ValueChanged<String> onImageUploaded,
+    required ValueChanged<FeaturedBookItem> onBookSelected,
+  }) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Pilih Sumber Cover',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                    ),
+                    SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(LucideIcons.x, size: 16, color: AppTheme.textSecondary),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Pilih cara mendapatkan gambar cover 2D untuk slot ini.',
+                  style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                ),
+                const SizedBox(height: 16),
+
+                // --- Option 1: Upload File ---
+                InkWell(
+                  onTap: () async {
+                    Navigator.of(ctx).pop();
+                    final url = await controller.pickAndUploadFeaturedCoverImage();
+                    if (url != null) {
+                      onImageUploaded(url);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(LucideIcons.uploadCloud, color: Color(0xFF16A34A), size: 22),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Upload Gambar dari File',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'JPG, PNG, WEBP — diunggah ke Supabase Storage',
+                                style: TextStyle(fontSize: 11, color: Color(0xFF4ADE80)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // --- Option 2: Katalog Buku ---
+                InkWell(
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    _showBookSearchDialog(context, controller, onSelected: onBookSelected);
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.2)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(LucideIcons.bookOpen, color: AppTheme.primaryColor, size: 22),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Pilih dari Katalog Buku',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Ambil cover 2D dari buku yang ada di katalog',
+                                style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+  // Book Search Modal Dialog
+  void _showBookSearchDialog(
+    BuildContext context,
+    WebSettingsController controller, {
+    required ValueChanged<FeaturedBookItem> onSelected,
+  }) {
+    final searchCtrl = TextEditingController();
+    final RxString filterText = ''.obs;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            width: 500,
+            constraints: const BoxConstraints(maxHeight: 600),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Pilih Buku (Cover 2D)',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                    ),
+                    IconButton(
+                      icon: const Icon(LucideIcons.x, size: 18),
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: searchCtrl,
+                  autofocus: true,
+                  onChanged: (val) => filterText.value = val,
+                  decoration: const InputDecoration(
+                    hintText: 'Cari judul buku atau penulis...',
+                    prefixIcon: Icon(LucideIcons.search, size: 18),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Expanded(
+                  child: Obx(() {
+                    final query = filterText.value.toLowerCase().trim();
+                    final allBooks = controller.booksList;
+                    final filtered = query.isEmpty
+                        ? allBooks
+                        : allBooks.where((b) =>
+                            b.title.toLowerCase().contains(query) ||
+                            b.author.toLowerCase().contains(query)).toList();
+
+                    if (filtered.isEmpty) {
+                      return const Center(
+                        child: Text('Buku tidak ditemukan', style: TextStyle(color: AppTheme.textMuted)),
+                      );
+                    }
+
+                    return ListView.separated(
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (context, idx) {
+                        final item = filtered[idx];
+                        return ListTile(
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: item.coverUrl.isNotEmpty
+                                ? CachedNetworkImage(
+                                    imageUrl: item.coverUrl,
+                                    width: 36,
+                                    height: 50,
+                                    fit: BoxFit.cover,
+                                    errorWidget: (_, __, ___) => Container(
+                                      width: 36,
+                                      height: 50,
+                                      color: AppTheme.inputFillColor,
+                                      child: const Icon(LucideIcons.book, size: 16),
+                                    ),
+                                  )
+                                : Container(
+                                    width: 36,
+                                    height: 50,
+                                    color: AppTheme.inputFillColor,
+                                    child: const Icon(LucideIcons.book, size: 16),
+                                  ),
+                          ),
+                          title: Text(item.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                          subtitle: Text(item.author.isNotEmpty ? item.author : 'Penulis tidak diketahui', style: const TextStyle(fontSize: 11)),
+                          onTap: () {
+                            onSelected(item);
+                            Navigator.of(dialogContext).pop();
+                          },
+                        );
+                      },
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
+
