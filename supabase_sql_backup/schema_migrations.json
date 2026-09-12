@@ -1,1 +1,0 @@
-{"code":"PGRST205","details":null,"hint":"Perhaps you meant the table 'public.submissions'","message":"Could not find the table 'public.schema_migrations' in the schema cache"}

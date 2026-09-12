@@ -47,3 +47,5 @@ app.*.map.json
 
 supabase/.temp/
 supabase_tables_backup/
+supabase_sql_backup/
+*.sql
